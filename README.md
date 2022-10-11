@@ -33,7 +33,7 @@ make fetch-wallet
 ## Run RPC server
 
 ```bash
-make dev-server
+make dev
 ```
 
 # License
