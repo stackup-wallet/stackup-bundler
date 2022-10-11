@@ -1,6 +1,12 @@
-setup-dev:
+install-dev:
 	go install github.com/cosmtrek/air@latest
 	go mod tidy
 
-dev-rpc:
-	air -c .air-rpc.toml
+generate-environment:
+	go run ./cmd/genenv
+
+fetch-wallet:
+	go run ./cmd/fetchwallet
+
+dev:
+	air

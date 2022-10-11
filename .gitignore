@@ -17,3 +17,5 @@
 # misc
 .DS_Store
 tmp
+.bundlerrc.json
+.env
