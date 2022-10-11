@@ -4,8 +4,8 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  bin = "./tmp/rpc"
-  cmd = "go build -o ./tmp/rpc cmd/rpc.go"
+  bin = ";ERC4337_BUNDLER_GIN_MODE=debug ./tmp/stackup-bundler"
+  cmd = "go build -o ./tmp/stackup-bundler main.go"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []

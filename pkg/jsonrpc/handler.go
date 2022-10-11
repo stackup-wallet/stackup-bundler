@@ -8,7 +8,8 @@ import (
 	"reflect"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iancoleman/strcase"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func jsonrpcError(c *gin.Context, code int, message string, data string, id *float64) {
@@ -60,7 +61,7 @@ func HandleRequest(c *gin.Context, api interface{}) {
 	}
 
 	method, ok := data["method"].(string)
-	if !ok || method != strcase.ToSnake(method) {
+	if !ok {
 		jsonrpcError(c, -32600, "Invalid Request", "No or invalid 'method' in request", &id)
 		return
 	}
@@ -71,7 +72,7 @@ func HandleRequest(c *gin.Context, api interface{}) {
 		return
 	}
 
-	call := reflect.ValueOf(api).MethodByName(strcase.ToCamel(method))
+	call := reflect.ValueOf(api).MethodByName(cases.Title(language.Und, cases.NoLower).String(method))
 	if !call.IsValid() {
 		jsonrpcError(c, -32601, "Method not found", "Method not found", &id)
 		return
@@ -181,7 +182,7 @@ func HandleRequest(c *gin.Context, api interface{}) {
 			args[i] = reflect.ValueOf(arg)
 
 		case reflect.Map:
-			val, ok := arg.(map[interface{}]interface{})
+			val, ok := arg.(map[string]interface{})
 			if !ok {
 				jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
 				return
@@ -289,7 +290,9 @@ func HandleRequest(c *gin.Context, api interface{}) {
 	}
 
 	result := call.Call(args)
-	if len(result) > 0 {
+	if err, ok := result[len(result)-1].Interface().(error); ok && err != nil {
+		jsonrpcError(c, -32000, "Method error", err.Error(), &id)
+	} else if len(result) > 0 {
 		c.JSON(http.StatusOK, gin.H{
 			"result":  result[0].Interface(),
 			"jsonrpc": "2.0",
