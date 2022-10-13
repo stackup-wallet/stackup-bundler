@@ -1,7 +1,25 @@
 package client
 
+import (
+	"fmt"
+
+	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
+)
+
 type Instance struct {
 	supportedEntryPoints []string
+}
+
+// Implements the method call for eth_sendUserOperation.
+// Returns true if userOp was accepted otherwise returns an error.
+func (i *Instance) Eth_sendUserOperation(op map[string]interface{}) (bool, error) {
+	userop, err := userop.FromMap(op)
+	if err != nil {
+		return false, err
+	}
+	fmt.Printf("%+v\n", userop)
+
+	return true, nil
 }
 
 // Implements the method call for eth_supportedEntryPoints.
