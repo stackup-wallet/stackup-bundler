@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
@@ -12,7 +14,11 @@ import (
 
 func main() {
 	v := config.GetValues()
-	i := client.New(v.SupportedEntryPoints)
+	c, err := ethclient.Dial(v.RpcUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	i := client.New(c, v.SupportedEntryPoints)
 
 	gin.SetMode(v.GinMode)
 	r := gin.Default()
