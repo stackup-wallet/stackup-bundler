@@ -13,7 +13,7 @@ type Instance struct {
 // Implements the method call for eth_sendUserOperation.
 // Returns true if userOp was accepted otherwise returns an error.
 func (i *Instance) Eth_sendUserOperation(op map[string]interface{}) (bool, error) {
-	userop, err := userop.FromMap(op)
+	userop, err := userop.New(op)
 	if err != nil {
 		return false, err
 	}
