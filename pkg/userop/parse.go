@@ -10,20 +10,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type UserOperation struct {
-	Sender               string  `json:"sender" mapstructure:"sender" validate:"required,eth_addr"`
-	Nonce                big.Int `json:"nonce" mapstructure:"nonce" validate:"required"`
-	InitCode             []byte  `json:"initCode"  mapstructure:"initCode" validate:"required"`
-	CallData             []byte  `json:"callData" mapstructure:"callData" validate:"required"`
-	CallGasLimit         big.Int `json:"callGasLimit" mapstructure:"callGasLimit" validate:"required"`
-	VerificationGasLimit big.Int `json:"verificationGasLimit" mapstructure:"verificationGasLimit" validate:"required"`
-	PreVerificationGas   big.Int `json:"preVerificationGas" mapstructure:"preVerificationGas" validate:"required"`
-	MaxFeePerGas         big.Int `json:"maxFeePerGas" mapstructure:"maxFeePerGas" validate:"required"`
-	MaxPriorityFeePerGas big.Int `json:"maxPriorityFeePerGas" mapstructure:"maxPriorityFeePerGas" validate:"required"`
-	PaymasterAndData     []byte  `json:"paymasterAndData" mapstructure:"paymasterAndData" validate:"required"`
-	Signature            []byte  `json:"signature" mapstructure:"signature" validate:"required"`
-}
-
 var validate *validator.Validate
 
 func exactFieldMatch(mapKey, fieldName string) bool {
