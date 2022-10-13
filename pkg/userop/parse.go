@@ -65,7 +65,8 @@ func validateBigIntType(field reflect.Value) interface{} {
 	return field
 }
 
-func FromMap(data map[string]interface{}) (*UserOperation, error) {
+// Decodes a map into a UserOperation object and validates all the fields are correctly typed.
+func New(data map[string]interface{}) (*UserOperation, error) {
 	var op UserOperation
 
 	// Convert map to struct
