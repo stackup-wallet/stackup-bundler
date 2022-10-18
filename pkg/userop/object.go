@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/stackup-wallet/stackup-bundler/internal/web3utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 )
 
@@ -64,7 +63,7 @@ func (op *UserOperation) CheckPaymasterAndData(client *ethclient.Client, ep *ent
 	}
 
 	address := common.BytesToAddress(op.PaymasterAndData)
-	if web3utils.IsZeroAddress(address) {
+	if address == common.HexToAddress("0x") {
 		return errors.New("paymaster: cannot be the zero address")
 	}
 
