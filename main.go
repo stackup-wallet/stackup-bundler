@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
+	"github.com/stackup-wallet/stackup-bundler/internal/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
-	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 )
 
 func main() {
