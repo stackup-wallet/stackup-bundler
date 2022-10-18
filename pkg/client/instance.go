@@ -14,15 +14,24 @@ type Instance struct {
 	supportedEntryPoints []string
 }
 
+func (i *Instance) parseEntryPointAddress(ep string) (common.Address, error) {
+	for _, v := range i.supportedEntryPoints {
+		addr := common.HexToAddress(v)
+		if addr == common.HexToAddress(ep) {
+			return addr, nil
+		}
+	}
+
+	return common.Address{}, errors.New("entryPoint: Implementation not supported")
+}
+
 // Implements the method call for eth_sendUserOperation.
 // Returns true if userOp was accepted otherwise returns an error.
 func (i *Instance) Eth_sendUserOperation(op map[string]interface{}, ep string) (bool, error) {
-	for _, v := range i.supportedEntryPoints {
-		if common.HexToAddress(v) != common.HexToAddress(ep) {
-			return false, errors.New("entryPoint: Implementation not supported")
-		}
+	epAddr, err := i.parseEntryPointAddress(ep)
+	if err != nil {
+		return false, err
 	}
-	epAddr := common.HexToAddress(ep)
 	entryPoint, err := entrypoint.NewEntrypoint(epAddr, i.ethClient)
 	if err != nil {
 		return false, err
