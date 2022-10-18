@@ -5,6 +5,9 @@ install-dev:
 generate-environment:
 	go run ./cmd/genenv
 
+generate-entrypoint-pkg:
+	abigen --abi=./abi/entrypoint.json --pkg=entrypoint --out=./pkg/entrypoint/bindings.go
+
 fetch-wallet:
 	go run ./cmd/fetchwallet
 
