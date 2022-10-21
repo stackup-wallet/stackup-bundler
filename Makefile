@@ -11,5 +11,8 @@ generate-entrypoint-pkg:
 fetch-wallet:
 	go run ./cmd/fetchwallet
 
+dev-mempool:
+	docker-compose -f docker-compose.yml up redis
+
 dev:
 	air

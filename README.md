@@ -13,6 +13,7 @@ See the `Client` documentation at [docs.stackup.sh](https://docs.stackup.sh/docs
 ## Prerequisites
 
 - Go 1.19 or later
+- Docker
 
 ## Setup
 
@@ -28,6 +29,12 @@ make generate-environment
 
 # Parses private key in .env file and prints public key and address.
 make fetch-wallet
+```
+
+## Run local mempool
+
+```bash
+make dev-mempool
 ```
 
 ## Run RPC server
