@@ -9,18 +9,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
 	"github.com/stackup-wallet/stackup-bundler/internal/jsonrpc"
+	"github.com/stackup-wallet/stackup-bundler/internal/redispool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 )
 
 func main() {
-	v := config.GetValues()
-	c, err := ethclient.Dial(v.RpcUrl)
+	conf := config.GetValues()
+
+	eth, err := ethclient.Dial(conf.RpcUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
-	i := client.New(c, v.SupportedEntryPoints)
+	mem, err := redispool.NewClientInterface(conf.RedisUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client := client.New(eth, mem, conf.SupportedEntryPoints)
 
-	gin.SetMode(v.GinMode)
+	gin.SetMode(conf.GinMode)
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
 
@@ -29,7 +35,7 @@ func main() {
 		c.Status(http.StatusOK)
 	})
 	// JSON-RPC handler
-	r.POST("/", func(c *gin.Context) { jsonrpc.HandleRequest(c, &i) })
+	r.POST("/", func(c *gin.Context) { jsonrpc.HandleRequest(c, client) })
 
-	r.Run(fmt.Sprintf(":%d", v.Port))
+	r.Run(fmt.Sprintf(":%d", conf.Port))
 }

@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"reflect"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 )
@@ -20,6 +21,11 @@ func decodeOpTypes(
 	f reflect.Kind,
 	t reflect.Kind,
 	data interface{}) (interface{}, error) {
+	// String to common.Address conversion
+	if f == reflect.String && t == reflect.Array {
+		return common.HexToAddress(data.(string)), nil
+	}
+
 	// String to big.Int conversion
 	if f == reflect.String && t == reflect.Struct {
 		n := new(big.Int)
@@ -56,6 +62,15 @@ func decodeOpTypes(
 	return data, nil
 }
 
+func validateAddressType(field reflect.Value) interface{} {
+	value, ok := field.Interface().(common.Address)
+	if !ok || value == common.HexToAddress("0x") {
+		return nil
+	}
+
+	return field
+}
+
 func validateBigIntType(field reflect.Value) interface{} {
 	value, ok := field.Interface().(big.Int)
 	if !ok || value.Cmp(big.NewInt(0)) == -1 {
@@ -86,6 +101,7 @@ func New(data map[string]interface{}) (*UserOperation, error) {
 
 	// Validate struct
 	validate = validator.New()
+	validate.RegisterCustomTypeFunc(validateAddressType, common.Address{})
 	validate.RegisterCustomTypeFunc(validateBigIntType, big.Int{})
 	err = validate.Struct(op)
 	if err != nil {

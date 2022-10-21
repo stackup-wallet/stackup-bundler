@@ -2,15 +2,19 @@ package client
 
 import (
 	"errors"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 type Instance struct {
 	ethClient            *ethclient.Client
+	mempool              *mempool.ClientInterface
+	chainID              *big.Int
 	supportedEntryPoints []string
 }
 
@@ -37,44 +41,41 @@ func (i *Instance) Eth_sendUserOperation(op map[string]interface{}, ep string) (
 		return false, err
 	}
 
+	// Run sanity checks
 	userop, err := userop.New(op)
 	if err != nil {
 		return false, err
 	}
-	if err := userop.CheckSender(i.ethClient); err != nil {
+	if err := checkSender(userop, i.ethClient); err != nil {
 		return false, err
 	}
-	if err := userop.CheckVerificationGasLimits(i.ethClient); err != nil {
+	if err := checkVerificationGasLimits(userop, i.ethClient); err != nil {
 		return false, err
 	}
-	if err := userop.CheckPaymasterAndData(i.ethClient, entryPoint); err != nil {
+	if err := checkPaymasterAndData(userop, i.ethClient, entryPoint); err != nil {
 		return false, err
 	}
-	if err := userop.CheckCallGasLimit(i.ethClient); err != nil {
+	if err := checkCallGasLimit(userop, i.ethClient); err != nil {
 		return false, err
 	}
-	if err := userop.CheckFeePerGas(i.ethClient); err != nil {
+	if err := checkFeePerGas(userop, i.ethClient); err != nil {
 		return false, err
 	}
-	if err := userop.CheckDuplicate(i.ethClient); err != nil {
+	if err := checkDuplicates(userop, i.mempool); err != nil {
 		return false, err
 	}
 
-	return true, nil
+	// Add to mempool
+	res, err := i.mempool.Add(userop.Sender.String(), userop, epAddr)
+	if err != nil {
+		return false, err
+	}
+
+	return res, nil
 }
 
 // Implements the method call for eth_supportedEntryPoints.
 // It returns the array of EntryPoint addresses that is supported by the client.
 func (i *Instance) Eth_supportedEntryPoints() ([]string, error) {
 	return i.supportedEntryPoints, nil
-}
-
-// Initializes a new ERC-4337 client with an ethClient instance
-// and an array of supported EntryPoint addresses.
-// The first address in the array is the preferred EntryPoint.
-func New(ethClient *ethclient.Client, supportedEntryPoints []string) Instance {
-	return Instance{
-		ethClient:            ethClient,
-		supportedEntryPoints: supportedEntryPoints,
-	}
 }
