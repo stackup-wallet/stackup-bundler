@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  bin = ";ERC4337_BUNDLER_GIN_MODE=debug ./tmp/stackup-bundler"
+  bin = ";ERC4337_BUNDLER_GIN_MODE=debug ./tmp/stackup-bundler start --mode client"
   cmd = "go build -o ./tmp/stackup-bundler main.go"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]

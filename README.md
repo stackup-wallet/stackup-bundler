@@ -37,10 +37,10 @@ make fetch-wallet
 make dev-mempool
 ```
 
-## Run RPC server
+## Run client
 
 ```bash
-make dev
+make dev-client
 ```
 
 # License
