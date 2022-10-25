@@ -3,16 +3,16 @@ install-dev:
 	go mod tidy
 
 generate-environment:
-	go run ./cmd/genenv
+	go run ./scripts/genenv
 
 generate-entrypoint-pkg:
 	abigen --abi=./abi/entrypoint.json --pkg=entrypoint --out=./pkg/entrypoint/bindings.go
 
 fetch-wallet:
-	go run ./cmd/fetchwallet
+	go run ./scripts/fetchwallet
 
 dev-mempool:
 	docker-compose -f docker-compose.yml up redis
 
-dev:
-	air
+dev-client:
+	air -c .air.client.toml
