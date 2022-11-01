@@ -11,8 +11,8 @@ generate-entrypoint-pkg:
 fetch-wallet:
 	go run ./scripts/fetchwallet
 
-dev-mempool:
-	docker-compose -f docker-compose.yml up redis
+dev-private-mode:
+	air -c .air.private-mode.toml
 
-dev-client:
-	air -c .air.client.toml
+dev-reset-default-data-dir:
+	rm -rf /tmp/stackup_bundler

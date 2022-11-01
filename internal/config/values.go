@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/stackup-wallet/stackup-bundler/internal/wallet"
@@ -12,30 +13,32 @@ import (
 type Values struct {
 	// Documented variables.
 	PrivateKey           string
-	RedisUrl             string
 	RpcUrl               string
 	Port                 int
-	SupportedEntryPoints []string
+	DataDirectory        string
+	SupportedEntryPoints []common.Address
 	Beneficiary          string
 
 	// Undocumented variables.
 	GinMode string
 }
 
-func envArrayToSlice(s string) []string {
-	slc := strings.Split(s, ",")
-	for i := range slc {
-		slc[i] = strings.TrimSpace(slc[i])
+func envArrayToAddressSlice(s string) []common.Address {
+	env := strings.Split(s, ",")
+	slc := []common.Address{}
+	for _, ep := range env {
+		slc = append(slc, common.HexToAddress(strings.TrimSpace(ep)))
 	}
 
 	return slc
 }
 
-// Returns config values for the RPC server that has been read in from env vars.
-// See https://docs.stackup.sh/docs/packages/client/configuration for details.
-func GetValues() Values {
+// GetValues returns config for the bundler that has been read in from env vars.
+// See https://docs.stackup.sh/docs/packages/bundler/configure for details.
+func GetValues() *Values {
 	// Default variables
 	viper.SetDefault("erc4337_bundler_port", 4337)
+	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x1b98F08dB8F12392EAE339674e568fe29929bC47")
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
@@ -54,7 +57,6 @@ func GetValues() Values {
 
 	// Read in from environment variables
 	viper.BindEnv("erc4337_bundler_private_key")
-	viper.BindEnv("erc4337_bundler_redis_url")
 	viper.BindEnv("erc4337_bundler_rpc_url")
 	viper.BindEnv("erc4337_bundler_port")
 	viper.BindEnv("erc4337_bundler_supported_entry_points")
@@ -64,10 +66,6 @@ func GetValues() Values {
 	// Validate required variables
 	if !viper.IsSet("erc4337_bundler_private_key") || viper.GetString("erc4337_bundler_private_key") == "" {
 		panic("Fatal config error: erc4337_bundler_private_key not set")
-	}
-
-	if !viper.IsSet("erc4337_bundler_redis_url") || viper.GetString("erc4337_bundler_redis_url") == "" {
-		panic("Fatal config error: erc4337_bundler_redis_url not set")
 	}
 
 	if !viper.IsSet("erc4337_bundler_rpc_url") || viper.GetString("erc4337_bundler_rpc_url") == "" {
@@ -80,12 +78,12 @@ func GetValues() Values {
 	}
 
 	// Return Values
-	return Values{
+	return &Values{
 		PrivateKey:           viper.GetString("erc4337_bundler_private_key"),
-		RedisUrl:             viper.GetString("erc4337_bundler_redis_url"),
 		RpcUrl:               viper.GetString("erc4337_bundler_rpc_url"),
 		Port:                 viper.GetInt("erc4337_bundler_port"),
-		SupportedEntryPoints: envArrayToSlice(viper.GetString("erc4337_bundler_supported_entry_points")),
+		DataDirectory:        viper.GetString("erc4337_bundler_data_directory"),
+		SupportedEntryPoints: envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points")),
 		Beneficiary:          viper.GetString("erc4337_bundler_beneficiary"),
 		GinMode:              viper.GetString("erc4337_bundler_gin_mode"),
 	}
