@@ -31,16 +31,19 @@ make generate-environment
 make fetch-wallet
 ```
 
-## Run local mempool
+## Run bundler in `private` mode
+
+Start a local bundler instance:
 
 ```bash
-make dev-mempool
+make dev-private-mode
 ```
 
-## Run client
+If you need to reset the embedded database:
 
 ```bash
-make dev-client
+# This will delete the default data directory at /tmp/stackup_bundler
+make dev-reset-default-data-dir
 ```
 
 # License

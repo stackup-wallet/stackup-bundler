@@ -13,15 +13,14 @@ import (
 
 type Instance struct {
 	ethClient            *ethclient.Client
-	mempool              *mempool.ClientInterface
+	mempool              *mempool.Interface
 	chainID              *big.Int
-	supportedEntryPoints []string
+	supportedEntryPoints []common.Address
 }
 
 func (i *Instance) parseEntryPointAddress(ep string) (common.Address, error) {
-	for _, v := range i.supportedEntryPoints {
-		addr := common.HexToAddress(v)
-		if addr == common.HexToAddress(ep) {
+	for _, addr := range i.supportedEntryPoints {
+		if common.HexToAddress(ep) == addr {
 			return addr, nil
 		}
 	}
@@ -61,12 +60,12 @@ func (i *Instance) Eth_sendUserOperation(op map[string]interface{}, ep string) (
 	if err := checkFeePerGas(userop, i.ethClient); err != nil {
 		return false, err
 	}
-	if err := checkDuplicates(userop, i.mempool); err != nil {
+	if err := checkDuplicates(userop, epAddr, i.mempool); err != nil {
 		return false, err
 	}
 
 	// Add to mempool
-	res, err := i.mempool.Add(userop.Sender.String(), userop, epAddr)
+	res, err := i.mempool.AddOp(epAddr, userop)
 	if err != nil {
 		return false, err
 	}
@@ -77,5 +76,10 @@ func (i *Instance) Eth_sendUserOperation(op map[string]interface{}, ep string) (
 // Implements the method call for eth_supportedEntryPoints.
 // It returns the array of EntryPoint addresses that is supported by the client.
 func (i *Instance) Eth_supportedEntryPoints() ([]string, error) {
-	return i.supportedEntryPoints, nil
+	slc := []string{}
+	for _, ep := range i.supportedEntryPoints {
+		slc = append(slc, ep.String())
+	}
+
+	return slc, nil
 }

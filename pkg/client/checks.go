@@ -39,11 +39,12 @@ func checkVerificationGasLimits(op *userop.UserOperation, client *ethclient.Clie
 }
 
 // Checks the paymasterAndData is either zero bytes or the first 20 bytes contain an address that
-// (i) is not the zero address,
-// (ii) currently has nonempty code on chain,
-// (iii) has registered and staked,
-// (iv) has a sufficient deposit to pay for the UserOperation,
-// and (v) is not currently banned.
+//
+//	(i) is not the zero address
+//	(ii) currently has nonempty code on chain
+//	(iii) has registered and staked
+//	(iv) has a sufficient deposit to pay for the UserOperation
+//	(v) is not currently banned
 func checkPaymasterAndData(op *userop.UserOperation, client *ethclient.Client, ep *entrypoint.Entrypoint) error {
 	if len(op.PaymasterAndData) == 0 {
 		return nil
@@ -91,11 +92,12 @@ func checkFeePerGas(op *userop.UserOperation, client *ethclient.Client) error {
 }
 
 // The sender can only have one UserOperation in the mempool. However it can be replaced if
-// (i) the nonce remains the same
-// (ii) the new maxPriorityFeePerGas is higher
-// (iii) the new maxFeePerGas is increased equally
-func checkDuplicates(op *userop.UserOperation, mempool *mempool.ClientInterface) error {
-	mem, err := mempool.Get(op.Sender.String())
+//
+//	(i) the nonce remains the same
+//	(ii) the new maxPriorityFeePerGas is higher
+//	(iii) the new maxFeePerGas is increased equally
+func checkDuplicates(op *userop.UserOperation, ep common.Address, mempool *mempool.Interface) error {
+	mem, err := mempool.GetOp(ep, op.Sender)
 	if err != nil {
 		return err
 	}
@@ -103,18 +105,18 @@ func checkDuplicates(op *userop.UserOperation, mempool *mempool.ClientInterface)
 		return nil
 	}
 
-	if op.Nonce.Cmp(mem.UserOp.Nonce) != 0 {
+	if op.Nonce.Cmp(mem.Nonce) != 0 {
 		return errors.New("sender: Has userOp in mempool with a different nonce")
 	}
 
-	if op.MaxPriorityFeePerGas.Cmp(mem.UserOp.MaxPriorityFeePerGas) <= 0 {
+	if op.MaxPriorityFeePerGas.Cmp(mem.MaxPriorityFeePerGas) <= 0 {
 		return errors.New("sender: Has userOp in mempool with same or higher priority fee")
 	}
 
 	diff := big.NewInt(0)
 	mf := big.NewInt(0)
-	diff.Sub(op.MaxPriorityFeePerGas, mem.UserOp.MaxPriorityFeePerGas)
-	if op.MaxFeePerGas.Cmp(mf.Add(mem.UserOp.MaxFeePerGas, diff)) != 0 {
+	diff.Sub(op.MaxPriorityFeePerGas, mem.MaxPriorityFeePerGas)
+	if op.MaxFeePerGas.Cmp(mf.Add(mem.MaxFeePerGas, diff)) != 0 {
 		return errors.New("sender: Replaced userOp must have an equally higher max fee")
 	}
 
