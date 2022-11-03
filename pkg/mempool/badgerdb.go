@@ -72,20 +72,48 @@ func getOpFunc(q *userOpQueues) GetOp {
 }
 
 func addOpFunc(db *badger.DB, q *userOpQueues) AddOp {
-	return func(entryPoint common.Address, op *userop.UserOperation) (bool, error) {
+	return func(entryPoint common.Address, op *userop.UserOperation) error {
 		data, err := op.MarshalJSON()
 		if err != nil {
-			return false, nil
+			return err
 		}
 
 		err = db.Update(func(txn *badger.Txn) error {
 			return txn.Set(getDBKey(entryPoint, op.Sender), data)
 		})
 		if err != nil {
-			return false, nil
+			return err
 		}
 
-		return q.AddOp(entryPoint, op), nil
+		q.AddOp(entryPoint, op)
+		return nil
+	}
+}
+
+func bundleOpsFunc(db *badger.DB, q *userOpQueues) BundleOps {
+	return func(entryPoint common.Address) ([]*userop.UserOperation, error) {
+		return q.Next(entryPoint), nil
+	}
+}
+
+func removeOpsFunc(db *badger.DB, q *userOpQueues) RemoveOps {
+	return func(entryPoint common.Address, senders []common.Address) error {
+		err := db.Update(func(txn *badger.Txn) error {
+			for _, s := range senders {
+				err := txn.Delete(getDBKey(entryPoint, s))
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		q.RemoveOps(entryPoint, senders)
+		return nil
 	}
 }
 
@@ -99,7 +127,9 @@ func NewBadgerDBWrapper(db *badger.DB) (*Interface, error) {
 	}
 
 	return &Interface{
-		AddOp: addOpFunc(db, q),
-		GetOp: getOpFunc(q),
+		AddOp:     addOpFunc(db, q),
+		GetOp:     getOpFunc(q),
+		BundleOps: bundleOpsFunc(db, q),
+		RemoveOps: removeOpsFunc(db, q),
 	}, nil
 }

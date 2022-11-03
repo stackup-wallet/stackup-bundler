@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -14,30 +13,24 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
+	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 func startBundler(conf *config.Values, eth *ethclient.Client, mem *mempool.Interface) {
-	// Spawn a bundler thread for each supported entryPoint
-	for _, ep := range conf.SupportedEntryPoints {
-		b, err := bundler.New(eth, mem, ep)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		go func(b *bundler.Instance) {
-			for {
-				res, err := b.ProcessBatch()
-				if err != nil {
-					fmt.Println(fmt.Errorf("bundler error: %w", err))
-				} else if !res {
-					fmt.Println("Nothing to process")
-				}
-
-				time.Sleep(5 * time.Second)
-			}
-		}(b)
+	b, err := bundler.New(eth, mem, conf.SupportedEntryPoints)
+	if err != nil {
+		log.Fatal(err)
 	}
 
+	b.SetBatchHandlerFunc(func(batch []*userop.UserOperation) error {
+		for _, op := range batch {
+			b, _ := op.MarshalJSON()
+			fmt.Println(string(b))
+		}
+		return nil
+	})
+	b.SetErrorHandlerFunc(func(err error) { log.Fatal(err) })
+	b.Run()
 }
 
 func startClient(conf *config.Values, eth *ethclient.Client, mem *mempool.Interface) {

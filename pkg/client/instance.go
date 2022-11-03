@@ -65,12 +65,12 @@ func (i *Instance) Eth_sendUserOperation(op map[string]interface{}, ep string) (
 	}
 
 	// Add to mempool
-	res, err := i.mempool.AddOp(epAddr, userop)
+	err = i.mempool.AddOp(epAddr, userop)
 	if err != nil {
 		return false, err
 	}
 
-	return res, nil
+	return true, nil
 }
 
 // Implements the method call for eth_supportedEntryPoints.

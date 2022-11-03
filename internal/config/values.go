@@ -56,20 +56,20 @@ func GetValues() *Values {
 	}
 
 	// Read in from environment variables
+	viper.BindEnv("erc4337_bundler_eth_client_url")
 	viper.BindEnv("erc4337_bundler_private_key")
-	viper.BindEnv("erc4337_bundler_rpc_url")
 	viper.BindEnv("erc4337_bundler_port")
 	viper.BindEnv("erc4337_bundler_supported_entry_points")
 	viper.BindEnv("erc4337_bundler_beneficiary")
 	viper.BindEnv("erc4337_bundler_gin_mode")
 
 	// Validate required variables
-	if !viper.IsSet("erc4337_bundler_private_key") || viper.GetString("erc4337_bundler_private_key") == "" {
-		panic("Fatal config error: erc4337_bundler_private_key not set")
+	if !viper.IsSet("erc4337_bundler_eth_client_url") || viper.GetString("erc4337_bundler_eth_client_url") == "" {
+		panic("Fatal config error: erc4337_bundler_eth_client_url not set")
 	}
 
-	if !viper.IsSet("erc4337_bundler_rpc_url") || viper.GetString("erc4337_bundler_rpc_url") == "" {
-		panic("Fatal config error: erc4337_bundler_rpc_url not set")
+	if !viper.IsSet("erc4337_bundler_private_key") || viper.GetString("erc4337_bundler_private_key") == "" {
+		panic("Fatal config error: erc4337_bundler_private_key not set")
 	}
 
 	if !viper.IsSet("erc4337_bundler_beneficiary") {
@@ -80,7 +80,7 @@ func GetValues() *Values {
 	// Return Values
 	return &Values{
 		PrivateKey:           viper.GetString("erc4337_bundler_private_key"),
-		RpcUrl:               viper.GetString("erc4337_bundler_rpc_url"),
+		RpcUrl:               viper.GetString("erc4337_bundler_eth_client_url"),
 		Port:                 viper.GetInt("erc4337_bundler_port"),
 		DataDirectory:        viper.GetString("erc4337_bundler_data_directory"),
 		SupportedEntryPoints: envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points")),
