@@ -6,14 +6,13 @@ A standalone RPC client and bundler for relaying UserOperations to the EntryPoin
 
 # Running an instance
 
-See the `Client` documentation at [docs.stackup.sh](https://docs.stackup.sh/docs/category/client).
+See the `Bundler` documentation at [docs.stackup.sh](https://docs.stackup.sh/docs/category/bundler).
 
 # Contributing
 
 ## Prerequisites
 
 - Go 1.19 or later
-- Docker
 
 ## Setup
 
