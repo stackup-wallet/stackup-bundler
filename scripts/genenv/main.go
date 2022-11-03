@@ -24,7 +24,7 @@ func genPrivateKey() string {
 func main() {
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
-	viper.Set("ERC4337_BUNDLER_RPC_URL", "")
+	viper.Set("ERC4337_BUNDLER_ETH_CLIENT_URL", "")
 	viper.Set("ERC4337_BUNDLER_PRIVATE_KEY", genPrivateKey())
 
 	if err := viper.WriteConfigAs(".env"); err != nil {
