@@ -13,7 +13,7 @@ import (
 type Values struct {
 	// Documented variables.
 	PrivateKey           string
-	RpcUrl               string
+	EthClientUrl         string
 	Port                 int
 	DataDirectory        string
 	SupportedEntryPoints []common.Address
@@ -80,7 +80,7 @@ func GetValues() *Values {
 	// Return Values
 	return &Values{
 		PrivateKey:           viper.GetString("erc4337_bundler_private_key"),
-		RpcUrl:               viper.GetString("erc4337_bundler_eth_client_url"),
+		EthClientUrl:         viper.GetString("erc4337_bundler_eth_client_url"),
 		Port:                 viper.GetInt("erc4337_bundler_port"),
 		DataDirectory:        viper.GetString("erc4337_bundler_data_directory"),
 		SupportedEntryPoints: envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points")),

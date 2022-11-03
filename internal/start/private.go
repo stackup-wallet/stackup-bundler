@@ -62,7 +62,7 @@ func PrivateMode() {
 	}
 	defer db.Close()
 
-	eth, err := ethclient.Dial(conf.RpcUrl)
+	eth, err := ethclient.Dial(conf.EthClientUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
