@@ -8,7 +8,6 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -37,8 +36,8 @@ func getRequestIDsFromOps(ep common.Address, chainID *big.Int, ops ...*userop.Us
 	return rids
 }
 
-func getOpsCountByKey(txn *badger.Txn, key []byte) (opsSeen int, opsIncluded int, err error) {
-	item, err := txn.Get(key)
+func getOpsCountByClientID(txn *badger.Txn, clientID string) (opsSeen int, opsIncluded int, err error) {
+	item, err := txn.Get(getOpsCountKey(clientID))
 	if err != nil && err == badger.ErrKeyNotFound {
 		return 0, 0, nil
 	} else if err != nil {
@@ -67,12 +66,8 @@ func getOpsCountByKey(txn *badger.Txn, key []byte) (opsSeen int, opsIncluded int
 	return opsSeen, opsIncluded, nil
 }
 
-func getOpsCount(c *gin.Context, txn *badger.Txn, clientID string) (opsSeen int, opsIncluded int, err error) {
-	return getOpsCountByKey(txn, getOpsCountKey(clientID))
-}
-
-func incrementOpsSeen(c *gin.Context, txn *badger.Txn, clientID string) error {
-	opsSeen, opsIncluded, err := getOpsCount(c, txn, clientID)
+func incrementOpsSeenByClientID(txn *badger.Txn, clientID string) error {
+	opsSeen, opsIncluded, err := getOpsCountByClientID(txn, clientID)
 	if err != nil {
 		return err
 	}
@@ -89,17 +84,17 @@ func incrementOpsIncludedByRequestIDs(txn *badger.Txn, requestIDs ...string) err
 			return err
 		}
 
-		var clientID []byte
+		var value []byte
 		err = item.Value(func(val []byte) error {
-			clientID = append([]byte{}, val...)
+			value = append([]byte{}, val...)
 			return nil
 		})
 		if err != nil {
 			return err
 		}
 
-		opsCountKey := getOpsCountKey(string(clientID))
-		opsSeen, opsIncluded, err := getOpsCountByKey(txn, opsCountKey)
+		cid := string(value)
+		opsSeen, opsIncluded, err := getOpsCountByClientID(txn, cid)
 		if err != nil {
 			return err
 		}
@@ -112,7 +107,7 @@ func incrementOpsIncludedByRequestIDs(txn *badger.Txn, requestIDs ...string) err
 			opsCountValue = strconv.Itoa(opsSeen) + separator + strconv.Itoa(opsIncluded+1)
 		}
 
-		e := badger.NewEntry(opsCountKey, []byte(opsCountValue)).WithTTL(timeWindow)
+		e := badger.NewEntry(getOpsCountKey(cid), []byte(opsCountValue)).WithTTL(timeWindow)
 		if err := txn.SetEntry(e); err != nil {
 			return err
 		}
@@ -121,7 +116,7 @@ func incrementOpsIncludedByRequestIDs(txn *badger.Txn, requestIDs ...string) err
 	return nil
 }
 
-func mapRequestIDToClient(c *gin.Context, txn *badger.Txn, requestID string, clientID string) error {
+func mapRequestIDToClientID(txn *badger.Txn, requestID string, clientID string) error {
 	return txn.Set(getRequestIDKey(requestID), []byte(clientID))
 }
 

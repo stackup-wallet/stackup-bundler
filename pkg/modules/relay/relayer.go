@@ -68,7 +68,7 @@ func (r *Relayer) SetErrorHandlerFunc(handler modules.ErrorHandlerFunc) {
 func (r *Relayer) FilterByClient(c *gin.Context) {
 	isBanned := false
 	err := r.db.View(func(txn *badger.Txn) error {
-		opsSeen, opsIncluded, err := getOpsCount(c, txn, r.getClientID(c))
+		opsSeen, opsIncluded, err := getOpsCountByClientID(txn, r.getClientID(c))
 		if err != nil {
 			return err
 		}
@@ -115,12 +115,12 @@ func (r *Relayer) LogClientForSendUserOperation(c *gin.Context) {
 	rid := op.GetRequestID(common.HexToAddress(ep), r.chainID).String()
 	cid := r.getClientID(c)
 	err = r.db.Update(func(txn *badger.Txn) error {
-		err := mapRequestIDToClient(c, txn, rid, cid)
+		err := mapRequestIDToClientID(txn, rid, cid)
 		if err != nil {
 			return err
 		}
 
-		err = incrementOpsSeen(c, txn, cid)
+		err = incrementOpsSeenByClientID(txn, cid)
 		if err != nil {
 			return err
 		}
