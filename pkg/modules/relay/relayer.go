@@ -63,7 +63,7 @@ func (r *Relayer) SetErrorHandlerFunc(handler modules.ErrorHandlerFunc) {
 // FilterByClient is a custom Gin middleware used to prevent requests from banned clients from adding their
 // userOps to the mempool. Identifiers are prioritized by the following values:
 //  1. X-Bundler-Client-Id header: See UseClientIDHeader
-//  2. X-Forwarded-By header: The right most IP address in the array which is assumed to be the client
+//  2. X-Forwarded-By header: The first IP address in the array which is assumed to be the client
 //  3. Request.RemoteAddr: The remote IP address
 func (r *Relayer) FilterByClient(c *gin.Context) {
 	isBanned := false
