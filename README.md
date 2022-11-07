@@ -2,7 +2,7 @@
 
 # Getting started
 
-A modular implementation of an ERC-4337 Bundler for Go.
+A modular Go implementation of an ERC-4337 Bundler.
 
 # Running an instance
 
