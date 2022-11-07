@@ -49,8 +49,8 @@ func (r *Relayer) getClientID(c *gin.Context) string {
 	return c.ClientIP()
 }
 
-// UseClientIDHeader allows requests to identify clients using any ID set in the X-Bundler-Client-Id header.
-// This should only be turned on if incoming requests are from trusted sources.
+// UseClientIDHeader allows requests to be identified clients using any ID set in the X-Bundler-Client-Id
+// header. This should only be turned on if incoming requests are from trusted sources.
 func (r *Relayer) UseClientIDHeader(flag bool) {
 	r.clientIDHeaderEnabled = flag
 }
