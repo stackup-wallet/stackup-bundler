@@ -1,33 +1,36 @@
 package bundler
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
-	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 )
 
-type BatchHandlerFunc func(batch []*userop.UserOperation) error
-type ErrorHandlerFunc func(err error)
-
+// Instance is a representation of an ERC-4337 bundler.
 type Instance struct {
 	ethClient            *ethclient.Client
 	mempool              *mempool.Interface
+	chainID              *big.Int
 	supportedEntryPoints []common.Address
-	batchHandler         BatchHandlerFunc
-	errorHandler         ErrorHandlerFunc
+	batchHandler         modules.BatchHandlerFunc
+	errorHandler         modules.ErrorHandlerFunc
 }
 
-func (i *Instance) SetBatchHandlerFunc(handler BatchHandlerFunc) {
-	i.batchHandler = handler
+// UseModules defines the BatchHandlers to process batches after it has gone through the standard checks.
+func (i *Instance) UseModules(handlers ...modules.BatchHandlerFunc) {
+	i.batchHandler = modules.ComposeBatchHandlerFunc(handlers...)
 }
 
-func (i *Instance) SetErrorHandlerFunc(handler ErrorHandlerFunc) {
+// SetErrorHandlerFunc defines a method for handling errors at any point of the process.
+func (i *Instance) SetErrorHandlerFunc(handler modules.ErrorHandlerFunc) {
 	i.errorHandler = handler
 }
 
+// Run starts a goroutine that will continuously process batches from the mempool.
 func (i *Instance) Run() error {
 	go func(i *Instance) {
 		for {
@@ -40,13 +43,14 @@ func (i *Instance) Run() error {
 				batch = filterSender(batch)
 				batch = filterPaymaster(batch)
 
-				err = i.batchHandler(batch)
-				if err != nil {
+				ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID)
+				if err := i.batchHandler(ctx); err != nil {
 					i.errorHandler(err)
 					continue
 				}
 
-				err = i.mempool.RemoveOps(ep, getSenders(batch))
+				senders := append(getSenders(ctx.Batch), getSenders(ctx.PendingRemoval)...)
+				err = i.mempool.RemoveOps(ep, senders...)
 				if err != nil {
 					i.errorHandler(err)
 					continue

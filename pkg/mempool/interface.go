@@ -15,8 +15,9 @@ type AddOp func(entryPoint common.Address, op *userop.UserOperation) error
 type BundleOps func(entryPoint common.Address) ([]*userop.UserOperation, error)
 
 // RemoveOps removes a list of UserOperations from the mempool by sender.
-type RemoveOps func(entryPoint common.Address, senders []common.Address) error
+type RemoveOps func(entryPoint common.Address, senders ...common.Address) error
 
+// Interface is a set of standard functions required to interact with the mempool.
 type Interface struct {
 	GetOp
 	AddOp

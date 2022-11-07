@@ -10,21 +10,22 @@ import (
 )
 
 const keySeparator = ":"
+const keyPrefix = "mempool"
 
 func getDBKey(entryPoint common.Address, sender common.Address) []byte {
-	return []byte(entryPoint.String() + keySeparator + sender.String())
+	return []byte(keyPrefix + keySeparator + entryPoint.String() + keySeparator + sender.String())
 }
 
 func getEntryPointAndSenderFromDBKey(key []byte) (common.Address, common.Address) {
 	slc := strings.Split(string(key), keySeparator)
-	ep := common.HexToAddress(slc[0])
-	sender := common.HexToAddress(slc[1])
+	ep := common.HexToAddress(slc[1])
+	sender := common.HexToAddress(slc[2])
 
 	return ep, sender
 }
 
 func getUserOpFromDBValue(value []byte) (*userop.UserOperation, error) {
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	json.Unmarshal(value, &data)
 	op, err := userop.New(data)
 	if err != nil {
@@ -39,9 +40,10 @@ func loadFromDisk(db *badger.DB, q *userOpQueues) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
+		prefix := []byte(keyPrefix)
 		defer it.Close()
 
-		for it.Rewind(); it.Valid(); it.Next() {
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 			ep, _ := getEntryPointAndSenderFromDBKey(item.Key())
 
@@ -97,7 +99,7 @@ func bundleOpsFunc(db *badger.DB, q *userOpQueues) BundleOps {
 }
 
 func removeOpsFunc(db *badger.DB, q *userOpQueues) RemoveOps {
-	return func(entryPoint common.Address, senders []common.Address) error {
+	return func(entryPoint common.Address, senders ...common.Address) error {
 		err := db.Update(func(txn *badger.Txn) error {
 			for _, s := range senders {
 				err := txn.Delete(getDBKey(entryPoint, s))
