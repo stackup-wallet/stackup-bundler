@@ -2,7 +2,7 @@
 
 # Getting started
 
-A standalone RPC client and bundler for relaying UserOperations to the EntryPoint.
+A modular implementation of an ERC-4337 Bundler for Go.
 
 # Running an instance
 
