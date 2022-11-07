@@ -8,8 +8,8 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "stackup-bundler",
-	Short: "Standalone ERC-4337 Client & Bundler",
-	Long:  "A standalone RPC client and bundler for relaying UserOperations to the EntryPoint.",
+	Short: "ERC-4337 Bundler",
+	Long:  "A modular Go implementation of an ERC-4337 Bundler.",
 }
 
 func Execute() {
