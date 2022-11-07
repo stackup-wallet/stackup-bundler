@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+// UserOperation is the transaction object for ERC-4337 smart contract accounts.
 type UserOperation struct {
 	Sender               common.Address `json:"sender" mapstructure:"sender" validate:"required"`
 	Nonce                *big.Int       `json:"nonce" mapstructure:"nonce" validate:"required"`
@@ -24,6 +25,7 @@ type UserOperation struct {
 	Signature            []byte         `json:"signature" mapstructure:"signature" validate:"required"`
 }
 
+// Pack returns a standardized message of the op.
 func (op *UserOperation) Pack() []byte {
 	userOpType, _ := abi.NewType("tuple", "userOp", []abi.ArgumentMarshaling{
 		{Name: "Sender", Type: "address"},
@@ -67,13 +69,13 @@ func (op *UserOperation) Pack() []byte {
 		[]byte{},
 	})
 
-	// Return with stripped leading word (total length) and trailing word (zero-length signature)
+	// Return with stripped leading word (total length) and trailing word (zero-length signature).
 	enc := hexutil.Encode(packed)
 	enc = "0x" + enc[66:len(enc)-64]
 	return (hexutil.MustDecode(enc))
 }
 
-// Returns the hash of op + entryPoint address + chainID
+// GetRequestID returns the hash of op + entryPoint address + chainID.
 func (op *UserOperation) GetRequestID(epAddr common.Address, chainID *big.Int) common.Hash {
 	return crypto.Keccak256Hash(
 		crypto.Keccak256(op.Pack()),
@@ -82,7 +84,7 @@ func (op *UserOperation) GetRequestID(epAddr common.Address, chainID *big.Int) c
 	)
 }
 
-// Returns a JSON encoding of the UserOperation
+// MarshalJSON returns a JSON encoding of the UserOperation.
 func (op *UserOperation) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		Sender               string `json:"sender"`

@@ -1,26 +1,21 @@
 package client
 
 import (
-	"context"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
 )
 
-// Initializes a new ERC-4337 client with an ethClient instance
-// and an array of supported EntryPoint addresses.
-// The first address in the array is the preferred EntryPoint.
-func New(ethClient *ethclient.Client, mempool *mempool.Interface, supportedEntryPoints []common.Address) (*Instance, error) {
-	cid, err := ethClient.ChainID(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
+// New initializes a new ERC-4337 client for accepting UserOperations into the mempool.
+func New(ethClient *ethclient.Client, mempool *mempool.Interface, chainID *big.Int, supportedEntryPoints []common.Address) *Instance {
 	return &Instance{
 		ethClient:            ethClient,
 		mempool:              mempool,
-		chainID:              cid,
+		chainID:              chainID,
 		supportedEntryPoints: supportedEntryPoints,
-	}, nil
+		userOpHandler:        noop.UserOpHandler,
+	}
 }

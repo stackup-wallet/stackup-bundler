@@ -80,8 +80,8 @@ func validateBigIntType(field reflect.Value) interface{} {
 	return field
 }
 
-// Decodes a map into a UserOperation object and validates all the fields are correctly typed.
-func New(data map[string]interface{}) (*UserOperation, error) {
+// New decodes a map into a UserOperation object and validates all the fields are correctly typed.
+func New(data map[string]any) (*UserOperation, error) {
 	var op UserOperation
 
 	// Convert map to struct
