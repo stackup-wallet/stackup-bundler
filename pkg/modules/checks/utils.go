@@ -1,4 +1,4 @@
-package client
+package checks
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 // Checks that the sender is an existing contract, or the initCode is not empty (but not both)
-func checkSender(op *userop.UserOperation, eth *ethclient.Client) error {
+func checkSender(eth *ethclient.Client, op *userop.UserOperation) error {
 	bytecode, err := eth.CodeAt(context.Background(), op.Sender, nil)
 	if err != nil {
 		return err
@@ -33,19 +33,19 @@ func checkSender(op *userop.UserOperation, eth *ethclient.Client) error {
 // Checks that the verificationGasLimit is sufficiently low (<= MAX_VERIFICATION_GAS) and the
 // preVerificationGas is sufficiently high (enough to pay for the calldata gas cost of serializing
 // the UserOperation plus PRE_VERIFICATION_OVERHEAD_GAS)
-func checkVerificationGasLimits(op *userop.UserOperation, client *ethclient.Client) error {
+func checkVerificationGasLimits(eth *ethclient.Client, op *userop.UserOperation) error {
 	// TODO: Add implementation
 	return nil
 }
 
 // Checks the paymasterAndData is either zero bytes or the first 20 bytes contain an address that
 //
-//	(i) is not the zero address
-//	(ii) currently has nonempty code on chain
-//	(iii) has registered and staked
-//	(iv) has a sufficient deposit to pay for the UserOperation
-//	(v) is not currently banned
-func checkPaymasterAndData(op *userop.UserOperation, client *ethclient.Client, ep *entrypoint.Entrypoint) error {
+//  1. is not the zero address
+//  2. currently has nonempty code on chain
+//  3. has registered and staked
+//  4. has a sufficient deposit to pay for the UserOperation
+//  5. is not currently banned
+func checkPaymasterAndData(eth *ethclient.Client, op *userop.UserOperation, ep *entrypoint.Entrypoint) error {
 	if len(op.PaymasterAndData) == 0 {
 		return nil
 	}
@@ -55,7 +55,7 @@ func checkPaymasterAndData(op *userop.UserOperation, client *ethclient.Client, e
 		return errors.New("paymaster: cannot be the zero address")
 	}
 
-	bytecode, err := client.CodeAt(context.Background(), address, nil)
+	bytecode, err := eth.CodeAt(context.Background(), address, nil)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func checkPaymasterAndData(op *userop.UserOperation, client *ethclient.Client, e
 
 // Checks the callGasLimit is at least the cost of a CALL with non-zero value.
 // See https://github.com/wolflo/evm-opcodes/blob/main/gas.md#aa-1-call
-func checkCallGasLimit(op *userop.UserOperation, client *ethclient.Client) error {
+func checkCallGasLimit(eth *ethclient.Client, op *userop.UserOperation) error {
 	// TODO: Add implementation
 	return nil
 }
@@ -86,7 +86,7 @@ func checkCallGasLimit(op *userop.UserOperation, client *ethclient.Client) error
 // The maxFeePerGas and maxPriorityFeePerGas are above a configurable minimum value that the client
 // is willing to accept. At the minimum, they are sufficiently high to be included with the current
 // block.basefee.
-func checkFeePerGas(op *userop.UserOperation, client *ethclient.Client) error {
+func checkFeePerGas(eth *ethclient.Client, op *userop.UserOperation) error {
 	// TODO: Add implementation
 	return nil
 }
@@ -96,27 +96,27 @@ func checkFeePerGas(op *userop.UserOperation, client *ethclient.Client) error {
 //	(i) the nonce remains the same
 //	(ii) the new maxPriorityFeePerGas is higher
 //	(iii) the new maxFeePerGas is increased equally
-func checkDuplicates(op *userop.UserOperation, ep common.Address, mempool *mempool.Interface) error {
-	mem, err := mempool.GetOp(ep, op.Sender)
+func checkDuplicates(mem *mempool.Interface, op *userop.UserOperation, ep common.Address) error {
+	op, err := mem.GetOp(ep, op.Sender)
 	if err != nil {
 		return err
 	}
-	if mem == nil {
+	if op == nil {
 		return nil
 	}
 
-	if op.Nonce.Cmp(mem.Nonce) != 0 {
+	if op.Nonce.Cmp(op.Nonce) != 0 {
 		return errors.New("sender: Has userOp in mempool with a different nonce")
 	}
 
-	if op.MaxPriorityFeePerGas.Cmp(mem.MaxPriorityFeePerGas) <= 0 {
+	if op.MaxPriorityFeePerGas.Cmp(op.MaxPriorityFeePerGas) <= 0 {
 		return errors.New("sender: Has userOp in mempool with same or higher priority fee")
 	}
 
 	diff := big.NewInt(0)
 	mf := big.NewInt(0)
-	diff.Sub(op.MaxPriorityFeePerGas, mem.MaxPriorityFeePerGas)
-	if op.MaxFeePerGas.Cmp(mf.Add(mem.MaxFeePerGas, diff)) != 0 {
+	diff.Sub(op.MaxPriorityFeePerGas, op.MaxPriorityFeePerGas)
+	if op.MaxFeePerGas.Cmp(mf.Add(op.MaxFeePerGas, diff)) != 0 {
 		return errors.New("sender: Replaced userOp must have an equally higher max fee")
 	}
 

@@ -5,8 +5,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
@@ -14,7 +12,6 @@ import (
 
 // Instance is a representation of an ERC-4337 client.
 type Instance struct {
-	ethClient            *ethclient.Client
 	mempool              *mempool.Interface
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
@@ -43,44 +40,18 @@ func (i *Instance) SendUserOperation(op map[string]any, ep string) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	entryPoint, err := entrypoint.NewEntrypoint(epAddr, i.ethClient)
-	if err != nil {
-		return false, err
-	}
 
-	// Run sanity checks
 	userop, err := userop.New(op)
 	if err != nil {
 		return false, err
 	}
-	if err := checkSender(userop, i.ethClient); err != nil {
-		return false, err
-	}
-	if err := checkVerificationGasLimits(userop, i.ethClient); err != nil {
-		return false, err
-	}
-	if err := checkPaymasterAndData(userop, i.ethClient, entryPoint); err != nil {
-		return false, err
-	}
-	if err := checkCallGasLimit(userop, i.ethClient); err != nil {
-		return false, err
-	}
-	if err := checkFeePerGas(userop, i.ethClient); err != nil {
-		return false, err
-	}
-	if err := checkDuplicates(userop, epAddr, i.mempool); err != nil {
-		return false, err
-	}
 
-	// Run through additional modules
-	ctx := modules.NewUserOpHandlerContext(userop)
+	ctx := modules.NewUserOpHandlerContext(userop, epAddr, i.chainID)
 	if err := i.userOpHandler(ctx); err != nil {
 		return false, err
 	}
 
-	// Add to mempool
-	err = i.mempool.AddOp(epAddr, ctx.UserOp)
-	if err != nil {
+	if err := i.mempool.AddOp(epAddr, ctx.UserOp); err != nil {
 		return false, err
 	}
 
