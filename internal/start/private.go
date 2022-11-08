@@ -60,10 +60,7 @@ func PrivateMode() {
 		log.Fatal(err)
 	}
 
-	relayer, err := relay.New(db)
-	if err != nil {
-		log.Fatal(err)
-	}
+	relayer := relay.New(db)
 	relayer.SetErrorHandlerFunc(println.ErrorHandler)
 
 	// Start bundler

@@ -6,10 +6,10 @@ import (
 )
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
-func New(db *badger.DB) (*Relayer, error) {
+func New(db *badger.DB) *Relayer {
 	return &Relayer{
 		db:                    db,
 		errorHandler:          noop.ErrorHandler,
 		clientIDHeaderEnabled: false,
-	}, nil
+	}
 }
