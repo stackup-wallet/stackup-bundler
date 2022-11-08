@@ -5,14 +5,12 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 )
 
 // Instance is a representation of an ERC-4337 bundler.
 type Instance struct {
-	ethClient            *ethclient.Client
 	mempool              *mempool.Interface
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
@@ -40,8 +38,6 @@ func (i *Instance) Run() error {
 					i.errorHandler(err)
 					continue
 				}
-				batch = filterSender(batch)
-				batch = filterPaymaster(batch)
 
 				ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID)
 				if err := i.batchHandler(ctx); err != nil {
@@ -50,8 +46,7 @@ func (i *Instance) Run() error {
 				}
 
 				senders := append(getSenders(ctx.Batch), getSenders(ctx.PendingRemoval)...)
-				err = i.mempool.RemoveOps(ep, senders...)
-				if err != nil {
+				if err := i.mempool.RemoveOps(ep, senders...); err != nil {
 					i.errorHandler(err)
 					continue
 				}

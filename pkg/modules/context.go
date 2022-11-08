@@ -21,8 +21,10 @@ func NewBatchHandlerContext(batch []*userop.UserOperation, entryPoint common.Add
 }
 
 // NewUserOpHandlerContext creates a new UserOpHandlerCtx using a given op.
-func NewUserOpHandlerContext(op *userop.UserOperation) *UserOpHandlerCtx {
+func NewUserOpHandlerContext(op *userop.UserOperation, entryPoint common.Address, chainID *big.Int) *UserOpHandlerCtx {
 	return &UserOpHandlerCtx{
-		UserOp: op,
+		UserOp:     op,
+		EntryPoint: entryPoint,
+		ChainID:    chainID,
 	}
 }

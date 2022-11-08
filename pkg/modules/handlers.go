@@ -37,7 +37,9 @@ func (c *BatchHandlerCtx) MarkUserOpForRemoval(sender common.Address) {
 
 // UserOpHandlerCtx is the object passed to UserOpHandler functions.
 type UserOpHandlerCtx struct {
-	UserOp *userop.UserOperation
+	UserOp     *userop.UserOperation
+	EntryPoint common.Address
+	ChainID    *big.Int
 }
 
 // BatchHandlerFunc is an interface to support modular processing of UserOperation batches.

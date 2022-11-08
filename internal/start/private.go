@@ -11,10 +11,11 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
-	"github.com/stackup-wallet/stackup-bundler/internal/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
+	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/base"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/println"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
 )
@@ -59,21 +60,25 @@ func PrivateMode() {
 		log.Fatal(err)
 	}
 
-	relayer, err := relay.New(db, chain)
-	if err != nil {
-		log.Fatal(err)
-	}
+	relayer := relay.New(db)
 	relayer.SetErrorHandlerFunc(println.ErrorHandler)
 
 	// Start bundler
-	b := bundler.New(eth, mem, chain, conf.SupportedEntryPoints)
-	b.UseModules(println.BatchHandler, relayer.BatchHandler)
+	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
+	b.UseModules(
+		base.StandaloneBundler(eth),
+		println.BatchHandler,
+		relayer.SendUserOperation(),
+	)
 	b.SetErrorHandlerFunc(println.ErrorHandler)
 	b.Run()
 
 	// Start client
-	c := client.New(eth, mem, chain, conf.SupportedEntryPoints)
-	c.UseModules(println.UserOpHandler)
+	c := client.New(mem, chain, conf.SupportedEntryPoints)
+	c.UseModules(
+		base.StandaloneClient(eth, mem),
+		println.UserOpHandler,
+	)
 
 	gin.SetMode(conf.GinMode)
 	r := gin.Default()
@@ -81,6 +86,11 @@ func PrivateMode() {
 	r.GET("/ping", func(g *gin.Context) {
 		g.Status(http.StatusOK)
 	})
-	r.POST("/", relayer.FilterByClient, jsonrpc.GinHandler(client.NewRpcAdapter(c)), relayer.LogClientForSendUserOperation)
+	r.POST(
+		"/",
+		relayer.FilterByClient(),
+		jsonrpc.Controller(client.NewRpcAdapter(c)),
+		relayer.MapRequestIDToClientID(chain),
+	)
 	r.Run(fmt.Sprintf(":%d", conf.Port))
 }

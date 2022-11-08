@@ -30,7 +30,6 @@ import (
 // propagated through the network and it is impossible to trust a sender's identifier.
 type Relayer struct {
 	db                    *badger.DB
-	chainID               *big.Int
 	errorHandler          modules.ErrorHandlerFunc
 	clientIDHeaderEnabled bool
 }
@@ -65,102 +64,109 @@ func (r *Relayer) SetErrorHandlerFunc(handler modules.ErrorHandlerFunc) {
 //  1. X-Bundler-Client-Id header: See UseClientIDHeader
 //  2. X-Forwarded-By header: The first IP address in the array which is assumed to be the client
 //  3. Request.RemoteAddr: The remote IP address
-func (r *Relayer) FilterByClient(c *gin.Context) {
-	isBanned := false
-	err := r.db.View(func(txn *badger.Txn) error {
-		opsSeen, opsIncluded, err := getOpsCountByClientID(txn, r.getClientID(c))
-		if err != nil {
-			return err
-		}
+func (r *Relayer) FilterByClient() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		isBanned := false
+		err := r.db.View(func(txn *badger.Txn) error {
+			opsSeen, opsIncluded, err := getOpsCountByClientID(txn, r.getClientID(c))
+			if err != nil {
+				return err
+			}
 
-		OpsFailed := opsSeen - opsIncluded
-		if OpsFailed < banThreshold {
+			OpsFailed := opsSeen - opsIncluded
+			if OpsFailed < banThreshold {
+				return nil
+			}
+
+			isBanned = true
 			return nil
+		})
+		if err != nil {
+			r.errorHandler(err)
+			c.Status(http.StatusInternalServerError)
+			c.Abort()
 		}
 
-		isBanned = true
-		return nil
-	})
-	if err != nil {
-		r.errorHandler(err)
-		c.Status(http.StatusInternalServerError)
-		c.Abort()
-	}
-
-	if isBanned {
-		c.Status(http.StatusForbidden)
-		c.Abort()
+		if isBanned {
+			c.Status(http.StatusForbidden)
+			c.Abort()
+		}
 	}
 }
 
-// LogClientForSendUserOperation is a custom Gin middleware used to map a userOp requestID to a client
+// MapRequestIDToClientID is a custom Gin middleware used to map a userOp requestID to a client
 // identifier (e.g. IP address).
-func (r *Relayer) LogClientForSendUserOperation(c *gin.Context) {
-	req, _ := c.Get("JsonRpcRequest")
-	json := req.(map[string]any)
-	if json["method"] != "eth_sendUserOperation" {
-		return
-	}
-
-	params := json["params"].([]any)
-	data := params[0].(map[string]any)
-	ep := params[1].(string)
-	op, err := userop.New(data)
-	if err != nil {
-		r.errorHandler(err)
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-
-	rid := op.GetRequestID(common.HexToAddress(ep), r.chainID).String()
-	cid := r.getClientID(c)
-	err = r.db.Update(func(txn *badger.Txn) error {
-		err := mapRequestIDToClientID(txn, rid, cid)
-		if err != nil {
-			return err
+func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		req, _ := c.Get("JsonRpcRequest")
+		json := req.(map[string]any)
+		if json["method"] != "eth_sendUserOperation" {
+			return
 		}
 
-		err = incrementOpsSeenByClientID(txn, cid)
+		params := json["params"].([]any)
+		data := params[0].(map[string]any)
+		ep := params[1].(string)
+		op, err := userop.New(data)
 		if err != nil {
-			return err
+			r.errorHandler(err)
+			c.Status(http.StatusInternalServerError)
+			return
 		}
 
-		return nil
-	})
-	if err != nil {
-		r.errorHandler(err)
-		c.Status(http.StatusInternalServerError)
-		return
+		rid := op.GetRequestID(common.HexToAddress(ep), chainID).String()
+		cid := r.getClientID(c)
+		err = r.db.Update(func(txn *badger.Txn) error {
+			err := mapRequestIDToClientID(txn, rid, cid)
+			if err != nil {
+				return err
+			}
+
+			err = incrementOpsSeenByClientID(txn, cid)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			r.errorHandler(err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
-// BatchHandler accepts a batch and sends it as a regular EOA transaction.
-func (r *Relayer) BatchHandler(ctx *modules.BatchHandlerCtx) error {
-	err := r.db.Update(func(txn *badger.Txn) error {
-		if len(ctx.PendingRemoval) > 0 {
-			rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
-			if err := removeRequestIDEntries(txn, rids...); err != nil {
-				return err
+// SendUserOperation returns a bundler module that accepts a batch and sends it as a regular EOA transaction.
+// It can also map a userOp request ID to a Client ID (e.g. IP address) in order to mitigate DoS attacks.
+func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
+	return func(ctx *modules.BatchHandlerCtx) error {
+		err := r.db.Update(func(txn *badger.Txn) error {
+			if len(ctx.PendingRemoval) > 0 {
+				rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
+				if err := removeRequestIDEntries(txn, rids...); err != nil {
+					return err
+				}
 			}
-		}
 
-		if len(ctx.Batch) > 0 {
-			// TODO: Submit batch and handle reverts.
+			if len(ctx.Batch) > 0 {
+				// TODO: Submit batch and handle reverts.
 
-			rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
-			if err := incrementOpsIncludedByRequestIDs(txn, rids...); err != nil {
-				return err
+				rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
+				if err := incrementOpsIncludedByRequestIDs(txn, rids...); err != nil {
+					return err
+				}
+				if err := removeRequestIDEntries(txn, rids...); err != nil {
+					return err
+				}
 			}
-			if err := removeRequestIDEntries(txn, rids...); err != nil {
-				return err
-			}
+
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 
 		return nil
-	})
-	if err != nil {
-		return err
 	}
-
-	return nil
 }
