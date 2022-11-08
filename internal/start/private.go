@@ -15,7 +15,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/base"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/println"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
 )
@@ -66,6 +66,7 @@ func PrivateMode() {
 	// Start bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
 	b.UseModules(
+		base.StandaloneBundler(eth),
 		println.BatchHandler,
 		relayer.SendUserOperation(),
 	)
@@ -75,7 +76,7 @@ func PrivateMode() {
 	// Start client
 	c := client.New(mem, chain, conf.SupportedEntryPoints)
 	c.UseModules(
-		checks.StandaloneClient(eth, mem),
+		base.StandaloneClient(eth, mem),
 		println.UserOpHandler,
 	)
 

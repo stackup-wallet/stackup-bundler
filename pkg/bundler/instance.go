@@ -38,8 +38,6 @@ func (i *Instance) Run() error {
 					i.errorHandler(err)
 					continue
 				}
-				batch = filterSender(batch)
-				batch = filterPaymaster(batch)
 
 				ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID)
 				if err := i.batchHandler(ctx); err != nil {
