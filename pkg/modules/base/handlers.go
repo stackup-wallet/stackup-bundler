@@ -41,7 +41,7 @@ func StandaloneClient(eth *ethclient.Client, mem *mempool.Interface) modules.Use
 }
 
 // StandaloneBundler returns a BatchHandler that relies on a given ethClient to run through all the standard
-// client checks as specified in EIP-4337. This should be the first module in the stack.
+// bundler checks as specified in EIP-4337. This should be the first module in the stack.
 func StandaloneBundler(eth *ethclient.Client) modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		var filter []*userop.UserOperation
