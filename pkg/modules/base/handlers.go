@@ -28,7 +28,7 @@ func StandaloneClient(eth *ethclient.Client, maxVerificationGas *big.Int) module
 		if err := checkPaymasterAndData(eth, ctx.UserOp, ep); err != nil {
 			return err
 		}
-		if err := checkCallGasLimit(eth, ctx.UserOp); err != nil {
+		if err := checkCallGasLimit(ctx.UserOp); err != nil {
 			return err
 		}
 		if err := checkFeePerGas(eth, ctx.UserOp); err != nil {

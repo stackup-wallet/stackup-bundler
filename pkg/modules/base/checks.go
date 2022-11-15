@@ -39,8 +39,7 @@ func checkVerificationGas(maxVerificationGas *big.Int, op *userop.UserOperation)
 		return fmt.Errorf("verificationGasLimit: exceeds maxVerificationGas of %s", maxVerificationGas.String())
 	}
 
-	ov := gas.NewDefaultOverhead()
-	pvg := ov.CalcPreVerificationGas(op)
+	pvg := gas.NewDefaultOverhead().CalcPreVerificationGas(op)
 	if op.PreVerificationGas.Cmp(pvg) < 0 {
 		return fmt.Errorf("preVerificationGas: below expected gas of %s", pvg.String())
 	}
@@ -87,9 +86,12 @@ func checkPaymasterAndData(eth *ethclient.Client, op *userop.UserOperation, ep *
 }
 
 // Checks the callGasLimit is at least the cost of a CALL with non-zero value.
-// See https://github.com/wolflo/evm-opcodes/blob/main/gas.md#aa-1-call
-func checkCallGasLimit(eth *ethclient.Client, op *userop.UserOperation) error {
-	// TODO: Add implementation
+func checkCallGasLimit(op *userop.UserOperation) error {
+	cg := gas.NewDefaultOverhead().CalcCallGasCost()
+	if op.CallGasLimit.Cmp(cg) < 0 {
+		return fmt.Errorf("callGasLimit: below expected gas of %s", cg.String())
+	}
+
 	return nil
 }
 

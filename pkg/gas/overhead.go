@@ -9,12 +9,16 @@ import (
 
 // Overhead provides helper methods for calculating gas limits based on pre-defined parameters.
 type Overhead struct {
-	Fixed         float64
-	PerUserOp     float64
-	PerUserOpWord float64
-	ZeroByte      float64
-	NonZeroByte   float64
-	MinBundleSize float64
+	fixed               float64
+	perUserOp           float64
+	perUserOpWord       float64
+	zeroByte            float64
+	nonZeroByte         float64
+	minBundleSize       float64
+	warmStorageRead     float64
+	nonZeroValueCall    float64
+	callOpcode          float64
+	nonZeroValueStipend float64
 }
 
 // CalcPreVerificationGas returns an expected gas cost for processing a UserOperation from a batch.
@@ -24,24 +28,34 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
 
 	for _, b := range packed {
 		if b == byte(0) {
-			callDataCost += ov.ZeroByte
+			callDataCost += ov.zeroByte
 		} else {
-			callDataCost += ov.NonZeroByte
+			callDataCost += ov.nonZeroByte
 		}
 	}
 
-	pvg := callDataCost + (ov.Fixed / ov.MinBundleSize) + ov.PerUserOp + ov.PerUserOpWord*float64((len(packed)))
+	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + ov.perUserOpWord*float64((len(packed)))
 	return big.NewInt(int64(math.Round(pvg)))
+}
+
+// CalcCallGasCost returns an expected gas cost of using the CALL opcode.
+// See https://github.com/wolflo/evm-opcodes/blob/main/gas.md#aa-1-call.
+func (ov *Overhead) CalcCallGasCost() *big.Int {
+	return big.NewInt(int64(ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend))
 }
 
 // NewDefaultOverhead returns an instance of Overhead using parameters defined by the Ethereum protocol.
 func NewDefaultOverhead() *Overhead {
 	return &Overhead{
-		Fixed:         21000,
-		PerUserOp:     18300,
-		PerUserOpWord: 4,
-		ZeroByte:      4,
-		NonZeroByte:   16,
-		MinBundleSize: 1,
+		fixed:               21000,
+		perUserOp:           18300,
+		perUserOpWord:       4,
+		zeroByte:            4,
+		nonZeroByte:         16,
+		minBundleSize:       1,
+		warmStorageRead:     100,
+		nonZeroValueCall:    9000,
+		callOpcode:          700,
+		nonZeroValueStipend: 2300,
 	}
 }
