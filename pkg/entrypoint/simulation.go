@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// SimulateValidationResults returns the results from an userOp simulation. For details see the inline docs
+// SimulateValidationResults returns the results from a userOp simulation. For details see the inline docs
 // for EntryPoint.sol#simulateValidation at https://github.com/eth-infinitism/account-abstraction.
 type SimulateValidationResults struct {
 	PreOpGas          *big.Int
