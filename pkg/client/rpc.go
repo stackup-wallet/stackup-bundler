@@ -2,7 +2,7 @@ package client
 
 // RpcAdapter is an adapter for routing JSON-RPC method calls to the correct client functions.
 type RpcAdapter struct {
-	client *Instance
+	client *Client
 }
 
 // Eth_sendUserOperation routes eth_sendUserOperation method calls to client.SendUserOperation.
@@ -16,8 +16,6 @@ func (r *RpcAdapter) Eth_supportedEntryPoints() ([]string, error) {
 }
 
 // NewRpcAdapter initializes a new RpcAdapter which can be used with a JSON-RPC server.
-func NewRpcAdapter(instance *Instance) *RpcAdapter {
-	return &RpcAdapter{
-		client: instance,
-	}
+func NewRpcAdapter(client *Client) *RpcAdapter {
+	return &RpcAdapter{client}
 }

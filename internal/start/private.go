@@ -76,7 +76,7 @@ func PrivateMode() {
 	// Start client
 	c := client.New(mem, chain, conf.SupportedEntryPoints)
 	c.UseModules(
-		base.StandaloneClient(eth, mem),
+		base.StandaloneClient(eth, mem, conf.MaxVerificationGas),
 		println.UserOpHandler,
 	)
 

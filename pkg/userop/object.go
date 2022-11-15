@@ -10,6 +10,25 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+func getAbiArgs() abi.Arguments {
+	userOpType, _ := abi.NewType("tuple", "userOp", []abi.ArgumentMarshaling{
+		{Name: "Sender", Type: "address"},
+		{Name: "Nonce", Type: "uint256"},
+		{Name: "InitCode", Type: "bytes"},
+		{Name: "CallData", Type: "bytes"},
+		{Name: "CallGasLimit", Type: "uint256"},
+		{Name: "VerificationGasLimit", Type: "uint256"},
+		{Name: "PreVerificationGas", Type: "uint256"},
+		{Name: "MaxFeePerGas", Type: "uint256"},
+		{Name: "MaxPriorityFeePerGas", Type: "uint256"},
+		{Name: "PaymasterAndData", Type: "bytes"},
+		{Name: "Signature", Type: "bytes"},
+	})
+	return abi.Arguments{
+		{Name: "UserOp", Type: userOpType},
+	}
+}
+
 // UserOperation is the transaction object for ERC-4337 smart contract accounts.
 type UserOperation struct {
 	Sender               common.Address `json:"sender" mapstructure:"sender" validate:"required"`
@@ -25,24 +44,41 @@ type UserOperation struct {
 	Signature            []byte         `json:"signature" mapstructure:"signature" validate:"required"`
 }
 
-// Pack returns a standardized message of the op.
+// Pack returns a standard message of the userOp. This cannot be used to generate a requestID.
 func (op *UserOperation) Pack() []byte {
-	userOpType, _ := abi.NewType("tuple", "userOp", []abi.ArgumentMarshaling{
-		{Name: "Sender", Type: "address"},
-		{Name: "Nonce", Type: "uint256"},
-		{Name: "InitCode", Type: "bytes"},
-		{Name: "CallData", Type: "bytes"},
-		{Name: "CallGasLimit", Type: "uint256"},
-		{Name: "VerificationGasLimit", Type: "uint256"},
-		{Name: "PreVerificationGas", Type: "uint256"},
-		{Name: "MaxFeePerGas", Type: "uint256"},
-		{Name: "MaxPriorityFeePerGas", Type: "uint256"},
-		{Name: "PaymasterAndData", Type: "bytes"},
-		{Name: "Signature", Type: "bytes"},
+	args := getAbiArgs()
+	packed, _ := args.Pack(&struct {
+		Sender               common.Address
+		Nonce                *big.Int
+		InitCode             []byte
+		CallData             []byte
+		CallGasLimit         *big.Int
+		VerificationGasLimit *big.Int
+		PreVerificationGas   *big.Int
+		MaxFeePerGas         *big.Int
+		MaxPriorityFeePerGas *big.Int
+		PaymasterAndData     []byte
+		Signature            []byte
+	}{
+		op.Sender,
+		op.Nonce,
+		op.InitCode,
+		op.CallData,
+		op.CallGasLimit,
+		op.VerificationGasLimit,
+		op.PreVerificationGas,
+		op.MaxFeePerGas,
+		op.MaxPriorityFeePerGas,
+		op.PaymasterAndData,
+		op.Signature,
 	})
-	args := abi.Arguments{
-		{Name: "UserOp", Type: userOpType},
-	}
+
+	return packed
+}
+
+// PackForSignature returns a minimal message of the userOp which can be used to generate a requestID.
+func (op *UserOperation) PackForSignature() []byte {
+	args := getAbiArgs()
 	packed, _ := args.Pack(&struct {
 		Sender               common.Address
 		Nonce                *big.Int
@@ -78,7 +114,7 @@ func (op *UserOperation) Pack() []byte {
 // GetRequestID returns the hash of op + entryPoint address + chainID.
 func (op *UserOperation) GetRequestID(epAddr common.Address, chainID *big.Int) common.Hash {
 	return crypto.Keccak256Hash(
-		crypto.Keccak256(op.Pack()),
+		crypto.Keccak256(op.PackForSignature()),
 		common.LeftPadBytes(epAddr.Bytes(), 32),
 		common.LeftPadBytes(chainID.Bytes(), 32),
 	)
