@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -17,6 +18,7 @@ type Values struct {
 	Port                 int
 	DataDirectory        string
 	SupportedEntryPoints []common.Address
+	MaxVerificationGas   *big.Int
 	Beneficiary          string
 
 	// Undocumented variables.
@@ -40,6 +42,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_port", 4337)
 	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x1b98F08dB8F12392EAE339674e568fe29929bC47")
+	viper.SetDefault("erc4337_bundler_max_verification_gas", 100000)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
 	// Read in from .env file if available
@@ -59,8 +62,10 @@ func GetValues() *Values {
 	viper.BindEnv("erc4337_bundler_eth_client_url")
 	viper.BindEnv("erc4337_bundler_private_key")
 	viper.BindEnv("erc4337_bundler_port")
+	viper.BindEnv("erc4337_bundler_data_directory")
 	viper.BindEnv("erc4337_bundler_supported_entry_points")
 	viper.BindEnv("erc4337_bundler_beneficiary")
+	viper.BindEnv("erc4337_bundler_max_verification_gas")
 	viper.BindEnv("erc4337_bundler_gin_mode")
 
 	// Validate required variables
@@ -85,6 +90,7 @@ func GetValues() *Values {
 		DataDirectory:        viper.GetString("erc4337_bundler_data_directory"),
 		SupportedEntryPoints: envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points")),
 		Beneficiary:          viper.GetString("erc4337_bundler_beneficiary"),
+		MaxVerificationGas:   big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas"))),
 		GinMode:              viper.GetString("erc4337_bundler_gin_mode"),
 	}
 }

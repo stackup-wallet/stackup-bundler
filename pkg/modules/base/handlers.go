@@ -1,29 +1,31 @@
 package base
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
-	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 // StandaloneClient returns a UserOpHandler that relies on a given ethClient to run through all the standard
 // client checks as specified in EIP-4337. This should be the first module in the stack.
-func StandaloneClient(eth *ethclient.Client, mem *mempool.Interface) modules.UserOpHandlerFunc {
+func StandaloneClient(eth *ethclient.Client, maxVerificationGas *big.Int) modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
-		entryPoint, err := entrypoint.NewEntrypoint(ctx.EntryPoint, eth)
+		ep, err := entrypoint.NewEntrypoint(ctx.EntryPoint, eth)
 		if err != nil {
 			return err
 		}
 
+		// Sanity checks
 		if err := checkSender(eth, ctx.UserOp); err != nil {
 			return err
 		}
-		if err := checkVerificationGasLimits(eth, ctx.UserOp); err != nil {
+		if err := checkVerificationGas(maxVerificationGas, ctx.UserOp); err != nil {
 			return err
 		}
-		if err := checkPaymasterAndData(eth, ctx.UserOp, entryPoint); err != nil {
+		if err := checkPaymasterAndData(eth, ctx.UserOp, ep); err != nil {
 			return err
 		}
 		if err := checkCallGasLimit(eth, ctx.UserOp); err != nil {
@@ -32,7 +34,9 @@ func StandaloneClient(eth *ethclient.Client, mem *mempool.Interface) modules.Use
 		if err := checkFeePerGas(eth, ctx.UserOp); err != nil {
 			return err
 		}
-		if err := checkDuplicates(mem, ctx.UserOp, ctx.EntryPoint); err != nil {
+
+		// Op simulation
+		if _, err := entrypoint.SimulateValidation(ep, entrypoint.UserOperation(*ctx.UserOp)); err != nil {
 			return err
 		}
 
