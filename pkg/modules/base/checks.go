@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
-	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -99,37 +98,5 @@ func checkCallGasLimit(eth *ethclient.Client, op *userop.UserOperation) error {
 // block.basefee.
 func checkFeePerGas(eth *ethclient.Client, op *userop.UserOperation) error {
 	// TODO: Add implementation
-	return nil
-}
-
-// The sender can only have one UserOperation in the mempool. However it can be replaced if
-//
-//	(i) the nonce remains the same
-//	(ii) the new maxPriorityFeePerGas is higher
-//	(iii) the new maxFeePerGas is increased equally
-func checkDuplicates(mem *mempool.Interface, op *userop.UserOperation, ep common.Address) error {
-	op, err := mem.GetOp(ep, op.Sender)
-	if err != nil {
-		return err
-	}
-	if op == nil {
-		return nil
-	}
-
-	if op.Nonce.Cmp(op.Nonce) != 0 {
-		return errors.New("sender: Has userOp in mempool with a different nonce")
-	}
-
-	if op.MaxPriorityFeePerGas.Cmp(op.MaxPriorityFeePerGas) <= 0 {
-		return errors.New("sender: Has userOp in mempool with same or higher priority fee")
-	}
-
-	diff := big.NewInt(0)
-	mf := big.NewInt(0)
-	diff.Sub(op.MaxPriorityFeePerGas, op.MaxPriorityFeePerGas)
-	if op.MaxFeePerGas.Cmp(mf.Add(op.MaxFeePerGas, diff)) != 0 {
-		return errors.New("sender: Replaced userOp must have an equally higher max fee")
-	}
-
 	return nil
 }

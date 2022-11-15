@@ -5,14 +5,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
-	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 // StandaloneClient returns a UserOpHandler that relies on a given ethClient to run through all the standard
 // client checks as specified in EIP-4337. This should be the first module in the stack.
-func StandaloneClient(eth *ethclient.Client, mem *mempool.Interface, maxVerificationGas *big.Int) modules.UserOpHandlerFunc {
+func StandaloneClient(eth *ethclient.Client, maxVerificationGas *big.Int) modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
 		ep, err := entrypoint.NewEntrypoint(ctx.EntryPoint, eth)
 		if err != nil {
@@ -33,9 +32,6 @@ func StandaloneClient(eth *ethclient.Client, mem *mempool.Interface, maxVerifica
 			return err
 		}
 		if err := checkFeePerGas(eth, ctx.UserOp); err != nil {
-			return err
-		}
-		if err := checkDuplicates(mem, ctx.UserOp, ctx.EntryPoint); err != nil {
 			return err
 		}
 
