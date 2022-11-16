@@ -64,8 +64,8 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (bool, error) {
 			return false, errors.New("sender: Has userOp in mempool with same or higher priority fee")
 		}
 
-		diff := big.NewInt(0)
-		mf := big.NewInt(0)
+		diff := common.Big0
+		mf := common.Big0
 		diff.Sub(memOp.MaxPriorityFeePerGas, memOp.MaxPriorityFeePerGas)
 		if memOp.MaxFeePerGas.Cmp(mf.Add(memOp.MaxFeePerGas, diff)) != 0 {
 			return false, errors.New("sender: Replaced userOp must have an equally higher max fee")
