@@ -128,7 +128,7 @@ func getStatus(txn *badger.Txn, paymaster common.Address) (status, error) {
 
 	minExpectedIncluded := opsSeen / minInclusionRateDenominator
 	if minExpectedIncluded <= opsIncluded+throttlingSlack {
-		return banned, nil
+		return ok, nil
 	} else if minExpectedIncluded <= opsIncluded+banSlack {
 		return throttled, nil
 	} else {
