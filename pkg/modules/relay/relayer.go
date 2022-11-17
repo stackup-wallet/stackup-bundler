@@ -137,7 +137,7 @@ func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
 	}
 }
 
-// SendUserOperation returns a bundler module that accepts a batch and sends it as a regular EOA transaction.
+// SendUserOperation returns a BatchHandler that accepts a batch and sends it as a regular EOA transaction.
 // It can also map a userOp request ID to a Client ID (e.g. IP address) in order to mitigate DoS attacks.
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {

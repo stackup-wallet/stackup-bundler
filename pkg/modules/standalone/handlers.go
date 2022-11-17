@@ -1,4 +1,4 @@
-package base
+package standalone
 
 import (
 	"math/big"
@@ -9,16 +9,15 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// StandaloneClient returns a UserOpHandler that relies on a given ethClient to run through all the standard
+// SanityCheck returns a UserOpHandler that relies on a given ethClient to run through all the standard
 // client checks as specified in EIP-4337. This should be the first module in the stack.
-func StandaloneClient(eth *ethclient.Client, maxVerificationGas *big.Int) modules.UserOpHandlerFunc {
+func SanityCheck(eth *ethclient.Client, maxVerificationGas *big.Int) modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
 		ep, err := entrypoint.NewEntrypoint(ctx.EntryPoint, eth)
 		if err != nil {
 			return err
 		}
 
-		// Sanity checks
 		if err := checkSender(eth, ctx.UserOp); err != nil {
 			return err
 		}
@@ -35,7 +34,19 @@ func StandaloneClient(eth *ethclient.Client, maxVerificationGas *big.Int) module
 			return err
 		}
 
-		// Op simulation
+		return nil
+	}
+}
+
+// Simulation returns a UserOpHandler that relies on a given ethClient to run through the standard simulation
+// as specified in EIP-4337. This should be done after all checks are complete.
+func Simulation(eth *ethclient.Client) modules.UserOpHandlerFunc {
+	return func(ctx *modules.UserOpHandlerCtx) error {
+		ep, err := entrypoint.NewEntrypoint(ctx.EntryPoint, eth)
+		if err != nil {
+			return err
+		}
+
 		if _, err := entrypoint.SimulateValidation(ep, entrypoint.UserOperation(*ctx.UserOp)); err != nil {
 			return err
 		}
@@ -44,9 +55,9 @@ func StandaloneClient(eth *ethclient.Client, maxVerificationGas *big.Int) module
 	}
 }
 
-// StandaloneBundler returns a BatchHandler that relies on a given ethClient to run through all the standard
-// bundler checks as specified in EIP-4337. This should be the first module in the stack.
-func StandaloneBundler(eth *ethclient.Client) modules.BatchHandlerFunc {
+// Filter returns a BatchHandler that relies on a given ethClient to run through all the standard bundler
+// checks as specified in EIP-4337. This should be the first module in the stack.
+func Filter(eth *ethclient.Client) modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		var filter []*userop.UserOperation
 		filter = append(filter, ctx.Batch...)

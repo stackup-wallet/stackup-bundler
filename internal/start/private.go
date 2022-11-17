@@ -15,9 +15,10 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules/base"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/println"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/standalone"
 )
 
 func runDBGarbageCollection(db *badger.DB) {
@@ -63,12 +64,15 @@ func PrivateMode() {
 	relayer := relay.New(db)
 	relayer.SetErrorHandlerFunc(println.ErrorHandler)
 
+	paymaster := paymaster.New(db)
+
 	// Start bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
 	b.UseModules(
-		base.StandaloneBundler(eth),
-		println.BatchHandler,
+		standalone.Filter(eth),
 		relayer.SendUserOperation(),
+		paymaster.IncOpsIncluded(),
+		println.BatchHandler,
 	)
 	b.SetErrorHandlerFunc(println.ErrorHandler)
 	b.Run()
@@ -76,7 +80,10 @@ func PrivateMode() {
 	// Start client
 	c := client.New(mem, chain, conf.SupportedEntryPoints)
 	c.UseModules(
-		base.StandaloneClient(eth, conf.MaxVerificationGas),
+		standalone.SanityCheck(eth, conf.MaxVerificationGas),
+		paymaster.StatusCheck(),
+		standalone.Simulation(eth),
+		paymaster.IncOpsSeen(),
 		println.UserOpHandler,
 	)
 
