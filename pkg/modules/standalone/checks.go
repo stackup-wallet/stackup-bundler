@@ -82,8 +82,10 @@ func checkPaymasterAndData(eth *ethclient.Client, op *userop.UserOperation, ep *
 	if !dep.Staked {
 		return errors.New("paymaster: not staked on the entrypoint")
 	}
+	if dep.Deposit.Cmp(op.GetMaxPrefund()) < 0 {
+		return errors.New("paymaster: not enough deposit to cover max prefund")
+	}
 
-	// TODO: Implement condition (iv)
 	return nil
 }
 

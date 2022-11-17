@@ -44,6 +44,32 @@ type UserOperation struct {
 	Signature            []byte         `json:"signature" mapstructure:"signature" validate:"required"`
 }
 
+// GetPaymaster returns the address portion of PaymasterAndData if applicable. Otherwise it returns the zero
+// address.
+func (op *UserOperation) GetPaymaster() common.Address {
+	if len(op.PaymasterAndData) < common.AddressLength {
+		return common.HexToAddress("0x")
+	}
+
+	return common.BytesToAddress(op.PaymasterAndData[:common.AddressLength])
+}
+
+// GetMaxPrefund returns the max amount of wei required to pay for gas fees by either the sender or
+// paymaster.
+func (op *UserOperation) GetMaxPrefund() *big.Int {
+	mul := big.NewInt(1)
+	paymaster := op.GetPaymaster()
+	if paymaster != common.HexToAddress("0x") {
+		mul = big.NewInt(3)
+	}
+
+	requiredGas := big.NewInt(0).Add(
+		big.NewInt(0).Mul(op.VerificationGasLimit, mul),
+		big.NewInt(0).Add(op.PreVerificationGas, op.CallGasLimit),
+	)
+	return big.NewInt(0).Mul(requiredGas, op.MaxFeePerGas)
+}
+
 // Pack returns a standard message of the userOp. This cannot be used to generate a requestID.
 func (op *UserOperation) Pack() []byte {
 	args := getAbiArgs()
@@ -74,16 +100,6 @@ func (op *UserOperation) Pack() []byte {
 	})
 
 	return packed
-}
-
-// GetPaymaster returns the address portion of PaymasterAndData if applicable. Otherwise it returns the zero
-// address.
-func (op *UserOperation) GetPaymaster() common.Address {
-	if len(op.PaymasterAndData) < common.AddressLength {
-		return common.HexToAddress("0x")
-	}
-
-	return common.BytesToAddress(op.PaymasterAndData[:common.AddressLength])
 }
 
 // PackForSignature returns a minimal message of the userOp which can be used to generate a requestID.
