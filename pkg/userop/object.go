@@ -76,6 +76,16 @@ func (op *UserOperation) Pack() []byte {
 	return packed
 }
 
+// GetPaymaster returns the address portion of PaymasterAndData if applicable. Otherwise it returns the zero
+// address.
+func (op *UserOperation) GetPaymaster() common.Address {
+	if len(op.PaymasterAndData) < common.AddressLength {
+		return common.HexToAddress("0x")
+	}
+
+	return common.BytesToAddress(op.PaymasterAndData[:common.AddressLength])
+}
+
 // PackForSignature returns a minimal message of the userOp which can be used to generate a requestID.
 func (op *UserOperation) PackForSignature() []byte {
 	args := getAbiArgs()

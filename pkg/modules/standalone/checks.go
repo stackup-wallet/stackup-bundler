@@ -1,4 +1,4 @@
-package base
+package standalone
 
 import (
 	"context"
@@ -53,13 +53,16 @@ func checkVerificationGas(maxVerificationGas *big.Int, op *userop.UserOperation)
 //  2. currently has nonempty code on chain
 //  3. has registered and staked
 //  4. has a sufficient deposit to pay for the UserOperation
-//  5. is not currently banned
 func checkPaymasterAndData(eth *ethclient.Client, op *userop.UserOperation, ep *entrypoint.Entrypoint) error {
 	if len(op.PaymasterAndData) == 0 {
 		return nil
 	}
 
-	address := common.BytesToAddress(op.PaymasterAndData)
+	if len(op.PaymasterAndData) < common.AddressLength {
+		return errors.New("PaymasterAndData: invalid length")
+	}
+
+	address := op.GetPaymaster()
 	if address == common.HexToAddress("0x") {
 		return errors.New("paymaster: cannot be the zero address")
 	}
@@ -80,8 +83,7 @@ func checkPaymasterAndData(eth *ethclient.Client, op *userop.UserOperation, ep *
 		return errors.New("paymaster: not staked on the entrypoint")
 	}
 
-	// TODO: Implement condition (iv) and (v)
-
+	// TODO: Implement condition (iv)
 	return nil
 }
 

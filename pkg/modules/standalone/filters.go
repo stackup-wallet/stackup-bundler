@@ -1,4 +1,4 @@
-package base
+package standalone
 
 import "github.com/stackup-wallet/stackup-bundler/pkg/userop"
 

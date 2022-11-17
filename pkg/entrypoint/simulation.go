@@ -27,6 +27,8 @@ func SimulateValidation(ep *Entrypoint, op UserOperation) (*SimulateValidationRe
 		return nil, err
 	}
 
+	// TODO: Trace forbidden opcodes
+
 	return &SimulateValidationResults{
 		PreOpGas:          res[0].(*big.Int),
 		Prefund:           res[1].(*big.Int),
