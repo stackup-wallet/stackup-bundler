@@ -15,7 +15,7 @@ type EOA struct {
 	Address    common.Address
 }
 
-// New returns a EOA from a hex string of a ECDSA private key.
+// New returns an EOA from a hex string of a ECDSA private key.
 func New(pk string) (*EOA, error) {
 	privateKey, err := crypto.HexToECDSA(pk)
 	if err != nil {
