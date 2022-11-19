@@ -71,6 +71,8 @@ func EstimateHandleOpsGas(
 	return est, nil, nil
 }
 
+// HandleOps calls the handleOps function on the EntryPoint with a given batch, gas limit, and tip. A failed
+// call will return the cause of the revert.
 func HandleOps(
 	eoa *signer.EOA,
 	eth *ethclient.Client,
