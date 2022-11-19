@@ -195,6 +195,7 @@ func (r *Relayer) SendUserOperation(
 					beneficiary,
 					gas,
 					ctx.Batch[0].MaxPriorityFeePerGas,
+					ctx.Batch[0].MaxFeePerGas,
 				)
 
 				if err != nil {
