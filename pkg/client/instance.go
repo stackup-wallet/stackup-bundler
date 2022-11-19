@@ -13,7 +13,7 @@ import (
 
 // Client controls the end to end process of adding incoming UserOperations to the mempool.
 type Client struct {
-	mempool              *mempool.Interface
+	mempool              *mempool.Mempool
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
 	userOpHandler        modules.UserOpHandlerFunc
@@ -21,7 +21,7 @@ type Client struct {
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
 // that are allowed to be added to the mempool.
-func New(mempool *mempool.Interface, chainID *big.Int, supportedEntryPoints []common.Address) *Client {
+func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []common.Address) *Client {
 	return &Client{
 		mempool:              mempool,
 		chainID:              chainID,
