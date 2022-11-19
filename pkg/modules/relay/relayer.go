@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -35,6 +36,15 @@ type Relayer struct {
 	db                    *badger.DB
 	errorHandler          modules.ErrorHandlerFunc
 	clientIDHeaderEnabled bool
+}
+
+// New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
+func New(db *badger.DB) *Relayer {
+	return &Relayer{
+		db:                    db,
+		errorHandler:          noop.ErrorHandler,
+		clientIDHeaderEnabled: false,
+	}
 }
 
 func (r *Relayer) getClientID(c *gin.Context) string {
