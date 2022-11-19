@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
 )
 
 // Bundler controls the end to end process of creating a batch of UserOperations from the mempool and sending
@@ -17,6 +18,18 @@ type Bundler struct {
 	supportedEntryPoints []common.Address
 	batchHandler         modules.BatchHandlerFunc
 	errorHandler         modules.ErrorHandlerFunc
+}
+
+// New initializes a new ERC-4337 bundler which can be extended with modules for validating batches and
+// excluding UserOperations that should not be sent to the EntryPoint.
+func New(mempool *mempool.Interface, chainID *big.Int, supportedEntryPoints []common.Address) *Bundler {
+	return &Bundler{
+		mempool:              mempool,
+		chainID:              chainID,
+		supportedEntryPoints: supportedEntryPoints,
+		batchHandler:         noop.BatchHandler,
+		errorHandler:         noop.ErrorHandler,
+	}
 }
 
 // UseModules defines the BatchHandlers to process batches after it has gone through the standard checks.
