@@ -68,15 +68,22 @@ func (r *Reputation) IncOpsSeen() modules.UserOpHandlerFunc {
 func (r *Reputation) IncOpsIncluded() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		return r.db.Update(func(txn *badger.Txn) error {
+			c := make(addressCounter)
 			ps := mapset.NewSet[common.Address]()
+
 			for _, op := range ctx.Batch {
 				paymaster := op.GetPaymaster()
 				if paymaster != common.HexToAddress("0x") {
+					if _, ok := c[paymaster.String()]; !ok {
+						c[paymaster.String()] = 0
+					}
+
+					c[paymaster.String()]++
 					ps.Add(paymaster)
 				}
 			}
 
-			return incrementOpsIncludedByPaymasters(txn, ps.ToSlice()...)
+			return incrementOpsIncludedByPaymasters(txn, c, ps.ToSlice()...)
 		})
 	}
 }

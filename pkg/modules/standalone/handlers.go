@@ -24,7 +24,7 @@ func SanityCheck(eth *ethclient.Client, maxVerificationGas *big.Int) modules.Use
 		if err := checkVerificationGas(maxVerificationGas, ctx.UserOp); err != nil {
 			return err
 		}
-		if err := checkPaymasterAndData(eth, ctx.UserOp, ep); err != nil {
+		if err := checkPaymasterAndData(eth, ep, ctx.UserOp); err != nil {
 			return err
 		}
 		if err := checkCallGasLimit(ctx.UserOp); err != nil {
@@ -42,16 +42,8 @@ func SanityCheck(eth *ethclient.Client, maxVerificationGas *big.Int) modules.Use
 // as specified in EIP-4337. This should be done after all checks are complete.
 func Simulation(eth *ethclient.Client) modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
-		ep, err := entrypoint.NewEntrypoint(ctx.EntryPoint, eth)
-		if err != nil {
-			return err
-		}
-
-		if _, err := entrypoint.SimulateValidation(ep, entrypoint.UserOperation(*ctx.UserOp)); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := entrypoint.SimulateValidation(eth, ctx.EntryPoint, ctx.UserOp)
+		return err
 	}
 }
 

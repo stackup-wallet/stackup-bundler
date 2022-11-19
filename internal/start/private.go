@@ -8,6 +8,7 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v3"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
@@ -19,6 +20,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/println"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/standalone"
+	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
 func runDBGarbageCollection(db *badger.DB) {
@@ -38,6 +40,12 @@ func runDBGarbageCollection(db *badger.DB) {
 
 func PrivateMode() {
 	conf := config.GetValues()
+
+	eoa, err := signer.New(conf.PrivateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	beneficiary := common.HexToAddress(conf.Beneficiary)
 
 	db, err := badger.Open(badger.DefaultOptions(conf.DataDirectory))
 	if err != nil {
@@ -70,7 +78,7 @@ func PrivateMode() {
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
 	b.UseModules(
 		standalone.Filter(eth),
-		relayer.SendUserOperation(),
+		relayer.SendUserOperation(eoa, eth, beneficiary),
 		paymaster.IncOpsIncluded(),
 		println.BatchHandler,
 	)

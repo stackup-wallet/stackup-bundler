@@ -80,6 +80,9 @@ func incrementOpsSeenByClientID(txn *badger.Txn, clientID string) error {
 func incrementOpsIncludedByRequestIDs(txn *badger.Txn, requestIDs ...string) error {
 	for _, rid := range requestIDs {
 		item, err := txn.Get(getRequestIDKey(rid))
+		if err != nil && err == badger.ErrKeyNotFound {
+			return nil
+		}
 		if err != nil {
 			return err
 		}

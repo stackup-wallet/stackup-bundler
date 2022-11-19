@@ -15,13 +15,13 @@ type BatchHandlerCtx struct {
 	ChainID        *big.Int
 }
 
-// MarkUserOpForRemoval will remove the op by sender from the batch and add it to the pending removal set.
+// MarkOpIndexForRemoval will remove the op by index from the batch and add it to the pending removal set.
 // This should be used for ops that are not to be included on-chain and dropped from the mempool.
-func (c *BatchHandlerCtx) MarkUserOpForRemoval(sender common.Address) {
+func (c *BatchHandlerCtx) MarkOpIndexForRemoval(index int) {
 	batch := []*userop.UserOperation{}
 	var op *userop.UserOperation
-	for _, curr := range c.Batch {
-		if curr.Sender == sender {
+	for i, curr := range c.Batch {
+		if i == index {
 			op = curr
 		} else {
 			batch = append(batch, curr)

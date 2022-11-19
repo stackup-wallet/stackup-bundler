@@ -53,7 +53,7 @@ func checkVerificationGas(maxVerificationGas *big.Int, op *userop.UserOperation)
 //  2. currently has nonempty code on chain
 //  3. has registered and staked
 //  4. has a sufficient deposit to pay for the UserOperation
-func checkPaymasterAndData(eth *ethclient.Client, op *userop.UserOperation, ep *entrypoint.Entrypoint) error {
+func checkPaymasterAndData(eth *ethclient.Client, ep *entrypoint.Entrypoint, op *userop.UserOperation) error {
 	if len(op.PaymasterAndData) == 0 {
 		return nil
 	}

@@ -10,6 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type addressCounter map[string]int
+
 type status int64
 
 const (
@@ -101,14 +103,21 @@ func incrementOpsSeenByPaymaster(txn *badger.Txn, paymaster common.Address) erro
 	return txn.SetEntry(e)
 }
 
-func incrementOpsIncludedByPaymasters(txn *badger.Txn, paymasters ...common.Address) error {
+func incrementOpsIncludedByPaymasters(
+	txn *badger.Txn,
+	count addressCounter,
+	paymasters ...common.Address,
+) error {
 	for _, paymaster := range paymasters {
 		opsSeen, opsIncluded, err := getOpsCountByPaymaster(txn, paymaster)
 		if err != nil {
 			return err
 		}
 
-		e := badger.NewEntry(getOpsCountKey(paymaster), getOpsCountValue(opsSeen, opsIncluded+1))
+		e := badger.NewEntry(
+			getOpsCountKey(paymaster),
+			getOpsCountValue(opsSeen, opsIncluded+count[paymaster.String()]),
+		)
 		if err := txn.SetEntry(e); err != nil {
 			return err
 		}
