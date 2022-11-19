@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"github.com/stackup-wallet/stackup-bundler/internal/wallet"
+	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
 type Values struct {
@@ -78,8 +78,11 @@ func GetValues() *Values {
 	}
 
 	if !viper.IsSet("erc4337_bundler_beneficiary") {
-		w := wallet.New(viper.GetString("erc4337_bundler_private_key"))
-		viper.SetDefault("erc4337_bundler_beneficiary", w.Address)
+		s, err := signer.New(viper.GetString("erc4337_bundler_private_key"))
+		if err != nil {
+			panic(err)
+		}
+		viper.SetDefault("erc4337_bundler_beneficiary", s.Address.String())
 	}
 
 	// Return Values

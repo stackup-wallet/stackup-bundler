@@ -8,8 +8,11 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
+	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -139,9 +142,14 @@ func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
 
 // SendUserOperation returns a BatchHandler that accepts a batch and sends it as a regular EOA transaction.
 // It can also map a userOp request ID to a Client ID (e.g. IP address) in order to mitigate DoS attacks.
-func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
+func (r *Relayer) SendUserOperation(
+	eoa *signer.EOA,
+	eth *ethclient.Client,
+	beneficiary common.Address,
+) modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		err := r.db.Update(func(txn *badger.Txn) error {
+			// Delete any request ID entries from dropped userOps.
 			if len(ctx.PendingRemoval) > 0 {
 				rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
 				if err := removeRequestIDEntries(txn, rids...); err != nil {
@@ -149,16 +157,67 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 				}
 			}
 
-			if len(ctx.Batch) > 0 {
-				// TODO: Submit batch and handle reverts.
+			// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
+			var gas uint64
+			for len(ctx.Batch) > 0 {
+				est, revert, err := entrypoint.EstimateHandleOpsGas(
+					eoa,
+					eth,
+					ctx.ChainID,
+					ctx.EntryPoint,
+					ctx.Batch,
+					beneficiary,
+				)
 
-				rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
-				if err := incrementOpsIncludedByRequestIDs(txn, rids...); err != nil {
+				if err != nil {
 					return err
+				} else if revert != nil {
+					ctx.MarkOpIndexForRemoval(revert.OpIndex)
+
+					rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
+					if err := removeRequestIDEntries(txn, rids...); err != nil {
+						return err
+					}
+				} else {
+					gas = est
+					break
 				}
-				if err := removeRequestIDEntries(txn, rids...); err != nil {
+			}
+
+			// Call handleOps() with gas estimate and drop all userOps that cause unexpected reverts.
+			for len(ctx.Batch) > 0 {
+				revert, err := entrypoint.HandleOps(
+					eoa,
+					eth,
+					ctx.ChainID,
+					ctx.EntryPoint,
+					ctx.Batch,
+					beneficiary,
+					gas,
+					ctx.Batch[0].MaxPriorityFeePerGas,
+				)
+
+				if err != nil {
 					return err
+				} else if revert != nil {
+					ctx.MarkOpIndexForRemoval(revert.OpIndex)
+
+					rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
+					if err := removeRequestIDEntries(txn, rids...); err != nil {
+						return err
+					}
+				} else {
+					break
 				}
+			}
+
+			// Delete remaining request ID entries from submitted userOps.
+			rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
+			if err := incrementOpsIncludedByRequestIDs(txn, rids...); err != nil {
+				return err
+			}
+			if err := removeRequestIDEntries(txn, rids...); err != nil {
+				return err
 			}
 
 			return nil

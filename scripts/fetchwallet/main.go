@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/viper"
-	"github.com/stackup-wallet/stackup-bundler/internal/wallet"
+	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
 func main() {
@@ -15,7 +17,10 @@ func main() {
 		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
 
-	w := wallet.New(viper.GetString("erc4337_bundler_private_key"))
-	fmt.Printf("Public key: %s\n", w.PublicKey)
-	fmt.Printf("Address: %s\n", w.Address)
+	s, err := signer.New(viper.GetString("erc4337_bundler_private_key"))
+	if err != nil {
+		panic(fmt.Errorf("fatal signer error: %w", err))
+	}
+	fmt.Printf("Public key: %s\n", hexutil.Encode(crypto.FromECDSAPub(s.PublicKey))[4:])
+	fmt.Printf("Address: %s\n", s.Address)
 }

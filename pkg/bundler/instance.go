@@ -39,6 +39,9 @@ func (i *Bundler) Run() error {
 					i.errorHandler(err)
 					continue
 				}
+				if len(batch) == 0 {
+					continue
+				}
 
 				ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID)
 				if err := i.batchHandler(ctx); err != nil {

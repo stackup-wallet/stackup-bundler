@@ -9,12 +9,10 @@ import (
 
 // BatchHandler prints each op in the batch to a new line.
 func BatchHandler(ctx *modules.BatchHandlerCtx) error {
-	if len(ctx.Batch) > 0 {
-		fmt.Println("log batch:")
-		for _, op := range ctx.Batch {
-			b, _ := op.MarshalJSON()
-			fmt.Println(string(b))
-		}
+	fmt.Println("log batch:")
+	for _, op := range ctx.Batch {
+		b, _ := op.MarshalJSON()
+		fmt.Println(string(b))
 	}
 
 	return nil
