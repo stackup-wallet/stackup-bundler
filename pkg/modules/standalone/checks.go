@@ -76,7 +76,7 @@ func checkPaymasterAndData(eth *ethclient.Client, ep *entrypoint.Entrypoint, op 
 
 	dep, err := ep.GetDepositInfo(nil, address)
 	if err != nil {
-		return errors.New("paymaster: failed to get deposit info")
+		return err
 	}
 	if !dep.Staked {
 		return errors.New("paymaster: not staked on the entrypoint")
