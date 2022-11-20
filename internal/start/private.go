@@ -77,7 +77,7 @@ func PrivateMode() {
 	// Start bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
 	b.UseModules(
-		standalone.Filter(eth),
+		standalone.TrackPaymasterDeposit(eth),
 		relayer.SendUserOperation(eoa, eth, beneficiary),
 		paymaster.IncOpsIncluded(),
 		println.BatchHandler,

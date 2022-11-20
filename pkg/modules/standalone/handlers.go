@@ -3,10 +3,10 @@ package standalone
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
-	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -42,17 +42,37 @@ func Simulation(eth *ethclient.Client) modules.UserOpHandlerFunc {
 	}
 }
 
-// Filter returns a BatchHandler that relies on a given ethClient to run through all the standard bundler
-// checks as specified in EIP-4337. This should be the first module in the stack.
-func Filter(eth *ethclient.Client) modules.BatchHandlerFunc {
+// TrackPaymasterDeposit returns a BatchHandler that tracks each paymaster in the batch and ensures it has
+// enough deposit to pay for all the UserOps that use it.
+func TrackPaymasterDeposit(eth *ethclient.Client) modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
-		var filter []*userop.UserOperation
-		filter = append(filter, ctx.Batch...)
+		ep, err := entrypoint.NewEntrypoint(ctx.EntryPoint, eth)
+		if err != nil {
+			return err
+		}
 
-		filter = filterSender(filter)
-		filter = filterPaymaster(filter)
+		deps := make(map[common.Address]*big.Int)
+		for i, op := range ctx.Batch {
+			pm := op.GetPaymaster()
+			if pm == common.HexToAddress("0x") {
+				continue
+			}
 
-		ctx.Batch = filter
+			if _, ok := deps[pm]; !ok {
+				dep, err := ep.GetDepositInfo(nil, pm)
+				if err != nil {
+					return err
+				}
+
+				deps[pm] = dep.Deposit
+			}
+
+			deps[pm] = big.NewInt(0).Sub(deps[pm], op.GetMaxPrefund())
+			if deps[pm].Cmp(common.Big0) < 0 {
+				ctx.MarkOpIndexForRemoval(i)
+			}
+		}
+
 		return nil
 	}
 }
