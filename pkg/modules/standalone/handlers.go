@@ -7,6 +7,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
+	"golang.org/x/sync/errgroup"
 )
 
 // SanityCheck returns a UserOpHandler that relies on a given ethClient to run through all the standard
@@ -18,22 +19,16 @@ func SanityCheck(eth *ethclient.Client, maxVerificationGas *big.Int) modules.Use
 			return err
 		}
 
-		if err := checkSender(eth, ctx.UserOp); err != nil {
-			return err
-		}
-		if err := checkVerificationGas(maxVerificationGas, ctx.UserOp); err != nil {
-			return err
-		}
-		if err := checkPaymasterAndData(eth, ep, ctx.UserOp); err != nil {
-			return err
-		}
-		if err := checkCallGasLimit(ctx.UserOp); err != nil {
-			return err
-		}
-		if err := checkFeePerGas(eth, ctx.UserOp); err != nil {
-			return err
-		}
+		g := new(errgroup.Group)
+		g.Go(func() error { return checkSender(eth, ctx.UserOp) })
+		g.Go(func() error { return checkVerificationGas(maxVerificationGas, ctx.UserOp) })
+		g.Go(func() error { return checkPaymasterAndData(eth, ep, ctx.UserOp) })
+		g.Go(func() error { return checkCallGasLimit(ctx.UserOp) })
+		g.Go(func() error { return checkFeePerGas(eth, ctx.UserOp) })
 
+		if err := g.Wait(); err != nil {
+			return err
+		}
 		return nil
 	}
 }

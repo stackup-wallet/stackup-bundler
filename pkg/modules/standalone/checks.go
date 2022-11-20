@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
@@ -75,7 +74,7 @@ func checkPaymasterAndData(eth *ethclient.Client, ep *entrypoint.Entrypoint, op 
 		return errors.New("paymaster: code not deployed")
 	}
 
-	dep, err := ep.GetDepositInfo(&bind.CallOpts{}, address)
+	dep, err := ep.GetDepositInfo(nil, address)
 	if err != nil {
 		return errors.New("paymaster: failed to get deposit info")
 	}
