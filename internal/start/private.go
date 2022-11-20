@@ -64,7 +64,7 @@ func PrivateMode() {
 		log.Fatal(err)
 	}
 
-	mem, err := mempool.NewBadgerDBWrapper(db)
+	mem, err := mempool.New(db)
 	if err != nil {
 		log.Fatal(err)
 	}

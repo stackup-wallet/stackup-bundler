@@ -13,7 +13,7 @@ import (
 // Bundler controls the end to end process of creating a batch of UserOperations from the mempool and sending
 // it to the EntryPoint.
 type Bundler struct {
-	mempool              *mempool.Interface
+	mempool              *mempool.Mempool
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
 	batchHandler         modules.BatchHandlerFunc
@@ -22,7 +22,7 @@ type Bundler struct {
 
 // New initializes a new ERC-4337 bundler which can be extended with modules for validating batches and
 // excluding UserOperations that should not be sent to the EntryPoint.
-func New(mempool *mempool.Interface, chainID *big.Int, supportedEntryPoints []common.Address) *Bundler {
+func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []common.Address) *Bundler {
 	return &Bundler{
 		mempool:              mempool,
 		chainID:              chainID,
