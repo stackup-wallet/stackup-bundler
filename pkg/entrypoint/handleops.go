@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
@@ -83,28 +84,28 @@ func HandleOps(
 	gas uint64,
 	tip *big.Int,
 	maxFee *big.Int,
-) (revert *FailedOpRevert, err error) {
+) (txn *types.Transaction, revert *FailedOpRevert, err error) {
 	ep, err := NewEntrypoint(entryPoint, eth)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	auth.GasLimit = gas
 	auth.GasTipCap = tip
 	auth.GasFeeCap = maxFee
 
-	_, err = ep.HandleOps(auth, ToAbiType(batch), beneficiary)
+	txn, err = ep.HandleOps(auth, ToAbiType(batch), beneficiary)
 	if err != nil {
 		revert, err := newFailedOpRevert(err)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		return revert, nil
+		return nil, revert, nil
 	}
 
-	return nil, nil
+	return txn, nil, nil
 }

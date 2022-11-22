@@ -12,12 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
+	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules/println"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/standalone"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
@@ -40,6 +40,10 @@ func runDBGarbageCollection(db *badger.DB) {
 
 func PrivateMode() {
 	conf := config.GetValues()
+
+	logr := logger.NewZeroLogr().
+		WithName("stackup_bundler").
+		WithValues("bundler_mode", "private")
 
 	eoa, err := signer.New(conf.PrivateKey)
 	if err != nil {
@@ -69,34 +73,36 @@ func PrivateMode() {
 		log.Fatal(err)
 	}
 
-	relayer := relay.New(db)
-	relayer.SetErrorHandlerFunc(println.ErrorHandler)
+	relayer := relay.New(db, logr)
 
 	paymaster := paymaster.New(db)
 
 	// Start bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
+	b.UseLogger(logr)
 	b.UseModules(
 		standalone.TrackPaymasterDeposit(eth),
 		relayer.SendUserOperation(eoa, eth, beneficiary),
 		paymaster.IncOpsIncluded(),
-		println.BatchHandler,
 	)
-	b.SetErrorHandlerFunc(println.ErrorHandler)
 	b.Run()
 
 	// Start client
 	c := client.New(mem, chain, conf.SupportedEntryPoints)
+	c.UseLogger(logr)
 	c.UseModules(
 		standalone.SanityCheck(eth, conf.MaxVerificationGas),
 		paymaster.StatusCheck(),
 		standalone.Simulation(eth),
 		paymaster.IncOpsSeen(),
-		println.UserOpHandler,
 	)
 
 	gin.SetMode(conf.GinMode)
-	r := gin.Default()
+	r := gin.New()
+	r.Use(
+		logger.WithLogr(logr),
+		gin.Recovery(),
+	)
 	r.SetTrustedProxies(nil)
 	r.GET("/ping", func(g *gin.Context) {
 		g.Status(http.StatusOK)

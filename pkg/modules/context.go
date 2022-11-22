@@ -17,6 +17,7 @@ func NewBatchHandlerContext(batch []*userop.UserOperation, entryPoint common.Add
 		PendingRemoval: []*userop.UserOperation{},
 		EntryPoint:     entryPoint,
 		ChainID:        chainID,
+		Data:           make(map[string]any),
 	}
 }
 

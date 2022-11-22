@@ -2,17 +2,16 @@ package relay
 
 import (
 	"math/big"
-	"net"
 	"net/http"
-	"strings"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
+	"github.com/go-logr/logr"
+	"github.com/stackup-wallet/stackup-bundler/internal/ginutils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -33,43 +32,16 @@ import (
 // This will only work in the case of a private mempool and will not work in the P2P case where ops are
 // propagated through the network and it is impossible to trust a sender's identifier.
 type Relayer struct {
-	db                    *badger.DB
-	errorHandler          modules.ErrorHandlerFunc
-	clientIDHeaderEnabled bool
+	db     *badger.DB
+	logger logr.Logger
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
-func New(db *badger.DB) *Relayer {
+func New(db *badger.DB, l logr.Logger) *Relayer {
 	return &Relayer{
-		db:                    db,
-		errorHandler:          noop.ErrorHandler,
-		clientIDHeaderEnabled: false,
+		db:     db,
+		logger: l.WithName("relayer"),
 	}
-}
-
-func (r *Relayer) getClientID(c *gin.Context) string {
-	if r.clientIDHeaderEnabled && c.Request.Header.Get("x-bundler-client-id") != "" {
-		return c.Request.Header.Get("x-bundler-client-id")
-	}
-
-	forwardHeader := c.Request.Header.Get("x-forwarded-for")
-	firstAddress := strings.Split(forwardHeader, ",")[0]
-	if net.ParseIP(strings.TrimSpace(firstAddress)) != nil {
-		return firstAddress
-	}
-
-	return c.ClientIP()
-}
-
-// UseClientIDHeader allows bundlers to identify clients using any ID set in the X-Bundler-Client-Id header.
-// This should only be turned on if incoming requests are from trusted sources.
-func (r *Relayer) UseClientIDHeader(flag bool) {
-	r.clientIDHeaderEnabled = flag
-}
-
-// SetErrorHandlerFunc defines a method for handling errors at any point of the process.
-func (r *Relayer) SetErrorHandlerFunc(handler modules.ErrorHandlerFunc) {
-	r.errorHandler = handler
 }
 
 // FilterByClient is a custom Gin middleware used to prevent requests from banned clients from adding their
@@ -79,9 +51,11 @@ func (r *Relayer) SetErrorHandlerFunc(handler modules.ErrorHandlerFunc) {
 //  3. Request.RemoteAddr: The remote IP address
 func (r *Relayer) FilterByClient() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		l := r.logger.WithName("filter_by_client")
+
 		isBanned := false
 		err := r.db.View(func(txn *badger.Txn) error {
-			opsSeen, opsIncluded, err := getOpsCountByClientID(txn, r.getClientID(c))
+			opsSeen, opsIncluded, err := getOpsCountByClientID(txn, ginutils.GetClientIPFromXFF(c))
 			if err != nil {
 				return err
 			}
@@ -95,7 +69,7 @@ func (r *Relayer) FilterByClient() gin.HandlerFunc {
 			return nil
 		})
 		if err != nil {
-			r.errorHandler(err)
+			l.Error(err, "filter_by_client failed")
 			c.Status(http.StatusInternalServerError)
 			c.Abort()
 		}
@@ -111,6 +85,8 @@ func (r *Relayer) FilterByClient() gin.HandlerFunc {
 // identifier (e.g. IP address).
 func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		l := r.logger.WithName("map_request_id_to_client_id")
+
 		req, _ := c.Get("JsonRpcRequest")
 		json := req.(map[string]any)
 		if json["method"] != "eth_sendUserOperation" {
@@ -122,13 +98,13 @@ func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
 		ep := params[1].(string)
 		op, err := userop.New(data)
 		if err != nil {
-			r.errorHandler(err)
+			l.Error(err, "map_request_id_to_client_id failed")
 			c.Status(http.StatusInternalServerError)
 			return
 		}
 
 		rid := op.GetRequestID(common.HexToAddress(ep), chainID).String()
-		cid := r.getClientID(c)
+		cid := ginutils.GetClientIPFromXFF(c)
 		err = r.db.Update(func(txn *badger.Txn) error {
 			err := mapRequestIDToClientID(txn, rid, cid)
 			if err != nil {
@@ -143,7 +119,7 @@ func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
 			return nil
 		})
 		if err != nil {
-			r.errorHandler(err)
+			l.Error(err, "map_request_id_to_client_id failed")
 			c.Status(http.StatusInternalServerError)
 			return
 		}
@@ -196,7 +172,7 @@ func (r *Relayer) SendUserOperation(
 
 			// Call handleOps() with gas estimate and drop all userOps that cause unexpected reverts.
 			for len(ctx.Batch) > 0 {
-				revert, err := entrypoint.HandleOps(
+				t, revert, err := entrypoint.HandleOps(
 					eoa,
 					eth,
 					ctx.ChainID,
@@ -218,6 +194,7 @@ func (r *Relayer) SendUserOperation(
 						return err
 					}
 				} else {
+					ctx.Data["txn_hash"] = t.Hash().String()
 					break
 				}
 			}

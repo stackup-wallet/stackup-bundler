@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/go-logr/logr"
+	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
@@ -17,7 +19,7 @@ type Bundler struct {
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
 	batchHandler         modules.BatchHandlerFunc
-	errorHandler         modules.ErrorHandlerFunc
+	logger               logr.Logger
 }
 
 // New initializes a new ERC-4337 bundler which can be extended with modules for validating batches and
@@ -28,8 +30,13 @@ func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []comm
 		chainID:              chainID,
 		supportedEntryPoints: supportedEntryPoints,
 		batchHandler:         noop.BatchHandler,
-		errorHandler:         noop.ErrorHandler,
+		logger:               logger.NewZeroLogr().WithName("bundler"),
 	}
+}
+
+// UseLogger defines the logger object used by the Bundler instance based on the go-logr/logr interface.
+func (i *Bundler) UseLogger(logger logr.Logger) {
+	i.logger = logger.WithName("bundler")
 }
 
 // UseModules defines the BatchHandlers to process batches after it has gone through the standard checks.
@@ -37,19 +44,21 @@ func (i *Bundler) UseModules(handlers ...modules.BatchHandlerFunc) {
 	i.batchHandler = modules.ComposeBatchHandlerFunc(handlers...)
 }
 
-// SetErrorHandlerFunc defines a method for handling errors at any point of the process.
-func (i *Bundler) SetErrorHandlerFunc(handler modules.ErrorHandlerFunc) {
-	i.errorHandler = handler
-}
-
 // Run starts a goroutine that will continuously process batches from the mempool.
 func (i *Bundler) Run() error {
 	go func(i *Bundler) {
+		logger := i.logger.WithName("run")
+
 		for {
 			for _, ep := range i.supportedEntryPoints {
+				start := time.Now()
+				l := logger.
+					WithValues("entrypoint", ep.String()).
+					WithValues("chain_id", i.chainID.String())
+
 				batch, err := i.mempool.BundleOps(ep)
 				if err != nil {
-					i.errorHandler(err)
+					l.Error(err, "bundler run error")
 					continue
 				}
 				if len(batch) == 0 {
@@ -58,18 +67,34 @@ func (i *Bundler) Run() error {
 
 				ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID)
 				if err := i.batchHandler(ctx); err != nil {
-					i.errorHandler(err)
+					l.Error(err, "bundler run error")
 					continue
 				}
 
 				senders := append(getSenders(ctx.Batch), getSenders(ctx.PendingRemoval)...)
 				if err := i.mempool.RemoveOps(ep, senders...); err != nil {
-					i.errorHandler(err)
+					l.Error(err, "bundler run error")
 					continue
 				}
-			}
 
-			time.Sleep(5 * time.Second)
+				bat := []string{}
+				for _, op := range ctx.Batch {
+					bat = append(bat, op.GetRequestID(ep, i.chainID).String())
+				}
+				l = l.WithValues("batch_request_ids", bat)
+
+				drp := []string{}
+				for _, op := range ctx.PendingRemoval {
+					drp = append(drp, op.GetRequestID(ep, i.chainID).String())
+				}
+				l = l.WithValues("dropped_request_ids", drp)
+
+				for k, v := range ctx.Data {
+					l = l.WithValues(k, v)
+				}
+				l = l.WithValues("duration", time.Since(start))
+				l.Info("bundler run ok")
+			}
 		}
 	}(i)
 
