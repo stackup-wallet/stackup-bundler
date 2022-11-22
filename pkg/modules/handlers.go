@@ -13,6 +13,7 @@ type BatchHandlerCtx struct {
 	PendingRemoval []*userop.UserOperation
 	EntryPoint     common.Address
 	ChainID        *big.Int
+	Data           map[string]any
 }
 
 // MarkOpIndexForRemoval will remove the op by index from the batch and add it to the pending removal set.
@@ -47,6 +48,3 @@ type BatchHandlerFunc func(ctx *BatchHandlerCtx) error
 
 // OpHandlerFunc is an interface to support modular processing of single UserOperations.
 type UserOpHandlerFunc func(ctx *UserOpHandlerCtx) error
-
-// ErrorHandlerFunc is an interface to support modular processing of errors.
-type ErrorHandlerFunc func(err error)

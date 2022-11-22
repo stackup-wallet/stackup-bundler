@@ -11,6 +11,3 @@ func BatchHandler(ctx *modules.BatchHandlerCtx) error {
 func UserOpHandler(ctx *modules.UserOpHandlerCtx) error {
 	return nil
 }
-
-// ErrorHandler takes an error and does nothing with it.
-func ErrorHandler(err error) {}

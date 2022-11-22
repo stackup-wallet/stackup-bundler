@@ -7,8 +7,11 @@ require (
 	github.com/dgraph-io/badger/v3 v3.2103.3
 	github.com/ethereum/go-ethereum v1.10.25
 	github.com/gin-gonic/gin v1.8.1
+	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/zerologr v1.2.2
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.6.0
 	github.com/spf13/viper v1.13.0
 	github.com/wangjia184/sortedset v0.0.0-20220209072355-af6d6d227aa7
@@ -46,6 +49,7 @@ require (
 	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -65,7 +69,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b // indirect
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
-	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
