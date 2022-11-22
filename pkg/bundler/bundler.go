@@ -83,11 +83,11 @@ func (i *Bundler) Run() error {
 				}
 				l = l.WithValues("batch_request_ids", bat)
 
-				rem := []string{}
+				drp := []string{}
 				for _, op := range ctx.PendingRemoval {
-					rem = append(rem, op.GetRequestID(ep, i.chainID).String())
+					drp = append(drp, op.GetRequestID(ep, i.chainID).String())
 				}
-				l = l.WithValues("dropped_request_ids", rem)
+				l = l.WithValues("dropped_request_ids", drp)
 
 				for k, v := range ctx.Data {
 					l = l.WithValues(k, v)
