@@ -32,15 +32,30 @@ import (
 // This will only work in the case of a private mempool and will not work in the P2P case where ops are
 // propagated through the network and it is impossible to trust a sender's identifier.
 type Relayer struct {
-	db     *badger.DB
-	logger logr.Logger
+	db          *badger.DB
+	eoa         *signer.EOA
+	eth         *ethclient.Client
+	chainID     *big.Int
+	beneficiary common.Address
+	logger      logr.Logger
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
-func New(db *badger.DB, l logr.Logger) *Relayer {
+func New(
+	db *badger.DB,
+	eoa *signer.EOA,
+	eth *ethclient.Client,
+	chainID *big.Int,
+	beneficiary common.Address,
+	l logr.Logger,
+) *Relayer {
 	return &Relayer{
-		db:     db,
-		logger: l.WithName("relayer"),
+		db:          db,
+		eoa:         eoa,
+		eth:         eth,
+		chainID:     chainID,
+		beneficiary: beneficiary,
+		logger:      l.WithName("relayer"),
 	}
 }
 
@@ -83,7 +98,7 @@ func (r *Relayer) FilterByClient() gin.HandlerFunc {
 
 // MapRequestIDToClientID is a custom Gin middleware used to map a userOp requestID to a client
 // identifier (e.g. IP address).
-func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
+func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := r.logger.WithName("map_request_id_to_client_id")
 
@@ -103,7 +118,7 @@ func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
 			return
 		}
 
-		rid := op.GetRequestID(common.HexToAddress(ep), chainID).String()
+		rid := op.GetRequestID(common.HexToAddress(ep), r.chainID).String()
 		cid := ginutils.GetClientIPFromXFF(c)
 		err = r.db.Update(func(txn *badger.Txn) error {
 			err := mapRequestIDToClientID(txn, rid, cid)
@@ -128,11 +143,7 @@ func (r *Relayer) MapRequestIDToClientID(chainID *big.Int) gin.HandlerFunc {
 
 // SendUserOperation returns a BatchHandler that accepts a batch and sends it as a regular EOA transaction.
 // It can also map a userOp request ID to a Client ID (e.g. IP address) in order to mitigate DoS attacks.
-func (r *Relayer) SendUserOperation(
-	eoa *signer.EOA,
-	eth *ethclient.Client,
-	beneficiary common.Address,
-) modules.BatchHandlerFunc {
+func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		err := r.db.Update(func(txn *badger.Txn) error {
 			// Delete any request ID entries from dropped userOps.
@@ -147,12 +158,12 @@ func (r *Relayer) SendUserOperation(
 			var gas uint64
 			for len(ctx.Batch) > 0 {
 				est, revert, err := entrypoint.EstimateHandleOpsGas(
-					eoa,
-					eth,
+					r.eoa,
+					r.eth,
 					ctx.ChainID,
 					ctx.EntryPoint,
 					ctx.Batch,
-					beneficiary,
+					r.beneficiary,
 				)
 
 				if err != nil {
@@ -173,12 +184,12 @@ func (r *Relayer) SendUserOperation(
 			// Call handleOps() with gas estimate and drop all userOps that cause unexpected reverts.
 			for len(ctx.Batch) > 0 {
 				t, revert, err := entrypoint.HandleOps(
-					eoa,
-					eth,
+					r.eoa,
+					r.eth,
 					ctx.ChainID,
 					ctx.EntryPoint,
 					ctx.Batch,
-					beneficiary,
+					r.beneficiary,
 					gas,
 					ctx.Batch[0].MaxPriorityFeePerGas,
 					ctx.Batch[0].MaxFeePerGas,

@@ -17,9 +17,9 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules/standalone"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
@@ -73,30 +73,31 @@ func PrivateMode() {
 		log.Fatal(err)
 	}
 
-	relayer := relay.New(db, logr)
-
+	check := checks.New(eth, conf.MaxVerificationGas)
+	relayer := relay.New(db, eoa, eth, chain, beneficiary, logr)
 	paymaster := paymaster.New(db)
 
-	// Start bundler
+	// Init Client
+	c := client.New(mem, chain, conf.SupportedEntryPoints)
+	c.UseLogger(logr)
+	c.UseModules(
+		check.ValidateOpValues(),
+		paymaster.CheckStatus(),
+		check.SimulateOp(),
+		paymaster.IncOpsSeen(),
+	)
+
+	// Init Bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
 	b.UseLogger(logr)
 	b.UseModules(
-		standalone.TrackPaymasterDeposit(eth),
-		relayer.SendUserOperation(eoa, eth, beneficiary),
+		check.PaymasterDeposit(),
+		relayer.SendUserOperation(),
 		paymaster.IncOpsIncluded(),
 	)
 	b.Run()
 
-	// Start client
-	c := client.New(mem, chain, conf.SupportedEntryPoints)
-	c.UseLogger(logr)
-	c.UseModules(
-		standalone.SanityCheck(eth, conf.MaxVerificationGas),
-		paymaster.StatusCheck(),
-		standalone.Simulation(eth),
-		paymaster.IncOpsSeen(),
-	)
-
+	// Init HTTP server
 	gin.SetMode(conf.GinMode)
 	r := gin.New()
 	r.Use(
@@ -111,7 +112,7 @@ func PrivateMode() {
 		"/",
 		relayer.FilterByClient(),
 		jsonrpc.Controller(client.NewRpcAdapter(c)),
-		relayer.MapRequestIDToClientID(chain),
+		relayer.MapRequestIDToClientID(),
 	)
 	r.Run(fmt.Sprintf(":%d", conf.Port))
 }
