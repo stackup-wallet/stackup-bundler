@@ -1,4 +1,4 @@
-package standalone
+package checks
 
 import (
 	"context"

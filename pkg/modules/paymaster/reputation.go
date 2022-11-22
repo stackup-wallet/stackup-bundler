@@ -20,12 +20,12 @@ func New(db *badger.DB) *Reputation {
 	return &Reputation{db}
 }
 
-// StatusCheck returns a UserOpHandler to determine if the userOp is allowed based on the paymaster status.
+// CheckStatus returns a UserOpHandler to determine if the userOp is allowed based on the paymaster status.
 //  1. ok: Paymasters is allowed
 //  2. throttled: No new ops from the Paymaster is allowed if one already exists. And it can only stays in
 //     the pool for 10 blocks
 //  3. banned: No ops from the Paymaster is allowed
-func (r *Reputation) StatusCheck() modules.UserOpHandlerFunc {
+func (r *Reputation) CheckStatus() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
 		return r.db.Update(func(txn *badger.Txn) error {
 			paymaster := ctx.UserOp.GetPaymaster()
