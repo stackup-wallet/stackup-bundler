@@ -2,13 +2,11 @@ package bundler
 
 import (
 	"math/big"
-	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-logr/logr"
-	"github.com/go-logr/zerologr"
-	"github.com/rs/zerolog"
+	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
@@ -27,14 +25,12 @@ type Bundler struct {
 // New initializes a new ERC-4337 bundler which can be extended with modules for validating batches and
 // excluding UserOperations that should not be sent to the EntryPoint.
 func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []common.Address) *Bundler {
-	zl := zerolog.New(os.Stderr).With().Timestamp().Logger()
-
 	return &Bundler{
 		mempool:              mempool,
 		chainID:              chainID,
 		supportedEntryPoints: supportedEntryPoints,
 		batchHandler:         noop.BatchHandler,
-		logger:               zerologr.New(&zl).WithName("bundler"),
+		logger:               logger.NewZeroLogr().WithName("bundler"),
 	}
 }
 

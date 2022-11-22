@@ -74,7 +74,7 @@ func (r *Relayer) FilterByClient() gin.HandlerFunc {
 			c.Abort()
 		}
 
-		if !isBanned {
+		if isBanned {
 			c.Status(http.StatusForbidden)
 			c.Abort()
 		}

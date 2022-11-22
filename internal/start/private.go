@@ -41,7 +41,9 @@ func runDBGarbageCollection(db *badger.DB) {
 func PrivateMode() {
 	conf := config.GetValues()
 
-	logr := logger.NewZeroLogr()
+	logr := logger.NewZeroLogr().
+		WithName("stackup_bundler").
+		WithValues("bundler_mode", "private")
 
 	eoa, err := signer.New(conf.PrivateKey)
 	if err != nil {

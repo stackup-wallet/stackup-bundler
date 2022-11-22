@@ -3,12 +3,10 @@ package client
 import (
 	"errors"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-logr/logr"
-	"github.com/go-logr/zerologr"
-	"github.com/rs/zerolog"
+	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
@@ -27,14 +25,12 @@ type Client struct {
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
 // that are allowed to be added to the mempool.
 func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []common.Address) *Client {
-	zl := zerolog.New(os.Stderr).With().Timestamp().Logger()
-
 	return &Client{
 		mempool:              mempool,
 		chainID:              chainID,
 		supportedEntryPoints: supportedEntryPoints,
 		userOpHandler:        noop.UserOpHandler,
-		logger:               zerologr.New(&zl).WithName("client"),
+		logger:               logger.NewZeroLogr().WithName("client"),
 	}
 }
 
