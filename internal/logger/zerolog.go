@@ -23,7 +23,5 @@ func NewZeroLogr() logr.Logger {
 		return file + ":" + strconv.Itoa(line)
 	}
 	zl := zerolog.New(os.Stderr).With().Timestamp().Logger()
-	logr := zerologr.New(&zl)
-
-	return logr
+	return zerologr.New(&zl)
 }
