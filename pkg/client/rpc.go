@@ -10,12 +10,12 @@ func NewRpcAdapter(client *Client) *RpcAdapter {
 	return &RpcAdapter{client}
 }
 
-// Eth_sendUserOperation routes eth_sendUserOperation method calls to client.SendUserOperation.
+// Eth_sendUserOperation routes eth_sendUserOperation method calls to *Client.SendUserOperation.
 func (r *RpcAdapter) Eth_sendUserOperation(op map[string]any, ep string) (bool, error) {
 	return r.client.SendUserOperation(op, ep)
 }
 
-// Eth_supportedEntryPoints routes eth_supportedEntryPoints method calls to client.supportedEntryPoints.
+// Eth_supportedEntryPoints routes eth_supportedEntryPoints method calls to *Client.supportedEntryPoints.
 func (r *RpcAdapter) Eth_supportedEntryPoints() ([]string, error) {
 	return r.client.SupportedEntryPoints()
 }

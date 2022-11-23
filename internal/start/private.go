@@ -110,7 +110,7 @@ func PrivateMode() {
 	})
 	r.POST(
 		"/",
-		relayer.FilterByClient(),
+		relayer.FilterByClientID(),
 		jsonrpc.Controller(client.NewRpcAdapter(c)),
 		relayer.MapRequestIDToClientID(),
 	)

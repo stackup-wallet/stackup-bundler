@@ -1,3 +1,4 @@
+// Package jsonrpc implements Gin middleware for handling JSON-RPC requests via HTTP.
 package jsonrpc
 
 import (
@@ -26,10 +27,10 @@ func jsonrpcError(c *gin.Context, code int, message string, data string, id *flo
 	c.Abort()
 }
 
-// Controller returns a custom gin middleware that handles incoming RPC method calls to the server. It maps
-// the RPC method name to struct methods on the given api. For example, if the RPC request has the method
-// field set to "namespace_methodName" then the controller will make a call to api.Namespace_methodName with
-// the params spread as arguments.
+// Controller returns a custom Gin middleware that handles incoming JSON-RPC requests via HTTP. It maps the
+// RPC method name to struct methods on the given api. For example, if the RPC request has the method field
+// set to "namespace_methodName" then the controller will make a call to api.Namespace_methodName with the
+// params spread as arguments.
 //
 // On a successful call it will also set the request data on the context with the key "JsonRpcRequest".
 func Controller(api interface{}) gin.HandlerFunc {

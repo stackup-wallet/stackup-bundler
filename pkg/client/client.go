@@ -1,3 +1,4 @@
+// Package client provides the mediator for processing incoming UserOperations to the bundler.
 package client
 
 import (
@@ -13,7 +14,8 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// Client controls the end to end process of adding incoming UserOperations to the mempool.
+// Client controls the end to end process of adding incoming UserOperations to the mempool. It also
+// implements the required RPC methods as specified in EIP-4337.
 type Client struct {
 	mempool              *mempool.Mempool
 	chainID              *big.Int
@@ -127,8 +129,9 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (bool, error) {
 	return true, nil
 }
 
-// SupportedEntryPoints implements the method call for eth_supportedEntryPoints.
-// It returns the array of EntryPoint addresses that is supported by the client.
+// SupportedEntryPoints implements the method call for eth_supportedEntryPoints. It returns the array of
+// EntryPoint addresses that is supported by the client. The first address in the array is the preferred
+// EntryPoint.
 func (i *Client) SupportedEntryPoints() ([]string, error) {
 	slc := []string{}
 	for _, ep := range i.supportedEntryPoints {

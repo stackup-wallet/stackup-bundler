@@ -1,3 +1,5 @@
+// Package relay implements a module for private bundlers to send batches to the EntryPoint through regular
+// EOA transactions.
 package relay
 
 import (
@@ -59,12 +61,13 @@ func New(
 	}
 }
 
-// FilterByClient is a custom Gin middleware used to prevent requests from banned clients from adding their
+// FilterByClientID is a custom Gin middleware used to prevent requests from banned clients from adding their
 // userOps to the mempool. Identifiers are prioritized by the following values:
-//  1. X-Bundler-Client-Id header: See UseClientIDHeader
-//  2. X-Forwarded-By header: The first IP address in the array which is assumed to be the client
-//  3. Request.RemoteAddr: The remote IP address
-func (r *Relayer) FilterByClient() gin.HandlerFunc {
+//  1. X-Forwarded-By header: The first IP address in the array which is assumed to be the client
+//  2. Request.RemoteAddr: The remote IP address
+//
+// This should be the first middleware on the RPC path.
+func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := r.logger.WithName("filter_by_client")
 
@@ -96,8 +99,8 @@ func (r *Relayer) FilterByClient() gin.HandlerFunc {
 	}
 }
 
-// MapRequestIDToClientID is a custom Gin middleware used to map a userOp requestID to a client
-// identifier (e.g. IP address).
+// MapRequestIDToClientID is a custom Gin middleware used to map a userOp requestID to a clientID. This
+// should be placed after the main method call on the RPC path.
 func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := r.logger.WithName("map_request_id_to_client_id")
@@ -141,8 +144,9 @@ func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 	}
 }
 
-// SendUserOperation returns a BatchHandler that accepts a batch and sends it as a regular EOA transaction.
-// It can also map a userOp request ID to a Client ID (e.g. IP address) in order to mitigate DoS attacks.
+// SendUserOperation returns a BatchHandler that is used by the Bundler to send batches in a regular EOA
+// transaction. It uses the mapping of request ID to client ID created by the Gin middleware in order to
+// mitigate DoS attacks.
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		err := r.db.Update(func(txn *badger.Txn) error {
