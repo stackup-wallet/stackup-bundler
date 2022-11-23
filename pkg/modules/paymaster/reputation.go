@@ -1,3 +1,5 @@
+// Package paymaster implements modules for reputation scoring and throttling/banning for paymasters as
+// specified in EIP-4337.
 package paymaster
 
 import (
@@ -9,18 +11,20 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 )
 
-// Reputation provides client and bundler modules to track the status of every Paymaster seen in a
+// Reputation provides Client and Bundler modules to track the status of every Paymaster seen in a
 // UserOperation.
 type Reputation struct {
 	db *badger.DB
 }
 
-// New returns an instance of a Reputation module to track paymaster status.
+// New returns an instance of a Reputation object to track and appropriately process userOps by paymaster
+// status.
 func New(db *badger.DB) *Reputation {
 	return &Reputation{db}
 }
 
-// CheckStatus returns a UserOpHandler to determine if the userOp is allowed based on the paymaster status.
+// CheckStatus returns a UserOpHandler that is used by the Client to determine if the userOp is allowed based
+// on the paymaster status.
 //  1. ok: Paymasters is allowed
 //  2. throttled: No new ops from the Paymaster is allowed if one already exists. And it can only stays in
 //     the pool for 10 blocks
@@ -48,8 +52,8 @@ func (r *Reputation) CheckStatus() modules.UserOpHandlerFunc {
 	}
 }
 
-// IncOpsSeen returns a UserOpHandler that checks if a userOp has a paymaster and increments its opsSeen
-// counter.
+// IncOpsSeen returns a UserOpHandler that is used by the Client to check if a userOp has a paymaster and
+// increments its opsSeen counter.
 func (r *Reputation) IncOpsSeen() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
 		return r.db.Update(func(txn *badger.Txn) error {
@@ -63,8 +67,8 @@ func (r *Reputation) IncOpsSeen() modules.UserOpHandlerFunc {
 	}
 }
 
-// IncOpsIncluded returns a BatchHandler that increments opsIncluded for paymasters with userOps in the
-// batch. This module should be used last once batches have been sent.
+// IncOpsIncluded returns a BatchHandler used by the Bundler to increment opsIncluded counters for all
+// relevant paymasters in the batch. This module should be used last once batches have been sent.
 func (r *Reputation) IncOpsIncluded() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		return r.db.Update(func(txn *badger.Txn) error {

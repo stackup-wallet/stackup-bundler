@@ -1,3 +1,5 @@
+// Package checks implements modules for running an array of standard validations for both the Client and
+// Bundler.
 package checks
 
 import (
@@ -18,14 +20,14 @@ type Standalone struct {
 	maxVerificationGas *big.Int
 }
 
-// New returns a Standalone instance with methods that can be used as Client and Bundler modules to perform
+// New returns a Standalone instance with methods that can be used in Client and Bundler modules to perform
 // standard checks as specified in EIP-4337.
 func New(eth *ethclient.Client, maxVerificationGas *big.Int) *Standalone {
 	return &Standalone{eth, maxVerificationGas}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
-// going into the Client. This should be one of the first modules in the Client stack.
+// received by the Client. This should be one of the first modules executed by the Client.
 func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
 		ep, err := entrypoint.NewEntrypoint(ctx.EntryPoint, s.eth)

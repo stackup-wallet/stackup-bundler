@@ -1,3 +1,4 @@
+// Package signer holds EOA private keys to can sign regular Ethereum transactions.
 package signer
 
 import (

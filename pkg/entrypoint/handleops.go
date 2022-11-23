@@ -1,3 +1,4 @@
+// Package entrypoint provides ABI bindings and helper methods for interacting with the EntryPoint contract.
 package entrypoint
 
 import (

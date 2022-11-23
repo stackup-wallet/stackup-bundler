@@ -1,3 +1,5 @@
+// Package mempool provides a local representation of all the UserOperations that are known to the bundler
+// which have passed all Client checks and pending action by the Bundler.
 package mempool
 
 import (
@@ -6,12 +8,14 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+// Mempool provides read and write access to a pool of pending UserOperations which have passed all Client
+// checks.
 type Mempool struct {
 	db    *badger.DB
 	queue *userOpQueues
 }
 
-// New creates an instance of a mempool that uses badgerDB to persist and load UserOperations from disk
+// New creates an instance of a mempool that uses an embedded DB to persist and load UserOperations from disk
 // incase of a reset.
 func New(db *badger.DB) (*Mempool, error) {
 	queue := newUserOpQueue()
@@ -52,7 +56,7 @@ func (m *Mempool) BundleOps(entryPoint common.Address) ([]*userop.UserOperation,
 	return m.queue.Next(entryPoint), nil
 }
 
-// RemoveOps removes a list of UserOperations from the mempool by sender.
+// RemoveOps removes a list of UserOperations from the mempool by sender address.
 func (m *Mempool) RemoveOps(entryPoint common.Address, senders ...common.Address) error {
 	err := m.db.Update(func(txn *badger.Txn) error {
 		for _, s := range senders {
