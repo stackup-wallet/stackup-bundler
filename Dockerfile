@@ -4,10 +4,9 @@ WORKDIR /app
 
 COPY go.mod ./
 COPY go.sum ./
-RUN go mod download
-
 COPY *.go ./
 
+RUN go mod download
 RUN go build -o /stackup-bundler
 
 EXPOSE 4337
