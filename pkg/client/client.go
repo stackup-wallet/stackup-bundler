@@ -140,3 +140,9 @@ func (i *Client) SupportedEntryPoints() ([]string, error) {
 
 	return slc, nil
 }
+
+// ChainID implements the method call for eth_chainId. It returns the current chainID used by the client.
+// This method is used to validate that the client's chainID is in sync with the caller.
+func (i *Client) ChainID() (string, error) {
+	return i.chainID.String(), nil
+}
