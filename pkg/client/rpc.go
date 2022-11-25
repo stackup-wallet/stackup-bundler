@@ -15,7 +15,12 @@ func (r *RpcAdapter) Eth_sendUserOperation(op map[string]any, ep string) (bool, 
 	return r.client.SendUserOperation(op, ep)
 }
 
-// Eth_supportedEntryPoints routes eth_supportedEntryPoints method calls to *Client.supportedEntryPoints.
+// Eth_supportedEntryPoints routes eth_supportedEntryPoints method calls to *Client.SupportedEntryPoints.
 func (r *RpcAdapter) Eth_supportedEntryPoints() ([]string, error) {
 	return r.client.SupportedEntryPoints()
+}
+
+// Eth_chainId routes eth_chainId method calls to *Client.ChainID.
+func (r *RpcAdapter) Eth_chainId() (string, error) {
+	return r.client.ChainID()
 }
