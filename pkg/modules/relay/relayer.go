@@ -149,6 +149,7 @@ func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 // mitigate DoS attacks.
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
+		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {
 			// Delete any request ID entries from dropped userOps.
 			if len(ctx.PendingRemoval) > 0 {
@@ -214,16 +215,18 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 				}
 			}
 
-			// Delete remaining request ID entries from submitted userOps.
 			rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
-			if err := incrementOpsIncludedByRequestIDs(txn, rids...); err != nil {
-				return err
-			}
-			if err := removeRequestIDEntries(txn, rids...); err != nil {
-				return err
-			}
+			del = append([]string{}, rids...)
+			return incrementOpsIncludedByRequestIDs(txn, rids...)
+		})
+		if err != nil {
+			return err
+		}
 
-			return nil
+		// Delete remaining request ID entries from submitted userOps.
+		// Perform update in new txn to avoid db conflicts.
+		err = r.db.Update(func(txn *badger.Txn) error {
+			return removeRequestIDEntries(txn, del...)
 		})
 		if err != nil {
 			return err
