@@ -58,7 +58,7 @@ func (i *Client) UseModules(handlers ...modules.UserOpHandlerFunc) {
 
 // SendUserOperation implements the method call for eth_sendUserOperation.
 // It returns true if userOp was accepted otherwise returns an error.
-func (i *Client) SendUserOperation(op map[string]any, ep string) (bool, error) {
+func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error) {
 	// Init logger
 	l := i.logger.WithName("eth_sendUserOperation")
 
@@ -66,7 +66,7 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (bool, error) {
 	epAddr, err := i.parseEntryPointAddress(ep)
 	if err != nil {
 		l.Error(err, "eth_sendUserOperation error")
-		return false, err
+		return "", err
 	}
 	l = l.
 		WithValues("entrypoint", epAddr.String()).
@@ -75,9 +75,10 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (bool, error) {
 	userOp, err := userop.New(op)
 	if err != nil {
 		l.Error(err, "eth_sendUserOperation error")
-		return false, err
+		return "", err
 	}
-	l = l.WithValues("request_id", userOp.GetRequestID(epAddr, i.chainID))
+	rid := userOp.GetRequestID(epAddr, i.chainID)
+	l = l.WithValues("request_id", rid)
 
 	// Check mempool for duplicates and only replace under the following circumstances:
 	//
@@ -87,19 +88,19 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (bool, error) {
 	memOp, err := i.mempool.GetOp(epAddr, userOp.Sender)
 	if err != nil {
 		l.Error(err, "eth_sendUserOperation error")
-		return false, err
+		return "", err
 	}
 	if memOp != nil {
 		if memOp.Nonce.Cmp(memOp.Nonce) != 0 {
 			err := errors.New("sender: Has userOp in mempool with a different nonce")
 			l.Error(err, "eth_sendUserOperation error")
-			return false, err
+			return "", err
 		}
 
 		if memOp.MaxPriorityFeePerGas.Cmp(memOp.MaxPriorityFeePerGas) <= 0 {
 			err := errors.New("sender: Has userOp in mempool with same or higher priority fee")
 			l.Error(err, "eth_sendUserOperation error")
-			return false, err
+			return "", err
 		}
 
 		diff := big.NewInt(0)
@@ -108,7 +109,7 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (bool, error) {
 		if memOp.MaxFeePerGas.Cmp(mf.Add(memOp.MaxFeePerGas, diff)) != 0 {
 			err := errors.New("sender: Replaced userOp must have an equally higher max fee")
 			l.Error(err, "eth_sendUserOperation error")
-			return false, err
+			return "", err
 		}
 	}
 
@@ -116,17 +117,17 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (bool, error) {
 	ctx := modules.NewUserOpHandlerContext(userOp, epAddr, i.chainID)
 	if err := i.userOpHandler(ctx); err != nil {
 		l.Error(err, "eth_sendUserOperation error")
-		return false, err
+		return "", err
 	}
 
 	// Add userOp to mempool.
 	if err := i.mempool.AddOp(epAddr, ctx.UserOp); err != nil {
 		l.Error(err, "eth_sendUserOperation error")
-		return false, err
+		return "", err
 	}
 
 	l.Info("eth_sendUserOperation ok")
-	return true, nil
+	return rid.String(), nil
 }
 
 // SupportedEntryPoints implements the method call for eth_supportedEntryPoints. It returns the array of

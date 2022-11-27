@@ -11,7 +11,7 @@ func NewRpcAdapter(client *Client) *RpcAdapter {
 }
 
 // Eth_sendUserOperation routes eth_sendUserOperation method calls to *Client.SendUserOperation.
-func (r *RpcAdapter) Eth_sendUserOperation(op map[string]any, ep string) (bool, error) {
+func (r *RpcAdapter) Eth_sendUserOperation(op map[string]any, ep string) (string, error) {
 	return r.client.SendUserOperation(op, ep)
 }
 
