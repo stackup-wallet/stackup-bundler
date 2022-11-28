@@ -32,7 +32,7 @@ func jsonrpcError(c *gin.Context, code int, message string, data string, id *flo
 // set to "namespace_methodName" then the controller will make a call to api.Namespace_methodName with the
 // params spread as arguments.
 //
-// On a successful call it will also set the request data on the context with the key "JsonRpcRequest".
+// If request is valid it will also set the data on the Gin context with the key "json-rpc-request".
 func Controller(api interface{}) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Method != "POST" {
@@ -297,10 +297,10 @@ func Controller(api interface{}) gin.HandlerFunc {
 			}
 		}
 
+		c.Set("json-rpc-request", data)
 		result := call.Call(args)
 		if err, ok := result[len(result)-1].Interface().(error); ok && err != nil {
 			jsonrpcError(c, -32000, "Method error", err.Error(), &id)
-			return
 		} else if len(result) > 0 {
 			c.JSON(http.StatusOK, gin.H{
 				"result":  result[0].Interface(),
@@ -314,7 +314,5 @@ func Controller(api interface{}) gin.HandlerFunc {
 				"id":      id,
 			})
 		}
-
-		c.Set("JsonRpcRequest", data)
 	}
 }

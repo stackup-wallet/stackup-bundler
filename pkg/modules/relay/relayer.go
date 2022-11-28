@@ -72,8 +72,9 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 		l := r.logger.WithName("filter_by_client")
 
 		isBanned := false
+		cid := ginutils.GetClientIPFromXFF(c)
 		err := r.db.View(func(txn *badger.Txn) error {
-			opsSeen, opsIncluded, err := getOpsCountByClientID(txn, ginutils.GetClientIPFromXFF(c))
+			opsSeen, opsIncluded, err := getOpsCountByClientID(txn, cid)
 			if err != nil {
 				return err
 			}
@@ -84,6 +85,10 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 			}
 
 			isBanned = true
+			l = l.
+				WithValues("client_id", cid).
+				WithValues("opsSeen", opsSeen).
+				WithValues("opsIncluded", opsIncluded)
 			return nil
 		})
 		if err != nil {
@@ -93,6 +98,7 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 		}
 
 		if isBanned {
+			l.Info("client banned")
 			c.Status(http.StatusForbidden)
 			c.Abort()
 		}
@@ -105,7 +111,7 @@ func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := r.logger.WithName("map_request_id_to_client_id")
 
-		req, _ := c.Get("JsonRpcRequest")
+		req, _ := c.Get("json-rpc-request")
 		json := req.(map[string]any)
 		if json["method"] != "eth_sendUserOperation" {
 			return
@@ -123,18 +129,16 @@ func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 
 		rid := op.GetRequestID(common.HexToAddress(ep), r.chainID).String()
 		cid := ginutils.GetClientIPFromXFF(c)
+		l = l.
+			WithValues("request_id", rid).
+			WithValues("client_id", cid)
 		err = r.db.Update(func(txn *badger.Txn) error {
 			err := mapRequestIDToClientID(txn, rid, cid)
 			if err != nil {
 				return err
 			}
 
-			err = incrementOpsSeenByClientID(txn, cid)
-			if err != nil {
-				return err
-			}
-
-			return nil
+			return incrementOpsSeenByClientID(txn, cid)
 		})
 		if err != nil {
 			l.Error(err, "map_request_id_to_client_id failed")

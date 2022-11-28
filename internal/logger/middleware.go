@@ -47,12 +47,17 @@ func WithLogr(logger logr.Logger) gin.HandlerFunc {
 			WithValues("path", param.Path).
 			WithValues("latency", param.Latency.String())
 
-			// Log using the params
+		req, exists := c.Get("json-rpc-request")
+		if exists {
+			json := req.(map[string]any)
+			logEvent = logEvent.WithValues("rpc_method", json["method"])
+		}
+
+		// Log using the params
 		if c.Writer.Status() >= 500 {
 			logEvent.Error(errors.New(param.ErrorMessage), param.ErrorMessage)
 		} else {
 			logEvent.Info(param.ErrorMessage)
 		}
-
 	}
 }
