@@ -5,6 +5,7 @@ package relay
 import (
 	"math/big"
 	"net/http"
+	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
@@ -153,6 +154,9 @@ func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 // mitigate DoS attacks.
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
+		// TODO: Increment badger nextTxnTs to read latest data from MapRequestIDToClientID.
+		time.Sleep(time.Millisecond)
+
 		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {
 			// Delete any request ID entries from dropped userOps.
