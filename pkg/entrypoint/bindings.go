@@ -44,7 +44,7 @@ type EntryPointMemoryUserOp struct {
 // EntryPointUserOpInfo is an auto generated low-level Go binding around an user-defined struct.
 type EntryPointUserOpInfo struct {
 	MUserOp       EntryPointMemoryUserOp
-	RequestId     [32]byte
+	UserOpHash    [32]byte
 	Prefund       *big.Int
 	ContextOffset *big.Int
 	PreOpGas      *big.Int
@@ -83,7 +83,7 @@ type UserOperation struct {
 
 // EntrypointMetaData contains all meta data concerning the Entrypoint contract.
 var EntrypointMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_paymasterStake\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"_unstakeDelaySec\",\"type\":\"uint32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"opIndex\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"paymaster\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"FailedOp\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"aggregator\",\"type\":\"address\"}],\"name\":\"SignatureValidationFailed\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"totalDeposit\",\"type\":\"uint256\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"totalStaked\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"withdrawTime\",\"type\":\"uint256\"}],\"name\":\"StakeLocked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"withdrawTime\",\"type\":\"uint256\"}],\"name\":\"StakeUnlocked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"withdrawAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"StakeWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"requestId\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"paymaster\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"actualGasCost\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"actualGasPrice\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"name\":\"UserOperationEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"requestId\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"revertReason\",\"type\":\"bytes\"}],\"name\":\"UserOperationRevertReason\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"withdrawAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Withdrawn\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_unstakeDelaySec\",\"type\":\"uint32\"}],\"name\":\"addStake\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"depositTo\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint112\",\"name\":\"deposit\",\"type\":\"uint112\"},{\"internalType\":\"bool\",\"name\":\"staked\",\"type\":\"bool\"},{\"internalType\":\"uint112\",\"name\":\"stake\",\"type\":\"uint112\"},{\"internalType\":\"uint32\",\"name\":\"unstakeDelaySec\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"withdrawTime\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"getDepositInfo\",\"outputs\":[{\"components\":[{\"internalType\":\"uint112\",\"name\":\"deposit\",\"type\":\"uint112\"},{\"internalType\":\"bool\",\"name\":\"staked\",\"type\":\"bool\"},{\"internalType\":\"uint112\",\"name\":\"stake\",\"type\":\"uint112\"},{\"internalType\":\"uint32\",\"name\":\"unstakeDelaySec\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"withdrawTime\",\"type\":\"uint64\"}],\"internalType\":\"structIStakeManager.DepositInfo\",\"name\":\"info\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"paymasterAndData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUserOperation\",\"name\":\"userOp\",\"type\":\"tuple\"}],\"name\":\"getRequestId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"}],\"name\":\"getSenderAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"getSenderStorage\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"senderStorageCells\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"paymasterAndData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUserOperation[]\",\"name\":\"userOps\",\"type\":\"tuple[]\"},{\"internalType\":\"contractIAggregator\",\"name\":\"aggregator\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structIEntryPoint.UserOpsPerAggregator[]\",\"name\":\"opsPerAggregator\",\"type\":\"tuple[]\"},{\"internalType\":\"addresspayable\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"name\":\"handleAggregatedOps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"paymasterAndData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUserOperation[]\",\"name\":\"ops\",\"type\":\"tuple[]\"},{\"internalType\":\"addresspayable\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"name\":\"handleOps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"components\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"paymaster\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"}],\"internalType\":\"structEntryPoint.MemoryUserOp\",\"name\":\"mUserOp\",\"type\":\"tuple\"},{\"internalType\":\"bytes32\",\"name\":\"requestId\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"prefund\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"contextOffset\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preOpGas\",\"type\":\"uint256\"}],\"internalType\":\"structEntryPoint.UserOpInfo\",\"name\":\"opInfo\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"context\",\"type\":\"bytes\"}],\"name\":\"innerHandleOp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"actualGasCost\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"paymasterStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"paymasterAndData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUserOperation\",\"name\":\"userOp\",\"type\":\"tuple\"},{\"internalType\":\"bool\",\"name\":\"offChainSigCheck\",\"type\":\"bool\"}],\"name\":\"simulateValidation\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"preOpGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"prefund\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"actualAggregator\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"sigForUserOp\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"sigForAggregation\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"offChainSigInfo\",\"type\":\"bytes\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"unlockStake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"unstakeDelaySec\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"withdrawAddress\",\"type\":\"address\"}],\"name\":\"withdrawStake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"withdrawAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"withdrawAmount\",\"type\":\"uint256\"}],\"name\":\"withdrawTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"opIndex\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"paymaster\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"FailedOp\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"SenderAddressResult\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"aggregator\",\"type\":\"address\"}],\"name\":\"SignatureValidationFailed\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"preOpGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"prefund\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"paymasterStake\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"paymasterUnstakeDelay\",\"type\":\"uint256\"}],\"internalType\":\"structIEntryPoint.PaymasterInfo\",\"name\":\"paymasterInfo\",\"type\":\"tuple\"}],\"name\":\"SimulationResult\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"preOpGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"prefund\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"paymasterStake\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"paymasterUnstakeDelay\",\"type\":\"uint256\"}],\"internalType\":\"structIEntryPoint.PaymasterInfo\",\"name\":\"paymasterInfo\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"actualAggregator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"aggregatorStake\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"aggregatorUnstakeDelay\",\"type\":\"uint256\"}],\"internalType\":\"structIEntryPoint.AggregationInfo\",\"name\":\"aggregationInfo\",\"type\":\"tuple\"}],\"name\":\"SimulationResultWithAggregation\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"totalDeposit\",\"type\":\"uint256\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"totalStaked\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"withdrawTime\",\"type\":\"uint256\"}],\"name\":\"StakeLocked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"withdrawTime\",\"type\":\"uint256\"}],\"name\":\"StakeUnlocked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"withdrawAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"StakeWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"userOpHash\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"paymaster\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"actualGasCost\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"actualGasPrice\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"name\":\"UserOperationEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"userOpHash\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"revertReason\",\"type\":\"bytes\"}],\"name\":\"UserOperationRevertReason\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"withdrawAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Withdrawn\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_unstakeDelaySec\",\"type\":\"uint32\"}],\"name\":\"addStake\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"depositTo\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint112\",\"name\":\"deposit\",\"type\":\"uint112\"},{\"internalType\":\"bool\",\"name\":\"staked\",\"type\":\"bool\"},{\"internalType\":\"uint112\",\"name\":\"stake\",\"type\":\"uint112\"},{\"internalType\":\"uint32\",\"name\":\"unstakeDelaySec\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"withdrawTime\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"getDepositInfo\",\"outputs\":[{\"components\":[{\"internalType\":\"uint112\",\"name\":\"deposit\",\"type\":\"uint112\"},{\"internalType\":\"bool\",\"name\":\"staked\",\"type\":\"bool\"},{\"internalType\":\"uint112\",\"name\":\"stake\",\"type\":\"uint112\"},{\"internalType\":\"uint32\",\"name\":\"unstakeDelaySec\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"withdrawTime\",\"type\":\"uint64\"}],\"internalType\":\"structIStakeManager.DepositInfo\",\"name\":\"info\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"}],\"name\":\"getSenderAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"paymasterAndData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUserOperation\",\"name\":\"userOp\",\"type\":\"tuple\"}],\"name\":\"getUserOpHash\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"paymasterAndData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUserOperation[]\",\"name\":\"userOps\",\"type\":\"tuple[]\"},{\"internalType\":\"contractIAggregator\",\"name\":\"aggregator\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structIEntryPoint.UserOpsPerAggregator[]\",\"name\":\"opsPerAggregator\",\"type\":\"tuple[]\"},{\"internalType\":\"addresspayable\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"name\":\"handleAggregatedOps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"paymasterAndData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUserOperation[]\",\"name\":\"ops\",\"type\":\"tuple[]\"},{\"internalType\":\"addresspayable\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"name\":\"handleOps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"components\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"paymaster\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"}],\"internalType\":\"structEntryPoint.MemoryUserOp\",\"name\":\"mUserOp\",\"type\":\"tuple\"},{\"internalType\":\"bytes32\",\"name\":\"userOpHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"prefund\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"contextOffset\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preOpGas\",\"type\":\"uint256\"}],\"internalType\":\"structEntryPoint.UserOpInfo\",\"name\":\"opInfo\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"context\",\"type\":\"bytes\"}],\"name\":\"innerHandleOp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"actualGasCost\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"initCode\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"callGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"verificationGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"preVerificationGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxPriorityFeePerGas\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"paymasterAndData\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUserOperation\",\"name\":\"userOp\",\"type\":\"tuple\"}],\"name\":\"simulateValidation\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"unlockStake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"withdrawAddress\",\"type\":\"address\"}],\"name\":\"withdrawStake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"withdrawAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"withdrawAmount\",\"type\":\"uint256\"}],\"name\":\"withdrawTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
 }
 
 // EntrypointABI is the input ABI used to generate the binding from.
@@ -354,12 +354,12 @@ func (_Entrypoint *EntrypointCallerSession) GetDepositInfo(account common.Addres
 	return _Entrypoint.Contract.GetDepositInfo(&_Entrypoint.CallOpts, account)
 }
 
-// GetRequestId is a free data retrieval call binding the contract method 0x14e72634.
+// GetUserOpHash is a free data retrieval call binding the contract method 0xa6193531.
 //
-// Solidity: function getRequestId((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) view returns(bytes32)
-func (_Entrypoint *EntrypointCaller) GetRequestId(opts *bind.CallOpts, userOp UserOperation) ([32]byte, error) {
+// Solidity: function getUserOpHash((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) view returns(bytes32)
+func (_Entrypoint *EntrypointCaller) GetUserOpHash(opts *bind.CallOpts, userOp UserOperation) ([32]byte, error) {
 	var out []interface{}
-	err := _Entrypoint.contract.Call(opts, &out, "getRequestId", userOp)
+	err := _Entrypoint.contract.Call(opts, &out, "getUserOpHash", userOp)
 
 	if err != nil {
 		return *new([32]byte), err
@@ -371,111 +371,18 @@ func (_Entrypoint *EntrypointCaller) GetRequestId(opts *bind.CallOpts, userOp Us
 
 }
 
-// GetRequestId is a free data retrieval call binding the contract method 0x14e72634.
+// GetUserOpHash is a free data retrieval call binding the contract method 0xa6193531.
 //
-// Solidity: function getRequestId((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) view returns(bytes32)
-func (_Entrypoint *EntrypointSession) GetRequestId(userOp UserOperation) ([32]byte, error) {
-	return _Entrypoint.Contract.GetRequestId(&_Entrypoint.CallOpts, userOp)
+// Solidity: function getUserOpHash((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) view returns(bytes32)
+func (_Entrypoint *EntrypointSession) GetUserOpHash(userOp UserOperation) ([32]byte, error) {
+	return _Entrypoint.Contract.GetUserOpHash(&_Entrypoint.CallOpts, userOp)
 }
 
-// GetRequestId is a free data retrieval call binding the contract method 0x14e72634.
+// GetUserOpHash is a free data retrieval call binding the contract method 0xa6193531.
 //
-// Solidity: function getRequestId((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) view returns(bytes32)
-func (_Entrypoint *EntrypointCallerSession) GetRequestId(userOp UserOperation) ([32]byte, error) {
-	return _Entrypoint.Contract.GetRequestId(&_Entrypoint.CallOpts, userOp)
-}
-
-// GetSenderStorage is a free data retrieval call binding the contract method 0xec8b5dbf.
-//
-// Solidity: function getSenderStorage(address sender) view returns(uint256[] senderStorageCells)
-func (_Entrypoint *EntrypointCaller) GetSenderStorage(opts *bind.CallOpts, sender common.Address) ([]*big.Int, error) {
-	var out []interface{}
-	err := _Entrypoint.contract.Call(opts, &out, "getSenderStorage", sender)
-
-	if err != nil {
-		return *new([]*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]*big.Int)).(*[]*big.Int)
-
-	return out0, err
-
-}
-
-// GetSenderStorage is a free data retrieval call binding the contract method 0xec8b5dbf.
-//
-// Solidity: function getSenderStorage(address sender) view returns(uint256[] senderStorageCells)
-func (_Entrypoint *EntrypointSession) GetSenderStorage(sender common.Address) ([]*big.Int, error) {
-	return _Entrypoint.Contract.GetSenderStorage(&_Entrypoint.CallOpts, sender)
-}
-
-// GetSenderStorage is a free data retrieval call binding the contract method 0xec8b5dbf.
-//
-// Solidity: function getSenderStorage(address sender) view returns(uint256[] senderStorageCells)
-func (_Entrypoint *EntrypointCallerSession) GetSenderStorage(sender common.Address) ([]*big.Int, error) {
-	return _Entrypoint.Contract.GetSenderStorage(&_Entrypoint.CallOpts, sender)
-}
-
-// PaymasterStake is a free data retrieval call binding the contract method 0x17c6a987.
-//
-// Solidity: function paymasterStake() view returns(uint256)
-func (_Entrypoint *EntrypointCaller) PaymasterStake(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _Entrypoint.contract.Call(opts, &out, "paymasterStake")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// PaymasterStake is a free data retrieval call binding the contract method 0x17c6a987.
-//
-// Solidity: function paymasterStake() view returns(uint256)
-func (_Entrypoint *EntrypointSession) PaymasterStake() (*big.Int, error) {
-	return _Entrypoint.Contract.PaymasterStake(&_Entrypoint.CallOpts)
-}
-
-// PaymasterStake is a free data retrieval call binding the contract method 0x17c6a987.
-//
-// Solidity: function paymasterStake() view returns(uint256)
-func (_Entrypoint *EntrypointCallerSession) PaymasterStake() (*big.Int, error) {
-	return _Entrypoint.Contract.PaymasterStake(&_Entrypoint.CallOpts)
-}
-
-// UnstakeDelaySec is a free data retrieval call binding the contract method 0x390b9978.
-//
-// Solidity: function unstakeDelaySec() view returns(uint32)
-func (_Entrypoint *EntrypointCaller) UnstakeDelaySec(opts *bind.CallOpts) (uint32, error) {
-	var out []interface{}
-	err := _Entrypoint.contract.Call(opts, &out, "unstakeDelaySec")
-
-	if err != nil {
-		return *new(uint32), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
-
-	return out0, err
-
-}
-
-// UnstakeDelaySec is a free data retrieval call binding the contract method 0x390b9978.
-//
-// Solidity: function unstakeDelaySec() view returns(uint32)
-func (_Entrypoint *EntrypointSession) UnstakeDelaySec() (uint32, error) {
-	return _Entrypoint.Contract.UnstakeDelaySec(&_Entrypoint.CallOpts)
-}
-
-// UnstakeDelaySec is a free data retrieval call binding the contract method 0x390b9978.
-//
-// Solidity: function unstakeDelaySec() view returns(uint32)
-func (_Entrypoint *EntrypointCallerSession) UnstakeDelaySec() (uint32, error) {
-	return _Entrypoint.Contract.UnstakeDelaySec(&_Entrypoint.CallOpts)
+// Solidity: function getUserOpHash((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) view returns(bytes32)
+func (_Entrypoint *EntrypointCallerSession) GetUserOpHash(userOp UserOperation) ([32]byte, error) {
+	return _Entrypoint.Contract.GetUserOpHash(&_Entrypoint.CallOpts, userOp)
 }
 
 // AddStake is a paid mutator transaction binding the contract method 0x0396cb60.
@@ -522,21 +429,21 @@ func (_Entrypoint *EntrypointTransactorSession) DepositTo(account common.Address
 
 // GetSenderAddress is a paid mutator transaction binding the contract method 0x9b249f69.
 //
-// Solidity: function getSenderAddress(bytes initCode) returns(address sender)
+// Solidity: function getSenderAddress(bytes initCode) returns()
 func (_Entrypoint *EntrypointTransactor) GetSenderAddress(opts *bind.TransactOpts, initCode []byte) (*types.Transaction, error) {
 	return _Entrypoint.contract.Transact(opts, "getSenderAddress", initCode)
 }
 
 // GetSenderAddress is a paid mutator transaction binding the contract method 0x9b249f69.
 //
-// Solidity: function getSenderAddress(bytes initCode) returns(address sender)
+// Solidity: function getSenderAddress(bytes initCode) returns()
 func (_Entrypoint *EntrypointSession) GetSenderAddress(initCode []byte) (*types.Transaction, error) {
 	return _Entrypoint.Contract.GetSenderAddress(&_Entrypoint.TransactOpts, initCode)
 }
 
 // GetSenderAddress is a paid mutator transaction binding the contract method 0x9b249f69.
 //
-// Solidity: function getSenderAddress(bytes initCode) returns(address sender)
+// Solidity: function getSenderAddress(bytes initCode) returns()
 func (_Entrypoint *EntrypointTransactorSession) GetSenderAddress(initCode []byte) (*types.Transaction, error) {
 	return _Entrypoint.Contract.GetSenderAddress(&_Entrypoint.TransactOpts, initCode)
 }
@@ -604,25 +511,25 @@ func (_Entrypoint *EntrypointTransactorSession) InnerHandleOp(callData []byte, o
 	return _Entrypoint.Contract.InnerHandleOp(&_Entrypoint.TransactOpts, callData, opInfo, context)
 }
 
-// SimulateValidation is a paid mutator transaction binding the contract method 0xffb01dd9.
+// SimulateValidation is a paid mutator transaction binding the contract method 0xee219423.
 //
-// Solidity: function simulateValidation((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp, bool offChainSigCheck) returns(uint256 preOpGas, uint256 prefund, address actualAggregator, bytes sigForUserOp, bytes sigForAggregation, bytes offChainSigInfo)
-func (_Entrypoint *EntrypointTransactor) SimulateValidation(opts *bind.TransactOpts, userOp UserOperation, offChainSigCheck bool) (*types.Transaction, error) {
-	return _Entrypoint.contract.Transact(opts, "simulateValidation", userOp, offChainSigCheck)
+// Solidity: function simulateValidation((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) returns()
+func (_Entrypoint *EntrypointTransactor) SimulateValidation(opts *bind.TransactOpts, userOp UserOperation) (*types.Transaction, error) {
+	return _Entrypoint.contract.Transact(opts, "simulateValidation", userOp)
 }
 
-// SimulateValidation is a paid mutator transaction binding the contract method 0xffb01dd9.
+// SimulateValidation is a paid mutator transaction binding the contract method 0xee219423.
 //
-// Solidity: function simulateValidation((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp, bool offChainSigCheck) returns(uint256 preOpGas, uint256 prefund, address actualAggregator, bytes sigForUserOp, bytes sigForAggregation, bytes offChainSigInfo)
-func (_Entrypoint *EntrypointSession) SimulateValidation(userOp UserOperation, offChainSigCheck bool) (*types.Transaction, error) {
-	return _Entrypoint.Contract.SimulateValidation(&_Entrypoint.TransactOpts, userOp, offChainSigCheck)
+// Solidity: function simulateValidation((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) returns()
+func (_Entrypoint *EntrypointSession) SimulateValidation(userOp UserOperation) (*types.Transaction, error) {
+	return _Entrypoint.Contract.SimulateValidation(&_Entrypoint.TransactOpts, userOp)
 }
 
-// SimulateValidation is a paid mutator transaction binding the contract method 0xffb01dd9.
+// SimulateValidation is a paid mutator transaction binding the contract method 0xee219423.
 //
-// Solidity: function simulateValidation((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp, bool offChainSigCheck) returns(uint256 preOpGas, uint256 prefund, address actualAggregator, bytes sigForUserOp, bytes sigForAggregation, bytes offChainSigInfo)
-func (_Entrypoint *EntrypointTransactorSession) SimulateValidation(userOp UserOperation, offChainSigCheck bool) (*types.Transaction, error) {
-	return _Entrypoint.Contract.SimulateValidation(&_Entrypoint.TransactOpts, userOp, offChainSigCheck)
+// Solidity: function simulateValidation((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes) userOp) returns()
+func (_Entrypoint *EntrypointTransactorSession) SimulateValidation(userOp UserOperation) (*types.Transaction, error) {
+	return _Entrypoint.Contract.SimulateValidation(&_Entrypoint.TransactOpts, userOp)
 }
 
 // UnlockStake is a paid mutator transaction binding the contract method 0xbb9fe6bf.
@@ -1360,7 +1267,7 @@ func (it *EntrypointUserOperationEventIterator) Close() error {
 
 // EntrypointUserOperationEvent represents a UserOperationEvent event raised by the Entrypoint contract.
 type EntrypointUserOperationEvent struct {
-	RequestId      [32]byte
+	UserOpHash     [32]byte
 	Sender         common.Address
 	Paymaster      common.Address
 	Nonce          *big.Int
@@ -1372,12 +1279,12 @@ type EntrypointUserOperationEvent struct {
 
 // FilterUserOperationEvent is a free log retrieval operation binding the contract event 0x33fd4d1f25a5461bea901784a6571de6debc16cd0831932c22c6969cd73ba994.
 //
-// Solidity: event UserOperationEvent(bytes32 indexed requestId, address indexed sender, address indexed paymaster, uint256 nonce, uint256 actualGasCost, uint256 actualGasPrice, bool success)
-func (_Entrypoint *EntrypointFilterer) FilterUserOperationEvent(opts *bind.FilterOpts, requestId [][32]byte, sender []common.Address, paymaster []common.Address) (*EntrypointUserOperationEventIterator, error) {
+// Solidity: event UserOperationEvent(bytes32 indexed userOpHash, address indexed sender, address indexed paymaster, uint256 nonce, uint256 actualGasCost, uint256 actualGasPrice, bool success)
+func (_Entrypoint *EntrypointFilterer) FilterUserOperationEvent(opts *bind.FilterOpts, userOpHash [][32]byte, sender []common.Address, paymaster []common.Address) (*EntrypointUserOperationEventIterator, error) {
 
-	var requestIdRule []interface{}
-	for _, requestIdItem := range requestId {
-		requestIdRule = append(requestIdRule, requestIdItem)
+	var userOpHashRule []interface{}
+	for _, userOpHashItem := range userOpHash {
+		userOpHashRule = append(userOpHashRule, userOpHashItem)
 	}
 	var senderRule []interface{}
 	for _, senderItem := range sender {
@@ -1388,7 +1295,7 @@ func (_Entrypoint *EntrypointFilterer) FilterUserOperationEvent(opts *bind.Filte
 		paymasterRule = append(paymasterRule, paymasterItem)
 	}
 
-	logs, sub, err := _Entrypoint.contract.FilterLogs(opts, "UserOperationEvent", requestIdRule, senderRule, paymasterRule)
+	logs, sub, err := _Entrypoint.contract.FilterLogs(opts, "UserOperationEvent", userOpHashRule, senderRule, paymasterRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1397,12 +1304,12 @@ func (_Entrypoint *EntrypointFilterer) FilterUserOperationEvent(opts *bind.Filte
 
 // WatchUserOperationEvent is a free log subscription operation binding the contract event 0x33fd4d1f25a5461bea901784a6571de6debc16cd0831932c22c6969cd73ba994.
 //
-// Solidity: event UserOperationEvent(bytes32 indexed requestId, address indexed sender, address indexed paymaster, uint256 nonce, uint256 actualGasCost, uint256 actualGasPrice, bool success)
-func (_Entrypoint *EntrypointFilterer) WatchUserOperationEvent(opts *bind.WatchOpts, sink chan<- *EntrypointUserOperationEvent, requestId [][32]byte, sender []common.Address, paymaster []common.Address) (event.Subscription, error) {
+// Solidity: event UserOperationEvent(bytes32 indexed userOpHash, address indexed sender, address indexed paymaster, uint256 nonce, uint256 actualGasCost, uint256 actualGasPrice, bool success)
+func (_Entrypoint *EntrypointFilterer) WatchUserOperationEvent(opts *bind.WatchOpts, sink chan<- *EntrypointUserOperationEvent, userOpHash [][32]byte, sender []common.Address, paymaster []common.Address) (event.Subscription, error) {
 
-	var requestIdRule []interface{}
-	for _, requestIdItem := range requestId {
-		requestIdRule = append(requestIdRule, requestIdItem)
+	var userOpHashRule []interface{}
+	for _, userOpHashItem := range userOpHash {
+		userOpHashRule = append(userOpHashRule, userOpHashItem)
 	}
 	var senderRule []interface{}
 	for _, senderItem := range sender {
@@ -1413,7 +1320,7 @@ func (_Entrypoint *EntrypointFilterer) WatchUserOperationEvent(opts *bind.WatchO
 		paymasterRule = append(paymasterRule, paymasterItem)
 	}
 
-	logs, sub, err := _Entrypoint.contract.WatchLogs(opts, "UserOperationEvent", requestIdRule, senderRule, paymasterRule)
+	logs, sub, err := _Entrypoint.contract.WatchLogs(opts, "UserOperationEvent", userOpHashRule, senderRule, paymasterRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1447,7 +1354,7 @@ func (_Entrypoint *EntrypointFilterer) WatchUserOperationEvent(opts *bind.WatchO
 
 // ParseUserOperationEvent is a log parse operation binding the contract event 0x33fd4d1f25a5461bea901784a6571de6debc16cd0831932c22c6969cd73ba994.
 //
-// Solidity: event UserOperationEvent(bytes32 indexed requestId, address indexed sender, address indexed paymaster, uint256 nonce, uint256 actualGasCost, uint256 actualGasPrice, bool success)
+// Solidity: event UserOperationEvent(bytes32 indexed userOpHash, address indexed sender, address indexed paymaster, uint256 nonce, uint256 actualGasCost, uint256 actualGasPrice, bool success)
 func (_Entrypoint *EntrypointFilterer) ParseUserOperationEvent(log types.Log) (*EntrypointUserOperationEvent, error) {
 	event := new(EntrypointUserOperationEvent)
 	if err := _Entrypoint.contract.UnpackLog(event, "UserOperationEvent", log); err != nil {
@@ -1526,7 +1433,7 @@ func (it *EntrypointUserOperationRevertReasonIterator) Close() error {
 
 // EntrypointUserOperationRevertReason represents a UserOperationRevertReason event raised by the Entrypoint contract.
 type EntrypointUserOperationRevertReason struct {
-	RequestId    [32]byte
+	UserOpHash   [32]byte
 	Sender       common.Address
 	Nonce        *big.Int
 	RevertReason []byte
@@ -1535,19 +1442,19 @@ type EntrypointUserOperationRevertReason struct {
 
 // FilterUserOperationRevertReason is a free log retrieval operation binding the contract event 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201.
 //
-// Solidity: event UserOperationRevertReason(bytes32 indexed requestId, address indexed sender, uint256 nonce, bytes revertReason)
-func (_Entrypoint *EntrypointFilterer) FilterUserOperationRevertReason(opts *bind.FilterOpts, requestId [][32]byte, sender []common.Address) (*EntrypointUserOperationRevertReasonIterator, error) {
+// Solidity: event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason)
+func (_Entrypoint *EntrypointFilterer) FilterUserOperationRevertReason(opts *bind.FilterOpts, userOpHash [][32]byte, sender []common.Address) (*EntrypointUserOperationRevertReasonIterator, error) {
 
-	var requestIdRule []interface{}
-	for _, requestIdItem := range requestId {
-		requestIdRule = append(requestIdRule, requestIdItem)
+	var userOpHashRule []interface{}
+	for _, userOpHashItem := range userOpHash {
+		userOpHashRule = append(userOpHashRule, userOpHashItem)
 	}
 	var senderRule []interface{}
 	for _, senderItem := range sender {
 		senderRule = append(senderRule, senderItem)
 	}
 
-	logs, sub, err := _Entrypoint.contract.FilterLogs(opts, "UserOperationRevertReason", requestIdRule, senderRule)
+	logs, sub, err := _Entrypoint.contract.FilterLogs(opts, "UserOperationRevertReason", userOpHashRule, senderRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1556,19 +1463,19 @@ func (_Entrypoint *EntrypointFilterer) FilterUserOperationRevertReason(opts *bin
 
 // WatchUserOperationRevertReason is a free log subscription operation binding the contract event 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201.
 //
-// Solidity: event UserOperationRevertReason(bytes32 indexed requestId, address indexed sender, uint256 nonce, bytes revertReason)
-func (_Entrypoint *EntrypointFilterer) WatchUserOperationRevertReason(opts *bind.WatchOpts, sink chan<- *EntrypointUserOperationRevertReason, requestId [][32]byte, sender []common.Address) (event.Subscription, error) {
+// Solidity: event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason)
+func (_Entrypoint *EntrypointFilterer) WatchUserOperationRevertReason(opts *bind.WatchOpts, sink chan<- *EntrypointUserOperationRevertReason, userOpHash [][32]byte, sender []common.Address) (event.Subscription, error) {
 
-	var requestIdRule []interface{}
-	for _, requestIdItem := range requestId {
-		requestIdRule = append(requestIdRule, requestIdItem)
+	var userOpHashRule []interface{}
+	for _, userOpHashItem := range userOpHash {
+		userOpHashRule = append(userOpHashRule, userOpHashItem)
 	}
 	var senderRule []interface{}
 	for _, senderItem := range sender {
 		senderRule = append(senderRule, senderItem)
 	}
 
-	logs, sub, err := _Entrypoint.contract.WatchLogs(opts, "UserOperationRevertReason", requestIdRule, senderRule)
+	logs, sub, err := _Entrypoint.contract.WatchLogs(opts, "UserOperationRevertReason", userOpHashRule, senderRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1602,7 +1509,7 @@ func (_Entrypoint *EntrypointFilterer) WatchUserOperationRevertReason(opts *bind
 
 // ParseUserOperationRevertReason is a log parse operation binding the contract event 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201.
 //
-// Solidity: event UserOperationRevertReason(bytes32 indexed requestId, address indexed sender, uint256 nonce, bytes revertReason)
+// Solidity: event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason)
 func (_Entrypoint *EntrypointFilterer) ParseUserOperationRevertReason(log types.Log) (*EntrypointUserOperationRevertReason, error) {
 	event := new(EntrypointUserOperationRevertReason)
 	if err := _Entrypoint.contract.UnpackLog(event, "UserOperationRevertReason", log); err != nil {
