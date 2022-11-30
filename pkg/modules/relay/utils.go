@@ -77,7 +77,7 @@ func incrementOpsSeenByClientID(txn *badger.Txn, clientID string) error {
 	return txn.SetEntry(e)
 }
 
-func incrementOpsIncludedByUserOpHashs(txn *badger.Txn, userOpHashes ...string) error {
+func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, userOpHashes ...string) error {
 	for _, hashes := range userOpHashes {
 		item, err := txn.Get(getUserOpHashKey(hashes))
 		if err != nil && err == badger.ErrKeyNotFound {

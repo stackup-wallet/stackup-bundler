@@ -225,7 +225,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 
 			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
 			del = append([]string{}, hashes...)
-			return incrementOpsIncludedByUserOpHashs(txn, hashes...)
+			return incrementOpsIncludedByUserOpHashes(txn, hashes...)
 		})
 		if err != nil {
 			return err
