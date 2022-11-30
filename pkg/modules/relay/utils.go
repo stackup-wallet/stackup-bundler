@@ -17,23 +17,23 @@ const timeWindow = 7 * 24 * time.Hour
 const separator = ":"
 const keyPrefix = "module" + separator + "relay"
 const opsCountPrefix = keyPrefix + separator + "opsCount"
-const requestIDPrefix = keyPrefix + separator + "requestID"
+const userOpHashPrefix = keyPrefix + separator + "userOpHash"
 
 func getOpsCountKey(clientID string) []byte {
 	return []byte(opsCountPrefix + separator + clientID)
 }
 
-func getRequestIDKey(requestID string) []byte {
-	return []byte(requestIDPrefix + separator + requestID)
+func getUserOpHashKey(userOpHash string) []byte {
+	return []byte(userOpHashPrefix + separator + userOpHash)
 }
 
-func getRequestIDsFromOps(ep common.Address, chainID *big.Int, ops ...*userop.UserOperation) []string {
-	rids := []string{}
+func getUserOpHashesFromOps(ep common.Address, chainID *big.Int, ops ...*userop.UserOperation) []string {
+	hashes := []string{}
 	for _, op := range ops {
-		rids = append(rids, op.GetRequestID(ep, chainID).String())
+		hashes = append(hashes, op.GetUserOpHash(ep, chainID).String())
 	}
 
-	return rids
+	return hashes
 }
 
 func getOpsCountByClientID(txn *badger.Txn, clientID string) (opsSeen int, opsIncluded int, err error) {
@@ -77,9 +77,9 @@ func incrementOpsSeenByClientID(txn *badger.Txn, clientID string) error {
 	return txn.SetEntry(e)
 }
 
-func incrementOpsIncludedByRequestIDs(txn *badger.Txn, requestIDs ...string) error {
-	for _, rid := range requestIDs {
-		item, err := txn.Get(getRequestIDKey(rid))
+func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, userOpHashes ...string) error {
+	for _, hashes := range userOpHashes {
+		item, err := txn.Get(getUserOpHashKey(hashes))
 		if err != nil && err == badger.ErrKeyNotFound {
 			return nil
 		}
@@ -119,13 +119,13 @@ func incrementOpsIncludedByRequestIDs(txn *badger.Txn, requestIDs ...string) err
 	return nil
 }
 
-func mapRequestIDToClientID(txn *badger.Txn, requestID string, clientID string) error {
-	return txn.Set(getRequestIDKey(requestID), []byte(clientID))
+func mapUserOpHashToClientID(txn *badger.Txn, userOpHash string, clientID string) error {
+	return txn.Set(getUserOpHashKey(userOpHash), []byte(clientID))
 }
 
-func removeRequestIDEntries(txn *badger.Txn, requestIDs ...string) error {
-	for _, rid := range requestIDs {
-		err := txn.Delete(getRequestIDKey(rid))
+func removeUserOpHashEntries(txn *badger.Txn, userOpHashes ...string) error {
+	for _, hashes := range userOpHashes {
+		err := txn.Delete(getUserOpHashKey(hashes))
 		if err != nil {
 			return err
 		}

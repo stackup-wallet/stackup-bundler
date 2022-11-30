@@ -71,7 +71,7 @@ func (op *UserOperation) GetMaxPrefund() *big.Int {
 	return big.NewInt(0).Mul(requiredGas, op.MaxFeePerGas)
 }
 
-// Pack returns a standard message of the userOp. This cannot be used to generate a requestID.
+// Pack returns a standard message of the userOp. This cannot be used to generate a userOpHash.
 func (op *UserOperation) Pack() []byte {
 	args := getAbiArgs()
 	packed, _ := args.Pack(&struct {
@@ -103,7 +103,7 @@ func (op *UserOperation) Pack() []byte {
 	return packed
 }
 
-// PackForSignature returns a minimal message of the userOp. This can be used to generate a requestID.
+// PackForSignature returns a minimal message of the userOp. This can be used to generate a userOpHash.
 func (op *UserOperation) PackForSignature() []byte {
 	args := getAbiArgs()
 	packed, _ := args.Pack(&struct {
@@ -138,8 +138,8 @@ func (op *UserOperation) PackForSignature() []byte {
 	return (hexutil.MustDecode(enc))
 }
 
-// GetRequestID returns the hash of the userOp + entryPoint address + chainID.
-func (op *UserOperation) GetRequestID(entryPoint common.Address, chainID *big.Int) common.Hash {
+// GetUserOpHash returns the hash of the userOp + entryPoint address + chainID.
+func (op *UserOperation) GetUserOpHash(entryPoint common.Address, chainID *big.Int) common.Hash {
 	return crypto.Keccak256Hash(
 		crypto.Keccak256(op.PackForSignature()),
 		common.LeftPadBytes(entryPoint.Bytes(), 32),

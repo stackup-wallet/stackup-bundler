@@ -77,8 +77,8 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 		l.Error(err, "eth_sendUserOperation error")
 		return "", err
 	}
-	rid := userOp.GetRequestID(epAddr, i.chainID)
-	l = l.WithValues("request_id", rid)
+	hash := userOp.GetUserOpHash(epAddr, i.chainID)
+	l = l.WithValues("userop_hash", hash)
 
 	// Check mempool for duplicates and only replace under the following circumstances:
 	//
@@ -127,7 +127,7 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 	}
 
 	l.Info("eth_sendUserOperation ok")
-	return rid.String(), nil
+	return hash.String(), nil
 }
 
 // SupportedEntryPoints implements the method call for eth_supportedEntryPoints. It returns the array of

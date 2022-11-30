@@ -112,7 +112,7 @@ func PrivateMode() {
 		"/",
 		relayer.FilterByClientID(),
 		jsonrpc.Controller(client.NewRpcAdapter(c)),
-		relayer.MapRequestIDToClientID(),
+		relayer.MapUserOpHashToClientID(),
 	)
 	r.Run(fmt.Sprintf(":%d", conf.Port))
 }

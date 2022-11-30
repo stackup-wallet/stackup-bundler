@@ -80,15 +80,15 @@ func (i *Bundler) Run() error {
 
 				bat := []string{}
 				for _, op := range ctx.Batch {
-					bat = append(bat, op.GetRequestID(ep, i.chainID).String())
+					bat = append(bat, op.GetUserOpHash(ep, i.chainID).String())
 				}
-				l = l.WithValues("batch_request_ids", bat)
+				l = l.WithValues("batch_userop_hashes", bat)
 
 				drp := []string{}
 				for _, op := range ctx.PendingRemoval {
-					drp = append(drp, op.GetRequestID(ep, i.chainID).String())
+					drp = append(drp, op.GetUserOpHash(ep, i.chainID).String())
 				}
-				l = l.WithValues("dropped_request_ids", drp)
+				l = l.WithValues("dropped_userop_hashes", drp)
 
 				for k, v := range ctx.Data {
 					l = l.WithValues(k, v)
