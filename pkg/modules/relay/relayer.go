@@ -106,11 +106,11 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 	}
 }
 
-// MapRequestIDToClientID is a custom Gin middleware used to map a userOp requestID to a clientID. This
+// MapUserOpHashToClientID is a custom Gin middleware used to map a userOpHash to a clientID. This
 // should be placed after the main method call on the RPC path.
-func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
+func (r *Relayer) MapUserOpHashToClientID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		l := r.logger.WithName("map_request_id_to_client_id")
+		l := r.logger.WithName("map_userop_hash_to_client_id")
 
 		req, _ := c.Get("json-rpc-request")
 		json := req.(map[string]any)
@@ -123,18 +123,18 @@ func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 		ep := params[1].(string)
 		op, err := userop.New(data)
 		if err != nil {
-			l.Error(err, "map_request_id_to_client_id failed")
+			l.Error(err, "map_userop_hash_to_client_id failed")
 			c.Status(http.StatusInternalServerError)
 			return
 		}
 
-		rid := op.GetRequestID(common.HexToAddress(ep), r.chainID).String()
+		hash := op.GetUserOpHash(common.HexToAddress(ep), r.chainID).String()
 		cid := ginutils.GetClientIPFromXFF(c)
 		l = l.
-			WithValues("request_id", rid).
+			WithValues("userop_hash", hash).
 			WithValues("client_id", cid)
 		err = r.db.Update(func(txn *badger.Txn) error {
-			err := mapRequestIDToClientID(txn, rid, cid)
+			err := mapUserOpHashToClientID(txn, hash, cid)
 			if err != nil {
 				return err
 			}
@@ -142,7 +142,7 @@ func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 			return incrementOpsSeenByClientID(txn, cid)
 		})
 		if err != nil {
-			l.Error(err, "map_request_id_to_client_id failed")
+			l.Error(err, "map_userop_hash_to_client_id failed")
 			c.Status(http.StatusInternalServerError)
 			return
 		}
@@ -154,15 +154,15 @@ func (r *Relayer) MapRequestIDToClientID() gin.HandlerFunc {
 // mitigate DoS attacks.
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
-		// TODO: Increment badger nextTxnTs to read latest data from MapRequestIDToClientID.
+		// TODO: Increment badger nextTxnTs to read latest data from MapUserOpHashToClientID.
 		time.Sleep(time.Millisecond)
 
 		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {
 			// Delete any request ID entries from dropped userOps.
 			if len(ctx.PendingRemoval) > 0 {
-				rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
-				if err := removeRequestIDEntries(txn, rids...); err != nil {
+				hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
+				if err := removeUserOpHashEntries(txn, hashes...); err != nil {
 					return err
 				}
 			}
@@ -184,8 +184,8 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 				} else if revert != nil {
 					ctx.MarkOpIndexForRemoval(revert.OpIndex)
 
-					rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
-					if err := removeRequestIDEntries(txn, rids...); err != nil {
+					hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
+					if err := removeUserOpHashEntries(txn, hashes...); err != nil {
 						return err
 					}
 				} else {
@@ -213,8 +213,8 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 				} else if revert != nil {
 					ctx.MarkOpIndexForRemoval(revert.OpIndex)
 
-					rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
-					if err := removeRequestIDEntries(txn, rids...); err != nil {
+					hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
+					if err := removeUserOpHashEntries(txn, hashes...); err != nil {
 						return err
 					}
 				} else {
@@ -223,9 +223,9 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 				}
 			}
 
-			rids := getRequestIDsFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
-			del = append([]string{}, rids...)
-			return incrementOpsIncludedByRequestIDs(txn, rids...)
+			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
+			del = append([]string{}, hashes...)
+			return incrementOpsIncludedByUserOpHashs(txn, hashes...)
 		})
 		if err != nil {
 			return err
@@ -234,7 +234,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 		// Delete remaining request ID entries from submitted userOps.
 		// Perform update in new txn to avoid db conflicts.
 		err = r.db.Update(func(txn *badger.Txn) error {
-			return removeRequestIDEntries(txn, del...)
+			return removeUserOpHashEntries(txn, del...)
 		})
 		if err != nil {
 			return err
