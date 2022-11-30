@@ -150,16 +150,16 @@ func (r *Relayer) MapUserOpHashToClientID() gin.HandlerFunc {
 }
 
 // SendUserOperation returns a BatchHandler that is used by the Bundler to send batches in a regular EOA
-// transaction. It uses the mapping of request ID to client ID created by the Gin middleware in order to
+// transaction. It uses the mapping of userOpHash to client ID created by the Gin middleware in order to
 // mitigate DoS attacks.
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		// TODO: Increment badger nextTxnTs to read latest data from MapUserOpHashToClientID.
-		time.Sleep(time.Millisecond)
+		time.Sleep(2 * time.Millisecond)
 
 		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {
-			// Delete any request ID entries from dropped userOps.
+			// Delete any userOpHash entries from dropped userOps.
 			if len(ctx.PendingRemoval) > 0 {
 				hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
 				if err := removeUserOpHashEntries(txn, hashes...); err != nil {
@@ -231,7 +231,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			return err
 		}
 
-		// Delete remaining request ID entries from submitted userOps.
+		// Delete remaining userOpHash entries from submitted userOps.
 		// Perform update in new txn to avoid db conflicts.
 		err = r.db.Update(func(txn *badger.Txn) error {
 			return removeUserOpHashEntries(txn, del...)
