@@ -10,6 +10,7 @@ import (
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
@@ -101,6 +102,7 @@ func PrivateMode() {
 	gin.SetMode(conf.GinMode)
 	r := gin.New()
 	r.Use(
+		cors.Default(),
 		logger.WithLogr(logr),
 		gin.Recovery(),
 	)
