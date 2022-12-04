@@ -60,7 +60,7 @@ func PrivateMode() {
 	defer db.Close()
 	runDBGarbageCollection(db)
 
-	rpc, err := rpc.DialContext(context.Background(), conf.EthClientUrl)
+	rpc, err := rpc.Dial(conf.EthClientUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
