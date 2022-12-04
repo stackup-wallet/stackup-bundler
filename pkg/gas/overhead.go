@@ -39,7 +39,7 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
 	return big.NewInt(int64(math.Round(pvg)))
 }
 
-// NonZeroValueCallGasCost returns an expected gas cost of using the CALL opcode in the context of EIP-4337.
+// NonZeroValueCallCost returns an expected gas cost of using the CALL opcode in the context of EIP-4337.
 // See https://github.com/wolflo/evm-opcodes/blob/main/gas.md#aa-1-call.
 func (ov *Overhead) NonZeroValueCallCost() *big.Int {
 	return big.NewInt(int64(ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend))
