@@ -15,7 +15,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-func ToAbiType(batch []*userop.UserOperation) []UserOperation {
+func toAbiType(batch []*userop.UserOperation) []UserOperation {
 	ops := []UserOperation{}
 	for _, op := range batch {
 		ops = append(ops, UserOperation(*op))
@@ -46,7 +46,7 @@ func EstimateHandleOpsGas(
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
 
-	tx, err := ep.HandleOps(auth, ToAbiType(batch), beneficiary)
+	tx, err := ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -99,7 +99,7 @@ func HandleOps(
 	auth.GasTipCap = tip
 	auth.GasFeeCap = maxFee
 
-	txn, err = ep.HandleOps(auth, ToAbiType(batch), beneficiary)
+	txn, err = ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {
 		revert, err := newFailedOpRevert(err)
 		if err != nil {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"golang.org/x/sync/errgroup"
@@ -16,14 +17,16 @@ import (
 // intended for bundlers that are independent of an Ethereum node and hence relies on a given ethClient to
 // query blockchain state.
 type Standalone struct {
+	rpc                *rpc.Client
 	eth                *ethclient.Client
 	maxVerificationGas *big.Int
 }
 
 // New returns a Standalone instance with methods that can be used in Client and Bundler modules to perform
 // standard checks as specified in EIP-4337.
-func New(eth *ethclient.Client, maxVerificationGas *big.Int) *Standalone {
-	return &Standalone{eth, maxVerificationGas}
+func New(rpc *rpc.Client, maxVerificationGas *big.Int) *Standalone {
+	eth := ethclient.NewClient(rpc)
+	return &Standalone{rpc, eth, maxVerificationGas}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -42,19 +45,23 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g.Go(func() error { return checkCallGasLimit(ctx.UserOp) })
 		g.Go(func() error { return checkFeePerGas(s.eth, ctx.UserOp) })
 
-		if err := g.Wait(); err != nil {
-			return err
-		}
-		return nil
+		return g.Wait()
 	}
 }
 
-// SimulateOp returns a UserOpHandler that runs through simulation of new UserOps with the EntryPoint. This
-// should be done after all validations are complete.
+// SimulateOp returns a UserOpHandler that runs through simulation of new UserOps with the EntryPoint.
 func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
-		_, err := entrypoint.SimulateValidation(s.eth, ctx.EntryPoint, ctx.UserOp)
-		return err
+		g := new(errgroup.Group)
+		g.Go(func() error {
+			_, err := entrypoint.SimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp)
+			return err
+		})
+		g.Go(func() error {
+			return entrypoint.TraceSimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp, ctx.ChainID)
+		})
+
+		return g.Wait()
 	}
 }
 
