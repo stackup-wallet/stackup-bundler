@@ -90,7 +90,7 @@ func checkPaymasterAndData(eth *ethclient.Client, ep *entrypoint.Entrypoint, op 
 
 // Checks the callGasLimit is at least the cost of a CALL with non-zero value.
 func checkCallGasLimit(op *userop.UserOperation) error {
-	cg := gas.NewDefaultOverhead().NonZeroValueCallGasCost()
+	cg := gas.NewDefaultOverhead().NonZeroValueCallCost()
 	if op.CallGasLimit.Cmp(cg) < 0 {
 		return fmt.Errorf("callGasLimit: below expected gas of %s", cg.String())
 	}
