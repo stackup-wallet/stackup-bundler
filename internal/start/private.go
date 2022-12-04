@@ -10,6 +10,7 @@ import (
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
@@ -59,10 +60,12 @@ func PrivateMode() {
 	defer db.Close()
 	runDBGarbageCollection(db)
 
-	eth, err := ethclient.Dial(conf.EthClientUrl)
+	rpc, err := rpc.DialContext(context.Background(), conf.EthClientUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	eth := ethclient.NewClient(rpc)
 
 	chain, err := eth.ChainID(context.Background())
 	if err != nil {
@@ -74,7 +77,7 @@ func PrivateMode() {
 		log.Fatal(err)
 	}
 
-	check := checks.New(eth, conf.MaxVerificationGas)
+	check := checks.New(rpc, conf.MaxVerificationGas)
 	relayer := relay.New(db, eoa, eth, chain, beneficiary, logr)
 	paymaster := paymaster.New(db)
 
