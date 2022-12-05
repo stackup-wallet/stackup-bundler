@@ -79,6 +79,10 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 			if err != nil {
 				return err
 			}
+			l = l.
+				WithValues("client_id", cid).
+				WithValues("opsSeen", opsSeen).
+				WithValues("opsIncluded", opsIncluded)
 
 			OpsFailed := opsSeen - opsIncluded
 			if OpsFailed < banThreshold {
@@ -86,10 +90,6 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 			}
 
 			isBanned = true
-			l = l.
-				WithValues("client_id", cid).
-				WithValues("opsSeen", opsSeen).
-				WithValues("opsIncluded", opsIncluded)
 			return nil
 		})
 		if err != nil {
@@ -102,6 +102,8 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 			l.Info("client banned")
 			c.Status(http.StatusForbidden)
 			c.Abort()
+		} else {
+			l.Info("client ok")
 		}
 	}
 }
