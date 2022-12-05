@@ -157,7 +157,7 @@ func (r *Relayer) MapUserOpHashToClientID() gin.HandlerFunc {
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		// TODO: Increment badger nextTxnTs to read latest data from MapUserOpHashToClientID.
-		time.Sleep(2 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 
 		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {
