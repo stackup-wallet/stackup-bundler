@@ -24,6 +24,12 @@ var (
 	// A marker to delimit between account and paymaster simulation.
 	markerOpCode = "NUMBER"
 
+	// Pre-marker represents account validation.
+	preMarker = "account"
+
+	// Post-marker represents paymaster validation.
+	postMarker = "paymaster"
+
 	// All opcodes executed at this depth are from the EntryPoint and allowed.
 	allowedDepth = float64(1)
 
@@ -33,7 +39,7 @@ var (
 	// Only one create2 opcode is allowed if these two conditions are met:
 	// 	1. op.initcode.length != 0
 	// 	2. During account simulation (i.e. before markerOpCode)
-	// create2OpCode = "CREATE2"
+	create2OpCode = "CREATE2"
 
 	// List of opcodes related to CALL.
 	callOpcodes = mapset.NewSet(
@@ -148,17 +154,26 @@ func TraceSimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *use
 	}
 
 	var prev structLog
-	simFor := "account"
+	create2count := 0
+	simFor := preMarker
 	for _, sl := range res.StructLogs {
 		if sl.Depth == allowedDepth {
 			if sl.Op == markerOpCode {
-				simFor = "paymaster"
+				simFor = postMarker
 			}
 			continue
 		}
 
 		if prev.Op == gasOpCode && !callOpcodes.Contains(sl.Op) {
 			return fmt.Errorf("%s: uses opcode %s incorrectly", simFor, gasOpCode)
+		}
+
+		if sl.Op == create2OpCode {
+			create2count++
+
+			if create2count > 1 || len(op.InitCode) == 0 || simFor != preMarker {
+				return fmt.Errorf("%s: uses opcode %s incorrectly", simFor, sl.Op)
+			}
 		}
 
 		if baseForbiddenOpCodes.Contains(sl.Op) {
