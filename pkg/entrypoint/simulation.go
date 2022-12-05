@@ -28,7 +28,7 @@ var (
 	allowedDepth = float64(1)
 
 	// The gas opcode is only allowed if followed immediately by callOpcodes.
-	// gasOpCode = "GAS"
+	gasOpCode = "GAS"
 
 	// Only one create2 opcode is allowed if these two conditions are met:
 	// 	1. op.initcode.length != 0
@@ -36,12 +36,12 @@ var (
 	// create2OpCode = "CREATE2"
 
 	// List of opcodes related to CALL.
-	// callOpcodes = mapset.NewSet(
-	// 	"CALL",
-	// 	"DELEGATECALL",
-	// 	"CALLCODE",
-	// 	"STATICCALL",
-	// )
+	callOpcodes = mapset.NewSet(
+		"CALL",
+		"DELEGATECALL",
+		"CALLCODE",
+		"STATICCALL",
+	)
 
 	// List of opcodes not allowed during simulation for depth > allowedDepth (i.e. account, paymaster, or
 	// contracts called by them).
@@ -147,19 +147,25 @@ func TraceSimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *use
 		return err
 	}
 
+	var prev structLog
 	simFor := "account"
 	for _, sl := range res.StructLogs {
-		if sl.Depth == allowedDepth && sl.Op == markerOpCode {
-			simFor = "paymaster"
+		if sl.Depth == allowedDepth {
+			if sl.Op == markerOpCode {
+				simFor = "paymaster"
+			}
+			continue
 		}
 
-		if sl.Depth == allowedDepth {
-			continue
+		if prev.Op == gasOpCode && !callOpcodes.Contains(sl.Op) {
+			return fmt.Errorf("%s: uses opcode %s incorrectly", simFor, gasOpCode)
 		}
 
 		if baseForbiddenOpCodes.Contains(sl.Op) {
 			return fmt.Errorf("%s: uses forbidden opcode %s", simFor, sl.Op)
 		}
+
+		prev = sl
 	}
 
 	return nil
