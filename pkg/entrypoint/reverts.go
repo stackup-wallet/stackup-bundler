@@ -115,12 +115,16 @@ func failedOp() abi.Error {
 func newFailedOpRevert(err error) (*FailedOpRevert, error) {
 	rpcErr, ok := err.(rpc.DataError)
 	if !ok {
-		return nil, errors.New("failedOp: cannot assert type: error is not of type rpc.DataError")
+		return nil, fmt.Errorf("failedOp: cannot assert type: error is not of type rpc.DataError, err: %s", err)
 	}
 
 	data, ok := rpcErr.ErrorData().(string)
 	if !ok {
-		return nil, errors.New("failedOp: cannot assert type: data is not of type string")
+		return nil, fmt.Errorf(
+			"failedOp: cannot assert type: data is not of type string, err: %s, data: %s",
+			rpcErr.Error(),
+			rpcErr.ErrorData(),
+		)
 	}
 
 	failedOp := failedOp()
