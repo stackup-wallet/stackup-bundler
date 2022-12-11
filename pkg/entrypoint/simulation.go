@@ -121,9 +121,19 @@ type traceCallOpts struct {
 	DisableMemory  bool `json:"disableMemory"`
 }
 
+type traceCallOpts2 struct {
+	Tracer string `json:"tracer"`
+}
+
 // TraceSimulateValidation makes a debug_traceCall to Entrypoint.simulateValidation(userop) and returns the
 // results without any state changes.
-func TraceSimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *userop.UserOperation, chainID *big.Int) error {
+func TraceSimulateValidation(
+	rpc *rpc.Client,
+	entryPoint common.Address,
+	op *userop.UserOperation,
+	chainID *big.Int,
+	tracer string,
+) error {
 	ep, err := NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
 	if err != nil {
 		return err
@@ -145,11 +155,21 @@ func TraceSimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *use
 		To:   entryPoint,
 		Data: tx.Data(),
 	}
-	opts := traceCallOpts{
-		DisableStorage: false,
-		DisableMemory:  false,
+	// opts := traceCallOpts{
+	// 	DisableStorage: false,
+	// 	DisableMemory:  false,
+	// }
+
+	var res2 interface{}
+	opts2 := traceCallOpts2{
+		Tracer: tracer,
 	}
-	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
+	if err := rpc.CallContext(context.Background(), &res2, "debug_traceCall", &req, "latest", &opts2); err != nil {
+		return err
+	}
+	fmt.Println("JS tracer result:", res2)
+
+	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest"); err != nil {
 		return err
 	}
 

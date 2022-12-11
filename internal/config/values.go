@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
+	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 )
 
 type Values struct {
@@ -22,7 +23,8 @@ type Values struct {
 	Beneficiary          string
 
 	// Undocumented variables.
-	GinMode string
+	GinMode                string
+	BundlerCollectorTracer string
 }
 
 func envArrayToAddressSlice(s string) []common.Address {
@@ -85,15 +87,22 @@ func GetValues() *Values {
 		viper.SetDefault("erc4337_bundler_beneficiary", s.Address.String())
 	}
 
+	// Load js tracer from embedded file
+	bct, err := tracer.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	// Return Values
 	return &Values{
-		PrivateKey:           viper.GetString("erc4337_bundler_private_key"),
-		EthClientUrl:         viper.GetString("erc4337_bundler_eth_client_url"),
-		Port:                 viper.GetInt("erc4337_bundler_port"),
-		DataDirectory:        viper.GetString("erc4337_bundler_data_directory"),
-		SupportedEntryPoints: envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points")),
-		Beneficiary:          viper.GetString("erc4337_bundler_beneficiary"),
-		MaxVerificationGas:   big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas"))),
-		GinMode:              viper.GetString("erc4337_bundler_gin_mode"),
+		PrivateKey:             viper.GetString("erc4337_bundler_private_key"),
+		EthClientUrl:           viper.GetString("erc4337_bundler_eth_client_url"),
+		Port:                   viper.GetInt("erc4337_bundler_port"),
+		DataDirectory:          viper.GetString("erc4337_bundler_data_directory"),
+		SupportedEntryPoints:   envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points")),
+		Beneficiary:            viper.GetString("erc4337_bundler_beneficiary"),
+		MaxVerificationGas:     big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas"))),
+		GinMode:                viper.GetString("erc4337_bundler_gin_mode"),
+		BundlerCollectorTracer: bct,
 	}
 }
