@@ -1,4 +1,4 @@
-// These are the same BundlerCollectorTracer types from github.com/eth-infinitism/bundler ported for GO.
+// These are the same BundlerCollectorTracer types from github.com/eth-infinitism/bundler ported for Go.
 
 package tracer
 
