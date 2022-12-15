@@ -27,7 +27,7 @@ type CallInfo struct {
 	Value any            `json:"value"`
 }
 
-// LogInfo provides context on topics and data at the end of each step in the EVM trace.
+// LogInfo provides context from calls to LOG opcodes during each step in the EVM trace.
 type LogInfo struct {
 	Topics []string `json:"topics"`
 	Data   string   `json:"data"`
