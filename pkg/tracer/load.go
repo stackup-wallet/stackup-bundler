@@ -28,7 +28,8 @@ func parse(code string) string {
 	return m
 }
 
-// Load reads the JavaScript tracer file and returns a string that can be passed to debug_traceCall.
+// Load reads the BundlerCollectorTracer.js file and returns a string that can be passed to a debug RPC
+// method as a custom tracer.
 func Load() (string, error) {
 	var t string
 	err := fs.WalkDir(files, ".", func(path string, d fs.DirEntry, err error) error {
