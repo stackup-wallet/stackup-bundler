@@ -20,13 +20,14 @@ type Standalone struct {
 	rpc                *rpc.Client
 	eth                *ethclient.Client
 	maxVerificationGas *big.Int
+	tracer             string
 }
 
 // New returns a Standalone instance with methods that can be used in Client and Bundler modules to perform
 // standard checks as specified in EIP-4337.
-func New(rpc *rpc.Client, maxVerificationGas *big.Int) *Standalone {
+func New(rpc *rpc.Client, maxVerificationGas *big.Int, tracer string) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{rpc, eth, maxVerificationGas}
+	return &Standalone{rpc, eth, maxVerificationGas, tracer}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -58,7 +59,7 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 			return err
 		})
 		g.Go(func() error {
-			return entrypoint.TraceSimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp, ctx.ChainID)
+			return entrypoint.TraceSimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp, ctx.ChainID, s.tracer)
 		})
 
 		return g.Wait()

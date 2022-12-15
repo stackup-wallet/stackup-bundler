@@ -77,7 +77,7 @@ func PrivateMode() {
 		log.Fatal(err)
 	}
 
-	check := checks.New(rpc, conf.MaxVerificationGas)
+	check := checks.New(rpc, conf.MaxVerificationGas, conf.BundlerCollectorTracer)
 	relayer := relay.New(db, eoa, eth, chain, beneficiary, logr)
 	paymaster := paymaster.New(db)
 

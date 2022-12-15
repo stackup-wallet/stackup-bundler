@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -21,37 +22,20 @@ var (
 	// A dummy private key used to build *bind.TransactOpts for simulation.
 	dummyPk, _ = crypto.GenerateKey()
 
-	// A marker to delimit between account and paymaster simulation.
-	markerOpCode = "NUMBER"
+	// Pre number marker represents account validation.
+	accountNumberLevel = "0"
 
-	// Pre-marker represents account validation.
-	preMarker = "account"
-
-	// Post-marker represents paymaster validation.
-	postMarker = "paymaster"
-
-	// All opcodes executed at this depth are from the EntryPoint and allowed.
-	allowedDepth = float64(1)
-
-	// The gas opcode is only allowed if followed immediately by callOpcodes.
-	gasOpCode = "GAS"
+	// Post number marker represents paymaster validation.
+	paymasterNumberLevel = "1"
 
 	// Only one create2 opcode is allowed if these two conditions are met:
 	// 	1. op.initcode.length != 0
 	// 	2. During account simulation (i.e. before markerOpCode)
 	create2OpCode = "CREATE2"
 
-	// List of opcodes related to CALL.
-	callOpcodes = mapset.NewSet(
-		"CALL",
-		"DELEGATECALL",
-		"CALLCODE",
-		"STATICCALL",
-	)
-
-	// List of opcodes not allowed during simulation for depth > allowedDepth (i.e. account, paymaster, or
-	// contracts called by them).
-	baseForbiddenOpCodes = mapset.NewSet(
+	// List of opcodes not allowed during simulation for depth > 1 (i.e. account, paymaster, or contracts
+	// called by them).
+	bannedOpCodes = mapset.NewSet(
 		"GASPRICE",
 		"GASLIMIT",
 		"DIFFICULTY",
@@ -62,6 +46,7 @@ var (
 		"SELFBALANCE",
 		"BALANCE",
 		"ORIGIN",
+		"GAS",
 		"CREATE",
 		"COINBASE",
 	)
@@ -94,22 +79,6 @@ func SimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *userop.U
 	return sim, nil
 }
 
-type structLog struct {
-	Depth   float64  `json:"depth"`
-	Gas     float64  `json:"gas"`
-	GasCost float64  `json:"gasCost"`
-	Op      string   `json:"op"`
-	Pc      float64  `json:"pc"`
-	Stack   []string `json:"stack"`
-}
-
-type traceCallRes struct {
-	Failed      bool        `json:"failed"`
-	Gas         float64     `json:"gas"`
-	ReturnValue []byte      `json:"returnValue"`
-	StructLogs  []structLog `json:"structLogs"`
-}
-
 type traceCallReq struct {
 	From common.Address `json:"from"`
 	To   common.Address `json:"to"`
@@ -117,13 +86,18 @@ type traceCallReq struct {
 }
 
 type traceCallOpts struct {
-	DisableStorage bool `json:"disableStorage"`
-	DisableMemory  bool `json:"disableMemory"`
+	Tracer string `json:"tracer"`
 }
 
 // TraceSimulateValidation makes a debug_traceCall to Entrypoint.simulateValidation(userop) and returns the
 // results without any state changes.
-func TraceSimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *userop.UserOperation, chainID *big.Int) error {
+func TraceSimulateValidation(
+	rpc *rpc.Client,
+	entryPoint common.Address,
+	op *userop.UserOperation,
+	chainID *big.Int,
+	customTracer string,
+) error {
 	ep, err := NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
 	if err != nil {
 		return err
@@ -139,48 +113,51 @@ func TraceSimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *use
 		return err
 	}
 
-	var res traceCallRes
 	req := traceCallReq{
 		From: common.HexToAddress("0x"),
 		To:   entryPoint,
 		Data: tx.Data(),
 	}
+
+	var res tracer.BundlerCollectorReturn
 	opts := traceCallOpts{
-		DisableStorage: false,
-		DisableMemory:  false,
+		Tracer: customTracer,
 	}
 	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return err
 	}
 
-	var prev structLog
-	create2count := 0
-	simFor := preMarker
-	for _, sl := range res.StructLogs {
-		if sl.Depth == allowedDepth {
-			if sl.Op == markerOpCode {
-				simFor = postMarker
-			}
-			continue
+	var accountOpCodes, paymasterOpCodes tracer.Counts
+	if len(res.NumberLevels) == 1 {
+		accountOpCodes = res.NumberLevels[accountNumberLevel].Opcodes
+		paymasterOpCodes = make(tracer.Counts)
+	} else if len(res.NumberLevels) == 2 {
+		accountOpCodes = res.NumberLevels[accountNumberLevel].Opcodes
+		paymasterOpCodes = res.NumberLevels[paymasterNumberLevel].Opcodes
+	} else {
+		return fmt.Errorf("unexpected tracing result for op: %s", op.GetUserOpHash(entryPoint, chainID))
+	}
+
+	for key := range accountOpCodes {
+		if bannedOpCodes.Contains(key) {
+			return fmt.Errorf("account contains banned opcode: %s", key)
 		}
+	}
 
-		if prev.Op == gasOpCode && !callOpcodes.Contains(sl.Op) {
-			return fmt.Errorf("%s: uses opcode %s incorrectly", simFor, gasOpCode)
+	for key := range paymasterOpCodes {
+		if bannedOpCodes.Contains(key) {
+			return fmt.Errorf("paymaster contains banned opcode: %s", key)
 		}
+	}
 
-		if sl.Op == create2OpCode {
-			create2count++
+	create2Count, ok := accountOpCodes[create2OpCode]
+	if ok && (create2Count > 1 || len(op.InitCode) == 0) {
+		return fmt.Errorf("account with too many %s", create2OpCode)
+	}
 
-			if create2count > 1 || len(op.InitCode) == 0 || simFor != preMarker {
-				return fmt.Errorf("%s: uses opcode %s incorrectly", simFor, sl.Op)
-			}
-		}
-
-		if baseForbiddenOpCodes.Contains(sl.Op) {
-			return fmt.Errorf("%s: uses forbidden opcode %s", simFor, sl.Op)
-		}
-
-		prev = sl
+	_, ok = paymasterOpCodes[create2OpCode]
+	if ok {
+		return fmt.Errorf("paymaster uses banned %s opcode: %s", create2OpCode, op.GetPaymaster())
 	}
 
 	return nil
