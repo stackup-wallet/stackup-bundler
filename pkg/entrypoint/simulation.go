@@ -22,11 +22,14 @@ var (
 	// A dummy private key used to build *bind.TransactOpts for simulation.
 	dummyPk, _ = crypto.GenerateKey()
 
-	// Pre number marker represents account validation.
-	accountNumberLevel = "0"
+	// Up to the first number marker represents factory validation.
+	factoryNumberLevel = "0"
 
-	// Post number marker represents paymaster validation.
-	paymasterNumberLevel = "1"
+	// After the first number marker and before the second represents account validation.
+	accountNumberLevel = "1"
+
+	// After the second number marker represents paymaster validation.
+	paymasterNumberLevel = "2"
 
 	// Only one create2 opcode is allowed if these two conditions are met:
 	// 	1. op.initcode.length != 0
@@ -127,32 +130,40 @@ func TraceSimulateValidation(
 		return err
 	}
 
-	var accountOpCodes, paymasterOpCodes tracer.Counts
-	if len(res.NumberLevels) == 1 {
-		accountOpCodes = res.NumberLevels[accountNumberLevel].Opcodes
-		paymasterOpCodes = make(tracer.Counts)
-	} else if len(res.NumberLevels) == 2 {
-		accountOpCodes = res.NumberLevels[accountNumberLevel].Opcodes
-		paymasterOpCodes = res.NumberLevels[paymasterNumberLevel].Opcodes
-	} else {
+	var factoryOpCodes, accountOpCodes, paymasterOpCodes tracer.Counts
+	if len(res.NumberLevels) != 3 {
 		return fmt.Errorf("unexpected tracing result for op: %s", op.GetUserOpHash(entryPoint, chainID))
 	}
+	factoryOpCodes = res.NumberLevels[factoryNumberLevel].Opcodes
+	accountOpCodes = res.NumberLevels[accountNumberLevel].Opcodes
+	paymasterOpCodes = res.NumberLevels[paymasterNumberLevel].Opcodes
 
-	for key := range accountOpCodes {
-		if bannedOpCodes.Contains(key) {
-			return fmt.Errorf("account contains banned opcode: %s", key)
+	for opcode := range factoryOpCodes {
+		if bannedOpCodes.Contains(opcode) {
+			return fmt.Errorf("factory contains banned opcode: %s", opcode)
 		}
 	}
 
-	for key := range paymasterOpCodes {
-		if bannedOpCodes.Contains(key) {
-			return fmt.Errorf("paymaster contains banned opcode: %s", key)
+	for opcode := range accountOpCodes {
+		if bannedOpCodes.Contains(opcode) {
+			return fmt.Errorf("account contains banned opcode: %s", opcode)
 		}
 	}
 
-	create2Count, ok := accountOpCodes[create2OpCode]
+	for opcode := range paymasterOpCodes {
+		if bannedOpCodes.Contains(opcode) {
+			return fmt.Errorf("paymaster contains banned opcode: %s", opcode)
+		}
+	}
+
+	create2Count, ok := factoryOpCodes[create2OpCode]
 	if ok && (create2Count > 1 || len(op.InitCode) == 0) {
 		return fmt.Errorf("account with too many %s", create2OpCode)
+	}
+
+	_, ok = accountOpCodes[create2OpCode]
+	if ok {
+		return fmt.Errorf("account uses banned %s opcode: %s", create2OpCode, op.Sender.String())
 	}
 
 	_, ok = paymasterOpCodes[create2OpCode]
