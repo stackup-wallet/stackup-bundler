@@ -12,11 +12,14 @@ type AccessInfo struct {
 	Writes Counts `json:"writes"`
 }
 
+// NumberLevelInfo provides context on opcodes and storage access delimited by the use of NUMBER at the
+// EntryPoint.
 type NumberLevelInfo struct {
 	Opcodes Counts                        `json:"opcodes"`
 	Access  map[common.Address]AccessInfo `json:"access"`
 }
 
+// CallInfo provides context on internal calls made during tracing.
 type CallInfo struct {
 	Type  string         `json:"type"`
 	From  common.Address `json:"from"`
@@ -24,13 +27,13 @@ type CallInfo struct {
 	Value any            `json:"value"`
 }
 
+// LogInfo provides context on topics and data at the end of each step in the EVM trace.
 type LogInfo struct {
 	Topics []string `json:"topics"`
 	Data   string   `json:"data"`
 }
 
-// BundlerCollectorReturn is the return value from calling debug_traceCall with the custom JS tracer from
-// Load().
+// BundlerCollectorReturn is the return value from performing an EVM trace with BundlerCollectorTracer.js.
 type BundlerCollectorReturn struct {
 	NumberLevels map[string]NumberLevelInfo `json:"numberLevels"`
 	Keccak       []string                   `json:"keccak"`
