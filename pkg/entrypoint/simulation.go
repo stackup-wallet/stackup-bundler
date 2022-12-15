@@ -158,7 +158,7 @@ func TraceSimulateValidation(
 
 	create2Count, ok := factoryOpCodes[create2OpCode]
 	if ok && (create2Count > 1 || len(op.InitCode) == 0) {
-		return fmt.Errorf("account with too many %s", create2OpCode)
+		return fmt.Errorf("factory with too many %s", create2OpCode)
 	}
 
 	_, ok = accountOpCodes[create2OpCode]
