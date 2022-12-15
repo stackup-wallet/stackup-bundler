@@ -1,3 +1,5 @@
+// Package tracer provides provides custom tracing capabilities to comply with EIP-4337 specifications for
+// forbidden opcodes.
 package tracer
 
 import (
