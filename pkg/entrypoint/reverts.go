@@ -11,28 +11,39 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-type PaymasterInfo struct {
-	PaymasterStake        *big.Int `json:"paymasterStake"`
-	PaymasterUnstakeDelay *big.Int `json:"paymasterUnstakeDelay"`
+type StakeInfo struct {
+	Stake           *big.Int `json:"stake"`
+	UnstakeDelaySec *big.Int `json:"unstakeDelaySec"`
 }
 
 type SimulationResultRevert struct {
 	PreOpGas      *big.Int
 	Prefund       *big.Int
 	Deadline      *big.Int
-	PaymasterInfo *PaymasterInfo
+	SenderInfo    *StakeInfo
+	FactoryInfo   *StakeInfo
+	PaymasterInfo *StakeInfo
 }
+
+var (
+	stakeInfoType = []abi.ArgumentMarshaling{
+		{Name: "stake", Type: "uint256"},
+		{Name: "unstakeDelaySec", Type: "uint256"},
+	}
+)
 
 func simulationResult() abi.Error {
 	uint256, _ := abi.NewType("uint256", "uint256", nil)
-	paymasterInfo, _ := abi.NewType("tuple", "PaymasterInfo", []abi.ArgumentMarshaling{
-		{Name: "paymasterStake", Type: "uint256"},
-		{Name: "paymasterUnstakeDelay", Type: "uint256"},
-	})
+	senderInfo, _ := abi.NewType("tuple", "SenderInfo", stakeInfoType)
+	factoryInfo, _ := abi.NewType("tuple", "FactoryInfo", stakeInfoType)
+	paymasterInfo, _ := abi.NewType("tuple", "PaymasterInfo", stakeInfoType)
+
 	return abi.NewError("SimulationResult", abi.Arguments{
 		{Name: "preOpGas", Type: uint256},
 		{Name: "prefund", Type: uint256},
 		{Name: "deadline", Type: uint256},
+		{Name: "senderInfo", Type: senderInfo},
+		{Name: "factoryInfo", Type: factoryInfo},
 		{Name: "paymasterInfo", Type: paymasterInfo},
 	})
 }
@@ -58,8 +69,8 @@ func newSimulationResultRevert(err error) (*SimulationResultRevert, error) {
 	if !ok {
 		return nil, errors.New("simulationResult: cannot assert type: args is not of type []any")
 	}
-	if len(args) != 4 {
-		return nil, fmt.Errorf("simulationResult: invalid args length: expected 4, got %d", len(args))
+	if len(args) != 6 {
+		return nil, fmt.Errorf("simulationResult: invalid args length: expected 6, got %d", len(args))
 	}
 
 	preOpGas, ok := args[0].(*big.Int)
@@ -77,12 +88,29 @@ func newSimulationResultRevert(err error) (*SimulationResultRevert, error) {
 		return nil, errors.New("simulationResult: cannot assert type: deadline is not of type *big.Int")
 	}
 
-	pmi, err := json.Marshal(args[3])
+	senderInfo := &StakeInfo{}
+	si, err := json.Marshal(args[3])
 	if err != nil {
 		return nil, fmt.Errorf("simulationResult: %s", err)
 	}
+	if err := json.Unmarshal(si, senderInfo); err != nil {
+		return nil, fmt.Errorf("simulationResult: %s", err)
+	}
 
-	paymasterInfo := &PaymasterInfo{}
+	factoryInfo := &StakeInfo{}
+	fi, err := json.Marshal(args[4])
+	if err != nil {
+		return nil, fmt.Errorf("simulationResult: %s", err)
+	}
+	if err := json.Unmarshal(fi, factoryInfo); err != nil {
+		return nil, fmt.Errorf("simulationResult: %s", err)
+	}
+
+	paymasterInfo := &StakeInfo{}
+	pmi, err := json.Marshal(args[5])
+	if err != nil {
+		return nil, fmt.Errorf("simulationResult: %s", err)
+	}
 	if err := json.Unmarshal(pmi, paymasterInfo); err != nil {
 		return nil, fmt.Errorf("simulationResult: %s", err)
 	}
@@ -91,6 +119,8 @@ func newSimulationResultRevert(err error) (*SimulationResultRevert, error) {
 		PreOpGas:      preOpGas,
 		Prefund:       prefund,
 		Deadline:      deadline,
+		SenderInfo:    senderInfo,
+		FactoryInfo:   factoryInfo,
 		PaymasterInfo: paymasterInfo,
 	}, nil
 }
