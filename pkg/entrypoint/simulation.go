@@ -23,13 +23,13 @@ var (
 	dummyPk, _ = crypto.GenerateKey()
 
 	// Up to the first number marker represents factory validation.
-	factoryNumberLevel = "0"
+	factoryNumberLevel = 0
 
 	// After the first number marker and before the second represents account validation.
-	accountNumberLevel = "1"
+	accountNumberLevel = 1
 
 	// After the second number marker represents paymaster validation.
-	paymasterNumberLevel = "2"
+	paymasterNumberLevel = 2
 
 	// Only one create2 opcode is allowed if these two conditions are met:
 	// 	1. op.initcode.length != 0
