@@ -35,9 +35,9 @@ type LogInfo struct {
 
 // BundlerCollectorReturn is the return value from performing an EVM trace with BundlerCollectorTracer.js.
 type BundlerCollectorReturn struct {
-	NumberLevels map[string]NumberLevelInfo `json:"numberLevels"`
-	Keccak       []string                   `json:"keccak"`
-	Calls        []CallInfo                 `json:"calls"`
-	Logs         []LogInfo                  `json:"logs"`
-	Debug        []any                      `json:"debug"`
+	NumberLevels []NumberLevelInfo `json:"numberLevels"`
+	Keccak       []string          `json:"keccak"`
+	Calls        []CallInfo        `json:"calls"`
+	Logs         []LogInfo         `json:"logs"`
+	Debug        []any             `json:"debug"`
 }
