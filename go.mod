@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/deckarep/golang-set/v2 v2.1.0
-	github.com/dgraph-io/badger/v3 v3.2103.3
+	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/ethereum/go-ethereum v1.10.25
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
