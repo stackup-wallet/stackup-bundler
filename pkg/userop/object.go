@@ -55,6 +55,15 @@ func (op *UserOperation) GetPaymaster() common.Address {
 	return common.BytesToAddress(op.PaymasterAndData[:common.AddressLength])
 }
 
+// GetFactory returns the address portion of InitCode if applicable. Otherwise it returns the zero address.
+func (op *UserOperation) GetFactory() common.Address {
+	if len(op.InitCode) < common.AddressLength {
+		return common.HexToAddress("0x")
+	}
+
+	return common.BytesToAddress(op.InitCode[:common.AddressLength])
+}
+
 // GetMaxPrefund returns the max amount of wei required to pay for gas fees by either the sender or
 // paymaster.
 func (op *UserOperation) GetMaxPrefund() *big.Int {
