@@ -25,11 +25,16 @@ type MethodMocks map[string]any
 func EthMock(mocks MethodMocks) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req mockReq
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			panic(err)
+		}
+
 		mock, ok := mocks[req.Method]
 		if !ok {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(fmt.Sprintf("method not in mocks: %s", req.Method)))
+			if _, err := w.Write([]byte(fmt.Sprintf("method not in mocks: %s", req.Method))); err != nil {
+				panic(err)
+			}
 			return
 		}
 
@@ -39,6 +44,8 @@ func EthMock(mocks MethodMocks) *httptest.Server {
 			Result:  mock,
 		}
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(res)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			panic(err)
+		}
 	}))
 }

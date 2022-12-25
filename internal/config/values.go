@@ -61,14 +61,30 @@ func GetValues() *Values {
 	}
 
 	// Read in from environment variables
-	viper.BindEnv("erc4337_bundler_eth_client_url")
-	viper.BindEnv("erc4337_bundler_private_key")
-	viper.BindEnv("erc4337_bundler_port")
-	viper.BindEnv("erc4337_bundler_data_directory")
-	viper.BindEnv("erc4337_bundler_supported_entry_points")
-	viper.BindEnv("erc4337_bundler_beneficiary")
-	viper.BindEnv("erc4337_bundler_max_verification_gas")
-	viper.BindEnv("erc4337_bundler_gin_mode")
+	if err := viper.BindEnv("erc4337_bundler_eth_client_url"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv("erc4337_bundler_private_key"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv("erc4337_bundler_port"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv("erc4337_bundler_data_directory"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv("erc4337_bundler_supported_entry_points"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv("erc4337_bundler_beneficiary"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv("erc4337_bundler_max_verification_gas"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindEnv("erc4337_bundler_gin_mode"); err != nil {
+		panic(err)
+	}
 
 	// Validate required variables
 	if !viper.IsSet("erc4337_bundler_eth_client_url") || viper.GetString("erc4337_bundler_eth_client_url") == "" {
