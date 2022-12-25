@@ -1,16 +1,15 @@
 package checks
 
 import (
-	"context"
 	"errors"
 
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// Checks that the sender is an existing contract, or the initCode is not empty (but not both)
-func checkSender(eth *ethclient.Client, op *userop.UserOperation) error {
-	bytecode, err := eth.CodeAt(context.Background(), op.Sender, nil)
+// ValidateSender accepts a userOp and a generic function that can retrieve the bytecode of the sender.
+// Either the sender is deployed (non-zero length bytecode) or the initCode is not empty (but not both).
+func ValidateSender(op *userop.UserOperation, gc GetCodeFunc) error {
+	bytecode, err := gc(op.Sender)
 	if err != nil {
 		return err
 	}

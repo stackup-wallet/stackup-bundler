@@ -39,8 +39,15 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 			return err
 		}
 
+		getCode := getCodeWithEthClient(s.eth)
+		getStake, err := getStakeWithEthClient(ctx, s.eth)
+		if err != nil {
+			return err
+		}
+
 		g := new(errgroup.Group)
-		g.Go(func() error { return checkSender(s.eth, ctx.UserOp) })
+		g.Go(func() error { return ValidateSender(ctx.UserOp, getCode) })
+		g.Go(func() error { return ValidateInitCode(ctx.UserOp, getStake) })
 		g.Go(func() error { return checkVerificationGas(s.maxVerificationGas, ctx.UserOp) })
 		g.Go(func() error { return checkPaymasterAndData(s.eth, ep, ctx.UserOp) })
 		g.Go(func() error { return checkCallGasLimit(ctx.UserOp) })

@@ -1,6 +1,9 @@
 package testutils
 
-import "github.com/stackup-wallet/stackup-bundler/pkg/userop"
+import (
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
+)
 
 var (
 	MockUserOpData = map[string]any{
@@ -16,7 +19,7 @@ var (
 		"preVerificationGas":   "0xc650",
 		"signature":            "0xa925dcc5e5131636e244d4405334c25f034ebdd85c0cb12e8cdb13c15249c2d466d0bade18e2cafd3513497f7f968dcbb63e519acd9b76dcae7acd61f11aa8421b",
 	}
-	MockByteCode = "0x6080604052"
+	MockByteCode = common.Hex2Bytes("6080604052")
 )
 
 // Returns a valid initial userOperation for an EIP-4337 account.
