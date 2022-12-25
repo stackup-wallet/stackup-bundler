@@ -28,6 +28,10 @@ var mode string
 func init() {
 	rootCmd.AddCommand(startCmd)
 	startCmd.Flags().StringVarP(&mode, "mode", "m", "", "Required. See acceptable values above.")
-	startCmd.MarkFlagRequired("mode")
-	viper.BindPFlag("mode", startCmd.Flags().Lookup("mode"))
+	if err := startCmd.MarkFlagRequired("mode"); err != nil {
+		panic(err)
+	}
+	if err := viper.BindPFlag("mode", startCmd.Flags().Lookup("mode")); err != nil {
+		panic(err)
+	}
 }

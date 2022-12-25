@@ -26,7 +26,10 @@ func getEntryPointAndSenderFromDBKey(key []byte) (common.Address, common.Address
 
 func getUserOpFromDBValue(value []byte) (*userop.UserOperation, error) {
 	data := make(map[string]any)
-	json.Unmarshal(value, &data)
+	if err := json.Unmarshal(value, &data); err != nil {
+		return nil, err
+	}
+
 	op, err := userop.New(data)
 	if err != nil {
 		return nil, err

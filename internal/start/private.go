@@ -99,17 +99,21 @@ func PrivateMode() {
 		relayer.SendUserOperation(),
 		paymaster.IncOpsIncluded(),
 	)
-	b.Run()
+	if err := b.Run(); err != nil {
+		log.Fatal(err)
+	}
 
 	// Init HTTP server
 	gin.SetMode(conf.GinMode)
 	r := gin.New()
+	if err := r.SetTrustedProxies(nil); err != nil {
+		log.Fatal(err)
+	}
 	r.Use(
 		cors.Default(),
 		logger.WithLogr(logr),
 		gin.Recovery(),
 	)
-	r.SetTrustedProxies(nil)
 	r.GET("/ping", func(g *gin.Context) {
 		g.Status(http.StatusOK)
 	})
@@ -119,5 +123,7 @@ func PrivateMode() {
 		jsonrpc.Controller(client.NewRpcAdapter(c)),
 		relayer.MapUserOpHashToClientID(),
 	)
-	r.Run(fmt.Sprintf(":%d", conf.Port))
+	if err := r.Run(fmt.Sprintf(":%d", conf.Port)); err != nil {
+		log.Fatal(err)
+	}
 }
