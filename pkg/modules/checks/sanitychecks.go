@@ -2,57 +2,12 @@ package checks
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
-
-// Checks the paymasterAndData is either zero bytes or the first 20 bytes contain an address that
-//
-//  1. is not the zero address
-//  2. currently has nonempty code on chain
-//  3. has registered and staked
-//  4. has a sufficient deposit to pay for the UserOperation
-func checkPaymasterAndData(eth *ethclient.Client, ep *entrypoint.Entrypoint, op *userop.UserOperation) error {
-	if len(op.PaymasterAndData) == 0 {
-		return nil
-	}
-
-	if len(op.PaymasterAndData) < common.AddressLength {
-		return errors.New("PaymasterAndData: invalid length")
-	}
-
-	address := op.GetPaymaster()
-	if address == common.HexToAddress("0x") {
-		return errors.New("paymaster: cannot be the zero address")
-	}
-
-	bytecode, err := eth.CodeAt(context.Background(), address, nil)
-	if err != nil {
-		return err
-	}
-	if len(bytecode) == 0 {
-		return errors.New("paymaster: code not deployed")
-	}
-
-	dep, err := ep.GetDepositInfo(nil, address)
-	if err != nil {
-		return err
-	}
-	if !dep.Staked {
-		return errors.New("paymaster: not staked on the entrypoint")
-	}
-	if dep.Deposit.Cmp(op.GetMaxPrefund()) < 0 {
-		return errors.New("paymaster: not enough deposit to cover max prefund")
-	}
-
-	return nil
-}
 
 // Checks the callGasLimit is at least the cost of a CALL with non-zero value.
 func checkCallGasLimit(op *userop.UserOperation) error {

@@ -34,22 +34,17 @@ func New(rpc *rpc.Client, maxVerificationGas *big.Int, tracer string) *Standalon
 // received by the Client. This should be one of the first modules executed by the Client.
 func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
-		ep, err := entrypoint.NewEntrypoint(ctx.EntryPoint, s.eth)
-		if err != nil {
-			return err
-		}
-
-		getCode := getCodeWithEthClient(s.eth)
-		getStake, err := getStakeWithEthClient(ctx, s.eth)
+		gc := getCodeWithEthClient(s.eth)
+		gs, err := getStakeWithEthClient(ctx, s.eth)
 		if err != nil {
 			return err
 		}
 
 		g := new(errgroup.Group)
-		g.Go(func() error { return ValidateSender(ctx.UserOp, getCode) })
-		g.Go(func() error { return ValidateInitCode(ctx.UserOp, getStake) })
+		g.Go(func() error { return ValidateSender(ctx.UserOp, gc) })
+		g.Go(func() error { return ValidateInitCode(ctx.UserOp, gs) })
 		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.maxVerificationGas) })
-		g.Go(func() error { return checkPaymasterAndData(s.eth, ep, ctx.UserOp) })
+		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, gs) })
 		g.Go(func() error { return checkCallGasLimit(ctx.UserOp) })
 		g.Go(func() error { return checkFeePerGas(s.eth, ctx.UserOp) })
 
@@ -66,7 +61,13 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 			return err
 		})
 		g.Go(func() error {
-			return entrypoint.TraceSimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp, ctx.ChainID, s.tracer)
+			return entrypoint.TraceSimulateValidation(
+				s.rpc,
+				ctx.EntryPoint,
+				ctx.UserOp,
+				ctx.ChainID,
+				s.tracer,
+			)
 		})
 
 		return g.Wait()

@@ -3,7 +3,6 @@ package checks
 import (
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stackup-wallet/stackup-bundler/internal/testutils"
 )
 
@@ -12,9 +11,7 @@ import (
 func TestSenderExistAndInitCodeDNE(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.InitCode = []byte{}
-	err := ValidateSender(op, func(s common.Address) ([]byte, error) {
-		return testutils.MockByteCode, nil
-	})
+	err := ValidateSender(op, testutils.MockGetCode)
 
 	if err != nil {
 		t.Fatalf(`got err %v, want nil`, err)
@@ -25,9 +22,7 @@ func TestSenderExistAndInitCodeDNE(t *testing.T) {
 // error.
 func TestSenderAndInitCodeExist(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
-	err := ValidateSender(op, func(s common.Address) ([]byte, error) {
-		return testutils.MockByteCode, nil
-	})
+	err := ValidateSender(op, testutils.MockGetCode)
 
 	if err == nil {
 		t.Fatalf(`got nil, want err`)
@@ -38,9 +33,7 @@ func TestSenderAndInitCodeExist(t *testing.T) {
 // initCode does. Expect nil.
 func TestSenderDNEAndInitCodeExist(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
-	err := ValidateSender(op, func(s common.Address) ([]byte, error) {
-		return []byte{}, nil
-	})
+	err := ValidateSender(op, testutils.MockGetCodeZero)
 
 	if err != nil {
 		t.Fatalf(`got err %v, want nil`, err)
@@ -52,9 +45,7 @@ func TestSenderDNEAndInitCodeExist(t *testing.T) {
 func TestSenderAndInitCodeDNE(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.InitCode = []byte{}
-	err := ValidateSender(op, func(s common.Address) ([]byte, error) {
-		return []byte{}, nil
-	})
+	err := ValidateSender(op, testutils.MockGetCodeZero)
 
 	if err == nil {
 		t.Fatalf(`got nil, want err`)
