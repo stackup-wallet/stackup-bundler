@@ -10,7 +10,7 @@ import (
 func TestNilPaymasterAndData(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.PaymasterAndData = []byte{}
-	err := ValidatePaymasterAndData(op, testutils.MockGetCode, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePaymasterAndData(op, testutils.MockGetCodeZero, testutils.MockGetNotStakeZeroDeposit)
 
 	if err != nil {
 		t.Fatalf("got err %v, want nil", err)
@@ -21,7 +21,7 @@ func TestNilPaymasterAndData(t *testing.T) {
 func TestBadPaymasterAndData(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.PaymasterAndData = []byte("1234")
-	err := ValidatePaymasterAndData(op, testutils.MockGetCode, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePaymasterAndData(op, testutils.MockGetCodeZero, testutils.MockGetNotStakeZeroDeposit)
 
 	if err == nil {
 		t.Fatal("got nil, want err")
