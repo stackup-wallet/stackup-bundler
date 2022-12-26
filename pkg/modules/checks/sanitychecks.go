@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -12,22 +11,6 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
-
-// Checks that the verificationGasLimit is sufficiently low (<= MAX_VERIFICATION_GAS) and the
-// preVerificationGas is sufficiently high (enough to pay for the calldata gas cost of serializing
-// the UserOperation plus PRE_VERIFICATION_OVERHEAD_GAS)
-func checkVerificationGas(maxVerificationGas *big.Int, op *userop.UserOperation) error {
-	if op.VerificationGasLimit.Cmp(maxVerificationGas) > 0 {
-		return fmt.Errorf("verificationGasLimit: exceeds maxVerificationGas of %s", maxVerificationGas.String())
-	}
-
-	pvg := gas.NewDefaultOverhead().CalcPreVerificationGas(op)
-	if op.PreVerificationGas.Cmp(pvg) < 0 {
-		return fmt.Errorf("preVerificationGas: below expected gas of %s", pvg.String())
-	}
-
-	return nil
-}
 
 // Checks the paymasterAndData is either zero bytes or the first 20 bytes contain an address that
 //
