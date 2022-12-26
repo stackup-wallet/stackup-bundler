@@ -28,8 +28,8 @@ func TestBadPaymasterAndData(t *testing.T) {
 	}
 }
 
-// TestZeroByteCodePaymasterAndData calls checks.ValidatePaymasterAndData with paymaster contract not deployed
-// address. Expects error.
+// TestZeroByteCodePaymasterAndData calls checks.ValidatePaymasterAndData with paymaster contract not
+// deployed. Expects error.
 func TestZeroByteCodePaymasterAndData(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.PaymasterAndData = op.Sender.Bytes()
