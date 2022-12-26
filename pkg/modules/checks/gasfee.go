@@ -1,18 +1,16 @@
 package checks
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// The maxFeePerGas and maxPriorityFeePerGas are above a configurable minimum value that the client
-// is willing to accept. At the minimum, they are sufficiently high to be included with the current
-// block.basefee.
-func checkFeePerGas(eth *ethclient.Client, op *userop.UserOperation) error {
-	tip, err := eth.SuggestGasTipCap(context.Background())
+// ValidateFeePerGas checks the maxFeePerGas and maxPriorityFeePerGas are above a configurable minimum value
+// that the client is willing to accept. At the minimum, they are sufficiently high to be included with the
+// current block.basefee.
+func ValidateFeePerGas(op *userop.UserOperation, gt GetGasTipFunc) error {
+	tip, err := gt()
 	if err != nil {
 		return err
 	}
