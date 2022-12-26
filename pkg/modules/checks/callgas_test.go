@@ -9,7 +9,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 )
 
-// TestOpCGLessThanOH calls checks.ValidateCallGasLimit where callGas < overhead. Expect error
+// TestOpCGLessThanOH calls checks.ValidateCallGasLimit where callGas < overhead. Expect error.
 func TestOpCGLessThanOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	cg := gas.NewDefaultOverhead().NonZeroValueCall()
@@ -21,7 +21,7 @@ func TestOpCGLessThanOH(t *testing.T) {
 	}
 }
 
-// TestOpCGEqualOH calls checks.ValidateCallGasLimit where callGas == overhead. Expect nil
+// TestOpCGEqualOH calls checks.ValidateCallGasLimit where callGas == overhead. Expect nil.
 func TestOpCGEqualOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	cg := gas.NewDefaultOverhead().NonZeroValueCall()
@@ -33,7 +33,7 @@ func TestOpCGEqualOH(t *testing.T) {
 	}
 }
 
-// TestOpCGMoreThanOH calls checks.ValidateCallGasLimit where callGas > overhead. Expect nil
+// TestOpCGMoreThanOH calls checks.ValidateCallGasLimit where callGas > overhead. Expect nil.
 func TestOpCGMoreThanOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	cg := gas.NewDefaultOverhead().NonZeroValueCall()
