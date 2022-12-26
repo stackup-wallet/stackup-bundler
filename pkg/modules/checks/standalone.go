@@ -48,7 +48,7 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g := new(errgroup.Group)
 		g.Go(func() error { return ValidateSender(ctx.UserOp, getCode) })
 		g.Go(func() error { return ValidateInitCode(ctx.UserOp, getStake) })
-		g.Go(func() error { return checkVerificationGas(s.maxVerificationGas, ctx.UserOp) })
+		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.maxVerificationGas) })
 		g.Go(func() error { return checkPaymasterAndData(s.eth, ep, ctx.UserOp) })
 		g.Go(func() error { return checkCallGasLimit(ctx.UserOp) })
 		g.Go(func() error { return checkFeePerGas(s.eth, ctx.UserOp) })
