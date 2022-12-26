@@ -1,7 +1,6 @@
 package checks
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -48,7 +47,6 @@ func TestMFLessThanMPF(t *testing.T) {
 	gt := testutils.GetMockGasTipFunc(big.NewInt(0).Add(op.MaxPriorityFeePerGas, common.Big0))
 	op.MaxFeePerGas = big.NewInt(0).Sub(op.MaxPriorityFeePerGas, common.Big1)
 	err := ValidateFeePerGas(op, gt)
-	fmt.Println(err)
 
 	if err == nil {
 		t.Fatal("got nil, want err")
@@ -61,7 +59,6 @@ func TestMFEqualMPF(t *testing.T) {
 	gt := testutils.GetMockGasTipFunc(big.NewInt(0).Add(op.MaxPriorityFeePerGas, common.Big0))
 	op.MaxFeePerGas = big.NewInt(0).Add(op.MaxPriorityFeePerGas, common.Big0)
 	err := ValidateFeePerGas(op, gt)
-	fmt.Println(err)
 
 	if err != nil {
 		t.Fatalf("got %v, want nil", err)
@@ -74,7 +71,6 @@ func TestMFMoreThanMPF(t *testing.T) {
 	gt := testutils.GetMockGasTipFunc(big.NewInt(0).Add(op.MaxPriorityFeePerGas, common.Big0))
 	op.MaxFeePerGas = big.NewInt(0).Add(op.MaxPriorityFeePerGas, common.Big1)
 	err := ValidateFeePerGas(op, gt)
-	fmt.Println(err)
 
 	if err != nil {
 		t.Fatalf("got %v, want nil", err)
