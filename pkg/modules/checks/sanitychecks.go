@@ -5,19 +5,8 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
-
-// Checks the callGasLimit is at least the cost of a CALL with non-zero value.
-func checkCallGasLimit(op *userop.UserOperation) error {
-	cg := gas.NewDefaultOverhead().NonZeroValueCall()
-	if op.CallGasLimit.Cmp(cg) < 0 {
-		return fmt.Errorf("callGasLimit: below expected gas of %s", cg.String())
-	}
-
-	return nil
-}
 
 // The maxFeePerGas and maxPriorityFeePerGas are above a configurable minimum value that the client
 // is willing to accept. At the minimum, they are sufficiently high to be included with the current
