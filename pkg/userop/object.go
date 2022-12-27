@@ -32,17 +32,17 @@ func getAbiArgs() abi.Arguments {
 
 // UserOperation represents an EIP-4337 style transaction for a smart contract account.
 type UserOperation struct {
-	Sender               common.Address `json:"sender" mapstructure:"sender" validate:"required"`
-	Nonce                *big.Int       `json:"nonce" mapstructure:"nonce" validate:"required"`
-	InitCode             []byte         `json:"initCode"  mapstructure:"initCode" validate:"required"`
-	CallData             []byte         `json:"callData" mapstructure:"callData" validate:"required"`
-	CallGasLimit         *big.Int       `json:"callGasLimit" mapstructure:"callGasLimit" validate:"required"`
+	Sender               common.Address `json:"sender"               mapstructure:"sender"               validate:"required"`
+	Nonce                *big.Int       `json:"nonce"                mapstructure:"nonce"                validate:"required"`
+	InitCode             []byte         `json:"initCode"             mapstructure:"initCode"             validate:"required"`
+	CallData             []byte         `json:"callData"             mapstructure:"callData"             validate:"required"`
+	CallGasLimit         *big.Int       `json:"callGasLimit"         mapstructure:"callGasLimit"         validate:"required"`
 	VerificationGasLimit *big.Int       `json:"verificationGasLimit" mapstructure:"verificationGasLimit" validate:"required"`
-	PreVerificationGas   *big.Int       `json:"preVerificationGas" mapstructure:"preVerificationGas" validate:"required"`
-	MaxFeePerGas         *big.Int       `json:"maxFeePerGas" mapstructure:"maxFeePerGas" validate:"required"`
+	PreVerificationGas   *big.Int       `json:"preVerificationGas"   mapstructure:"preVerificationGas"   validate:"required"`
+	MaxFeePerGas         *big.Int       `json:"maxFeePerGas"         mapstructure:"maxFeePerGas"         validate:"required"`
 	MaxPriorityFeePerGas *big.Int       `json:"maxPriorityFeePerGas" mapstructure:"maxPriorityFeePerGas" validate:"required"`
-	PaymasterAndData     []byte         `json:"paymasterAndData" mapstructure:"paymasterAndData" validate:"required"`
-	Signature            []byte         `json:"signature" mapstructure:"signature" validate:"required"`
+	PaymasterAndData     []byte         `json:"paymasterAndData"     mapstructure:"paymasterAndData"     validate:"required"`
+	Signature            []byte         `json:"signature"            mapstructure:"signature"            validate:"required"`
 }
 
 // GetPaymaster returns the address portion of PaymasterAndData if applicable. Otherwise it returns the zero
@@ -176,7 +176,7 @@ func (op *UserOperation) MarshalJSON() ([]byte, error) {
 		InitCode:             hexutil.Encode(op.InitCode),
 		CallData:             hexutil.Encode(op.CallData),
 		CallGasLimit:         op.CallGasLimit.String(),
-		VerificationGasLimit: op.CallGasLimit.String(),
+		VerificationGasLimit: op.VerificationGasLimit.String(),
 		PreVerificationGas:   op.PreVerificationGas.String(),
 		MaxFeePerGas:         op.MaxFeePerGas.String(),
 		MaxPriorityFeePerGas: op.MaxPriorityFeePerGas.String(),

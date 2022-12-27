@@ -85,33 +85,33 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 	//	1. the nonce remains the same
 	//	2. the new maxPriorityFeePerGas is higher
 	//	3. the new maxFeePerGas is increased equally
-	memOp, err := i.mempool.GetOp(epAddr, userOp.Sender)
-	if err != nil {
-		l.Error(err, "eth_sendUserOperation error")
-		return "", err
-	}
-	if memOp != nil {
-		if memOp.Nonce.Cmp(memOp.Nonce) != 0 {
-			err := errors.New("sender: Has userOp in mempool with a different nonce")
-			l.Error(err, "eth_sendUserOperation error")
-			return "", err
-		}
+	// memOp, err := i.mempool.GetOp(epAddr, userOp.Sender)
+	// if err != nil {
+	// 	l.Error(err, "eth_sendUserOperation error")
+	// 	return "", err
+	// }
+	// if memOp != nil {
+	// 	if memOp.Nonce.Cmp(memOp.Nonce) != 0 {
+	// 		err := errors.New("sender: Has userOp in mempool with a different nonce")
+	// 		l.Error(err, "eth_sendUserOperation error")
+	// 		return "", err
+	// 	}
 
-		if memOp.MaxPriorityFeePerGas.Cmp(memOp.MaxPriorityFeePerGas) <= 0 {
-			err := errors.New("sender: Has userOp in mempool with same or higher priority fee")
-			l.Error(err, "eth_sendUserOperation error")
-			return "", err
-		}
+	// 	if memOp.MaxPriorityFeePerGas.Cmp(memOp.MaxPriorityFeePerGas) <= 0 {
+	// 		err := errors.New("sender: Has userOp in mempool with same or higher priority fee")
+	// 		l.Error(err, "eth_sendUserOperation error")
+	// 		return "", err
+	// 	}
 
-		diff := big.NewInt(0)
-		mf := big.NewInt(0)
-		diff.Sub(memOp.MaxPriorityFeePerGas, memOp.MaxPriorityFeePerGas)
-		if memOp.MaxFeePerGas.Cmp(mf.Add(memOp.MaxFeePerGas, diff)) != 0 {
-			err := errors.New("sender: Replaced userOp must have an equally higher max fee")
-			l.Error(err, "eth_sendUserOperation error")
-			return "", err
-		}
-	}
+	// 	diff := big.NewInt(0)
+	// 	mf := big.NewInt(0)
+	// 	diff.Sub(memOp.MaxPriorityFeePerGas, memOp.MaxPriorityFeePerGas)
+	// 	if memOp.MaxFeePerGas.Cmp(mf.Add(memOp.MaxFeePerGas, diff)) != 0 {
+	// 		err := errors.New("sender: Replaced userOp must have an equally higher max fee")
+	// 		l.Error(err, "eth_sendUserOperation error")
+	// 		return "", err
+	// 	}
+	// }
 
 	// Run through client module stack.
 	ctx := modules.NewUserOpHandlerContext(userOp, epAddr, i.chainID)

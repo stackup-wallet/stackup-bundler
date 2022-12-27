@@ -6,44 +6,50 @@ import (
 	"github.com/wangjia184/sortedset"
 )
 
-type maxBatchSize int
-
 const defaultMaxBatchSize = 10
 
-type setsByEntryPoint map[string]*sortedset.SortedSet
+type set struct {
+	all     *sortedset.SortedSet
+	senders map[common.Address]*sortedset.SortedSet
+}
+
+func (s *set) getSenderSortedSet(sender common.Address) *sortedset.SortedSet {
+	if _, ok := s.senders[sender]; !ok {
+		s.senders[sender] = sortedset.New()
+	}
+
+	return s.senders[sender]
+}
 
 type userOpQueues struct {
-	maxBatchSize
-	setsByEntryPoint
+	maxBatchSize     int
+	setsByEntryPoint map[common.Address]*set
 }
 
-func (q *userOpQueues) findOrCreateSet(entryPoint common.Address) *sortedset.SortedSet {
-	ep := entryPoint.String()
-	if _, ok := q.setsByEntryPoint[ep]; !ok {
-		q.setsByEntryPoint[ep] = sortedset.New()
+func (q *userOpQueues) getEntryPointSet(entryPoint common.Address) *set {
+	if _, ok := q.setsByEntryPoint[entryPoint]; !ok {
+		q.setsByEntryPoint[entryPoint] = &set{
+			all:     sortedset.New(),
+			senders: make(map[common.Address]*sortedset.SortedSet),
+		}
 	}
 
-	return q.setsByEntryPoint[ep]
+	return q.setsByEntryPoint[entryPoint]
 }
 
-func (q *userOpQueues) AddOp(entryPoint common.Address, op *userop.UserOperation) bool {
-	set := q.findOrCreateSet(entryPoint)
+func (q *userOpQueues) AddOp(entryPoint common.Address, op *userop.UserOperation) {
+	eps := q.getEntryPointSet(entryPoint)
+	sss := eps.getSenderSortedSet(op.Sender)
+	key := string(getUniqueKey(entryPoint, op.Sender, op.Nonce))
 
-	return set.AddOrUpdate(op.Sender.String(), sortedset.SCORE(op.MaxPriorityFeePerGas.Int64()), op)
+	eps.all.AddOrUpdate(key, sortedset.SCORE(op.MaxPriorityFeePerGas.Int64()), op)
+	sss.AddOrUpdate(key, sortedset.SCORE(op.Nonce.Int64()), op)
 }
 
-func (q *userOpQueues) GetOp(entryPoint common.Address, sender common.Address) *userop.UserOperation {
-	set := q.findOrCreateSet(entryPoint)
-	node := set.GetByKey(sender.String())
-	if node == nil {
-		return nil
-	}
-
-	return node.Value.(*userop.UserOperation)
-}
-
-func (q *userOpQueues) Next(entryPoint common.Address) []*userop.UserOperation {
-	nodes := q.findOrCreateSet(entryPoint).GetByRankRange(-1, -defaultMaxBatchSize, false)
+func (q *userOpQueues) GetOps(entryPoint common.Address, sender common.Address) []*userop.UserOperation {
+	eps := q.getEntryPointSet(entryPoint)
+	sss := eps.getSenderSortedSet(sender)
+	nodes := sss.GetByRankRange(-1, -sss.GetCount(), false)
 	batch := []*userop.UserOperation{}
 	for _, n := range nodes {
 		batch = append(batch, n.Value.(*userop.UserOperation))
@@ -52,16 +58,30 @@ func (q *userOpQueues) Next(entryPoint common.Address) []*userop.UserOperation {
 	return batch
 }
 
-func (q *userOpQueues) RemoveOps(entryPoint common.Address, senders []common.Address) {
-	set := q.findOrCreateSet(entryPoint)
-	for _, s := range senders {
-		set.Remove(s.String())
+func (q *userOpQueues) Next(entryPoint common.Address) []*userop.UserOperation {
+	eps := q.getEntryPointSet(entryPoint)
+	nodes := eps.all.GetByRankRange(-1, -defaultMaxBatchSize, false)
+	batch := []*userop.UserOperation{}
+	for _, n := range nodes {
+		batch = append(batch, n.Value.(*userop.UserOperation))
+	}
+
+	return batch
+}
+
+func (q *userOpQueues) RemoveOps(entryPoint common.Address, ops ...*userop.UserOperation) {
+	eps := q.getEntryPointSet(entryPoint)
+	for _, op := range ops {
+		sss := eps.getSenderSortedSet(op.Sender)
+		key := string(getUniqueKey(entryPoint, op.Sender, op.Nonce))
+		eps.all.Remove(key)
+		sss.Remove(key)
 	}
 }
 
 func newUserOpQueue() *userOpQueues {
 	return &userOpQueues{
 		maxBatchSize:     defaultMaxBatchSize,
-		setsByEntryPoint: make(setsByEntryPoint),
+		setsByEntryPoint: make(map[common.Address]*set),
 	}
 }
