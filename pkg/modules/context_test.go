@@ -36,9 +36,9 @@ func TestGetNilDepositInfoFromCtx(t *testing.T) {
 	}
 }
 
-// TestGetPendingOpsBySender calls (c *UserOpHandlerCtx).GetPendingOpsBySender and verifies that it returns
-// the same array of UserOperations the context was initialized with.
-func TestGetPendingOpsBySender(t *testing.T) {
+// TestGetPendingOps calls (c *UserOpHandlerCtx).GetPendingOps and verifies that it returns the same array of
+// UserOperations the context was initialized with.
+func TestGetPendingOps(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	penOp1 := testutils.MockValidInitUserOp()
 	penOp2 := testutils.MockValidInitUserOp()
@@ -48,7 +48,7 @@ func TestGetPendingOpsBySender(t *testing.T) {
 	initPenOps := []*userop.UserOperation{penOp1, penOp2, penOp3}
 	ctx := NewUserOpHandlerContext(op, initPenOps, testutils.ValidAddress, testutils.ChainID)
 
-	penOps := ctx.GetPendingOpsBySender()
+	penOps := ctx.GetPendingOps()
 	if len(penOps) != len(initPenOps) {
 		t.Fatalf("got length %d, want %d", len(penOps), len(initPenOps))
 	}

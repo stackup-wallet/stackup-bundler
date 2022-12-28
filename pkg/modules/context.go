@@ -94,7 +94,7 @@ func (c *UserOpHandlerCtx) GetDepositInfo(entity common.Address) *entrypoint.ISt
 	return c.deposits[entity]
 }
 
-// GetPendingOpsBySender returns all pending UserOperations in the mempool by the same sender.
-func (c *UserOpHandlerCtx) GetPendingOpsBySender() []*userop.UserOperation {
+// GetPendingOpsBySender returns all pending UserOperations in the mempool by the same UserOp.Sender.
+func (c *UserOpHandlerCtx) GetPendingOps() []*userop.UserOperation {
 	return c.pendingOps
 }
