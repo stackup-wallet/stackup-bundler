@@ -64,11 +64,13 @@ type UserOpHandlerCtx struct {
 	EntryPoint common.Address
 	ChainID    *big.Int
 	deposits   map[common.Address]*entrypoint.IStakeManagerDepositInfo
+	pendingOps []*userop.UserOperation
 }
 
 // NewUserOpHandlerContext creates a new UserOpHandlerCtx using a given op.
 func NewUserOpHandlerContext(
 	op *userop.UserOperation,
+	pendingOps []*userop.UserOperation,
 	entryPoint common.Address,
 	chainID *big.Int,
 ) *UserOpHandlerCtx {
@@ -77,6 +79,7 @@ func NewUserOpHandlerContext(
 		EntryPoint: entryPoint,
 		ChainID:    chainID,
 		deposits:   make(map[common.Address]*entrypoint.IStakeManagerDepositInfo),
+		pendingOps: append([]*userop.UserOperation{}, pendingOps...),
 	}
 }
 
@@ -89,4 +92,9 @@ func (c *UserOpHandlerCtx) AddDepositInfo(entity common.Address, dep *entrypoint
 // added. Otherwise returns nil
 func (c *UserOpHandlerCtx) GetDepositInfo(entity common.Address) *entrypoint.IStakeManagerDepositInfo {
 	return c.deposits[entity]
+}
+
+// GetPendingOpsBySender returns all pending UserOperations in the mempool by the same sender.
+func (c *UserOpHandlerCtx) GetPendingOpsBySender() []*userop.UserOperation {
+	return c.pendingOps
 }

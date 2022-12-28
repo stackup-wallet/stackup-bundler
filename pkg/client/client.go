@@ -113,8 +113,15 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 	// 	}
 	// }
 
+	// Fetch any pending UserOperations in the mempool by the same sender
+	penOps, err := i.mempool.GetOps(epAddr, userOp.Sender)
+	if err != nil {
+		l.Error(err, "eth_sendUserOperation error")
+		return "", err
+	}
+
 	// Run through client module stack.
-	ctx := modules.NewUserOpHandlerContext(userOp, epAddr, i.chainID)
+	ctx := modules.NewUserOpHandlerContext(userOp, penOps, epAddr, i.chainID)
 	if err := i.userOpHandler(ctx); err != nil {
 		l.Error(err, "eth_sendUserOperation error")
 		return "", err
