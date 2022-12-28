@@ -14,7 +14,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/rs/zerolog v1.28.0
-	github.com/spf13/cobra v1.6.0
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.13.0
 	github.com/wangjia184/sortedset v0.0.0-20220209072355-af6d6d227aa7
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
