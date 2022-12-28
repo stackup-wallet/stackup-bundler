@@ -34,6 +34,37 @@ func TestAddOpToMempool(t *testing.T) {
 	}
 }
 
+// TestReplaceOpInMempool verifies that a UserOperation with same Sender and Nonce can replace another
+// UserOperation already in the mempool.
+func TestReplaceOpInMempool(t *testing.T) {
+	db := testutils.DBMock()
+	defer db.Close()
+	mem, _ := New(db)
+	ep := testutils.ValidAddress
+	op1 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitUserOp()
+	op2.MaxPriorityFeePerGas = big.NewInt(0).Add(op1.MaxPriorityFeePerGas, common.Big1)
+
+	if err := mem.AddOp(ep, op1); err != nil {
+		t.Fatalf("got %v, want nil", err)
+	}
+	if err := mem.AddOp(ep, op2); err != nil {
+		t.Fatalf("got %v, want nil", err)
+	}
+
+	memOps, err := mem.GetOps(ep, op2.Sender)
+	if err != nil {
+		t.Fatalf("got %v, want nil", err)
+	}
+	if len(memOps) != 1 {
+		t.Fatalf("got length %d, want 1", len(memOps))
+	}
+
+	if !testutils.IsOpsEqual(op2, memOps[0]) {
+		t.Fatalf("ops not equal: %s", testutils.GetOpsDiff(op2, memOps[0]))
+	}
+}
+
 // TestRemoveOpsFromMempool verifies that a UserOperation can be added to the mempool and later removed.
 func TestRemoveOpsFromMempool(t *testing.T) {
 	db := testutils.DBMock()
