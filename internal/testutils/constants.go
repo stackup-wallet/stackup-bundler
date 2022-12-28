@@ -12,6 +12,7 @@ var (
 	OneETH                 = big.NewInt(1000000000000000000)
 	DefaultUnstakeDelaySec = uint32(86400)
 	ValidAddress           = common.HexToAddress("0x7357b8a705328FC283dF72D7Ac546895B596DC12")
+	ChainID                = big.NewInt(1)
 	StakedDepositInfo      = &entrypoint.IStakeManagerDepositInfo{
 		Deposit:         big.NewInt(OneETH.Int64()),
 		Staked:          true,
