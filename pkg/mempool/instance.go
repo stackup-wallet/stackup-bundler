@@ -27,13 +27,14 @@ func New(db *badger.DB) (*Mempool, error) {
 	return &Mempool{db, queue}, nil
 }
 
-// GetOp checks if a UserOperation is in the mempool and returns it.
-func (m *Mempool) GetOp(entryPoint common.Address, sender common.Address) (*userop.UserOperation, error) {
-	op := m.queue.GetOp(entryPoint, sender)
-	return op, nil
+// GetOps returns all the UserOperations associated with an EntryPoint and Sender address.
+func (m *Mempool) GetOps(entryPoint common.Address, sender common.Address) ([]*userop.UserOperation, error) {
+	ops := m.queue.GetOps(entryPoint, sender)
+	return ops, nil
 }
 
-// AddOp adds a UserOperation to the mempool.
+// AddOp adds a UserOperation to the mempool or replace an existing one with the same EntryPoint, Sender, and
+// Nonce values.
 func (m *Mempool) AddOp(entryPoint common.Address, op *userop.UserOperation) error {
 	data, err := op.MarshalJSON()
 	if err != nil {
@@ -41,7 +42,7 @@ func (m *Mempool) AddOp(entryPoint common.Address, op *userop.UserOperation) err
 	}
 
 	err = m.db.Update(func(txn *badger.Txn) error {
-		return txn.Set(getDBKey(entryPoint, op.Sender), data)
+		return txn.Set(getUniqueKey(entryPoint, op.Sender, op.Nonce), data)
 	})
 	if err != nil {
 		return err
@@ -51,16 +52,16 @@ func (m *Mempool) AddOp(entryPoint common.Address, op *userop.UserOperation) err
 	return nil
 }
 
-// BundleOps builds a bundle of ops from the mempool to be sent to the EntryPoint.
+// BundleOps builds a bundle of UserOperations from the mempool to be sent to the EntryPoint.
 func (m *Mempool) BundleOps(entryPoint common.Address) ([]*userop.UserOperation, error) {
 	return m.queue.Next(entryPoint), nil
 }
 
-// RemoveOps removes a list of UserOperations from the mempool by sender address.
-func (m *Mempool) RemoveOps(entryPoint common.Address, senders ...common.Address) error {
+// RemoveOps removes a list of UserOperations from the mempool by EntryPoint, Sender, and Nonce values.
+func (m *Mempool) RemoveOps(entryPoint common.Address, ops ...*userop.UserOperation) error {
 	err := m.db.Update(func(txn *badger.Txn) error {
-		for _, s := range senders {
-			err := txn.Delete(getDBKey(entryPoint, s))
+		for _, op := range ops {
+			err := txn.Delete(getUniqueKey(entryPoint, op.Sender, op.Nonce))
 			if err != nil {
 				return err
 			}
@@ -72,6 +73,6 @@ func (m *Mempool) RemoveOps(entryPoint common.Address, senders ...common.Address
 		return err
 	}
 
-	m.queue.RemoveOps(entryPoint, senders)
+	m.queue.RemoveOps(entryPoint, ops...)
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
+	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 // Bundler controls the end to end process of creating a batch of UserOperations from the mempool and sending
@@ -72,8 +73,9 @@ func (i *Bundler) Run() error {
 					continue
 				}
 
-				senders := append(getSenders(ctx.Batch), getSenders(ctx.PendingRemoval)...)
-				if err := i.mempool.RemoveOps(ep, senders...); err != nil {
+				rmOps := append([]*userop.UserOperation{}, ctx.Batch...)
+				rmOps = append(rmOps, ctx.PendingRemoval...)
+				if err := i.mempool.RemoveOps(ep, rmOps...); err != nil {
 					l.Error(err, "bundler run error")
 					continue
 				}

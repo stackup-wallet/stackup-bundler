@@ -1,7 +1,10 @@
 package testutils
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -26,4 +29,20 @@ var (
 func MockValidInitUserOp() *userop.UserOperation {
 	op, _ := userop.New(MockUserOpData)
 	return op
+}
+
+func IsOpsEqual(op1 *userop.UserOperation, op2 *userop.UserOperation) bool {
+	return cmp.Equal(
+		op1,
+		op2,
+		cmp.Comparer(func(a *big.Int, b *big.Int) bool { return a.Cmp(b) == 0 }),
+	)
+}
+
+func GetOpsDiff(op1 *userop.UserOperation, op2 *userop.UserOperation) string {
+	return cmp.Diff(
+		op1,
+		op2,
+		cmp.Comparer(func(a *big.Int, b *big.Int) bool { return a.Cmp(b) == 0 }),
+	)
 }

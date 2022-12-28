@@ -20,7 +20,11 @@ type BatchHandlerCtx struct {
 }
 
 // NewBatchHandlerContext creates a new BatchHandlerCtx using a copy of the given batch.
-func NewBatchHandlerContext(batch []*userop.UserOperation, entryPoint common.Address, chainID *big.Int) *BatchHandlerCtx {
+func NewBatchHandlerContext(
+	batch []*userop.UserOperation,
+	entryPoint common.Address,
+	chainID *big.Int,
+) *BatchHandlerCtx {
 	var copy []*userop.UserOperation
 	copy = append(copy, batch...)
 
@@ -63,7 +67,11 @@ type UserOpHandlerCtx struct {
 }
 
 // NewUserOpHandlerContext creates a new UserOpHandlerCtx using a given op.
-func NewUserOpHandlerContext(op *userop.UserOperation, entryPoint common.Address, chainID *big.Int) *UserOpHandlerCtx {
+func NewUserOpHandlerContext(
+	op *userop.UserOperation,
+	entryPoint common.Address,
+	chainID *big.Int,
+) *UserOpHandlerCtx {
 	return &UserOpHandlerCtx{
 		UserOp:     op,
 		EntryPoint: entryPoint,
