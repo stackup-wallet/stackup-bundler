@@ -34,6 +34,7 @@ func New(rpc *rpc.Client, maxVerificationGas *big.Int, tracer string) *Standalon
 // received by the Client. This should be one of the first modules executed by the Client.
 func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
+		penOps := ctx.GetPendingOps()
 		gc := getCodeWithEthClient(s.eth)
 		gt := getGasTipWithEthClient(s.eth)
 		gs, err := getStakeWithEthClient(ctx, s.eth)
@@ -48,6 +49,7 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, gs) })
 		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp) })
 		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gt) })
+		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps, gs) })
 
 		return g.Wait()
 	}
