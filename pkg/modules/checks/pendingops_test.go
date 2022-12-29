@@ -34,7 +34,7 @@ func TestPendingOpsNotStaked(t *testing.T) {
 	}
 }
 
-// TestPendingOpsStaked calls checks.ValidatePendingOps with pending UserOperations but sender is not staked.
+// TestPendingOpsStaked calls checks.ValidatePendingOps with pending UserOperations but sender is staked.
 // Expect nil.
 func TestPendingOpsStaked(t *testing.T) {
 	penOp := testutils.MockValidInitUserOp()
@@ -113,6 +113,7 @@ func TestReplaceOpSameMF(t *testing.T) {
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
 	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big1)
+	op.MaxFeePerGas = big.NewInt(0).Add(penOp.MaxFeePerGas, common.Big0)
 	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
 
 	if err == nil {
