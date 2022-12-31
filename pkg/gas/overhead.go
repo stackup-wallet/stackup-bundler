@@ -2,7 +2,6 @@
 package gas
 
 import (
-	"fmt"
 	"math"
 	"math/big"
 
@@ -36,13 +35,6 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
 		}
 	}
 
-	fmt.Println(
-		callDataCost,
-		(ov.fixed / ov.minBundleSize),
-		ov.perUserOp,
-		ov.perUserOpWord*float64((len(packed))),
-		len(packed),
-	)
 	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + ov.perUserOpWord*float64(
 		(len(packed)),
 	)
