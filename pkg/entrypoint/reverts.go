@@ -11,114 +11,117 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
+type ReturnInfo struct {
+	PreOpGas          *big.Int `json:"preOpGas"`
+	Prefund           *big.Int `json:"prefund"`
+	Deadline          *big.Int `json:"deadline"`
+	PaymasterDeadline *big.Int `json:"paymasterDeadline"`
+	PaymasterContext  []byte   `json:"paymasterContext"`
+}
+
 type StakeInfo struct {
 	Stake           *big.Int `json:"stake"`
 	UnstakeDelaySec *big.Int `json:"unstakeDelaySec"`
 }
 
-type SimulationResultRevert struct {
-	PreOpGas      *big.Int
-	Prefund       *big.Int
-	Deadline      *big.Int
+type ValidationResultRevert struct {
+	ReturnInfo    *ReturnInfo
 	SenderInfo    *StakeInfo
 	FactoryInfo   *StakeInfo
 	PaymasterInfo *StakeInfo
 }
 
 var (
+	returnInfoType = []abi.ArgumentMarshaling{
+		{Name: "preOpGas", Type: "uint256"},
+		{Name: "prefund", Type: "uint256"},
+		{Name: "deadline", Type: "uint256"},
+		{Name: "paymasterDeadline", Type: "uint256"},
+		{Name: "paymasterContext", Type: "bytes"},
+	}
 	stakeInfoType = []abi.ArgumentMarshaling{
 		{Name: "stake", Type: "uint256"},
 		{Name: "unstakeDelaySec", Type: "uint256"},
 	}
 )
 
-func simulationResult() abi.Error {
-	uint256, _ := abi.NewType("uint256", "uint256", nil)
+func validationResult() abi.Error {
+	returnInfo, _ := abi.NewType("tuple", "ReturnInfo", returnInfoType)
 	senderInfo, _ := abi.NewType("tuple", "SenderInfo", stakeInfoType)
 	factoryInfo, _ := abi.NewType("tuple", "FactoryInfo", stakeInfoType)
 	paymasterInfo, _ := abi.NewType("tuple", "PaymasterInfo", stakeInfoType)
 
-	return abi.NewError("SimulationResult", abi.Arguments{
-		{Name: "preOpGas", Type: uint256},
-		{Name: "prefund", Type: uint256},
-		{Name: "deadline", Type: uint256},
+	return abi.NewError("ValidationResult", abi.Arguments{
+		{Name: "returnInfo", Type: returnInfo},
 		{Name: "senderInfo", Type: senderInfo},
 		{Name: "factoryInfo", Type: factoryInfo},
 		{Name: "paymasterInfo", Type: paymasterInfo},
 	})
 }
 
-func newSimulationResultRevert(err error) (*SimulationResultRevert, error) {
+func newValidationResultRevert(err error) (*ValidationResultRevert, error) {
 	rpcErr, ok := err.(rpc.DataError)
 	if !ok {
-		return nil, errors.New("simulationResult: cannot assert type: error is not of type rpc.DataError")
+		return nil, errors.New("validationResult: cannot assert type: error is not of type rpc.DataError")
 	}
 
 	data, ok := rpcErr.ErrorData().(string)
 	if !ok {
-		return nil, errors.New("simulationResult: cannot assert type: data is not of type string")
+		return nil, errors.New("validationResult: cannot assert type: data is not of type string")
 	}
 
-	sim := simulationResult()
+	sim := validationResult()
 	revert, err := sim.Unpack(common.Hex2Bytes(data[2:]))
 	if err != nil {
-		return nil, fmt.Errorf("simulationResult: %s", err)
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
 
 	args, ok := revert.([]any)
 	if !ok {
-		return nil, errors.New("simulationResult: cannot assert type: args is not of type []any")
+		return nil, errors.New("validationResult: cannot assert type: args is not of type []any")
 	}
-	if len(args) != 6 {
-		return nil, fmt.Errorf("simulationResult: invalid args length: expected 6, got %d", len(args))
-	}
-
-	preOpGas, ok := args[0].(*big.Int)
-	if !ok {
-		return nil, errors.New("simulationResult: cannot assert type: preOpGas is not of type *big.Int")
+	if len(args) != 4 {
+		return nil, fmt.Errorf("validationResult: invalid args length: expected 4, got %d", len(args))
 	}
 
-	prefund, ok := args[1].(*big.Int)
-	if !ok {
-		return nil, errors.New("simulationResult: cannot assert type: prefund is not of type *big.Int")
+	returnInfo := &ReturnInfo{}
+	ri, err := json.Marshal(args[0])
+	if err != nil {
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
-
-	deadline, ok := args[2].(*big.Int)
-	if !ok {
-		return nil, errors.New("simulationResult: cannot assert type: deadline is not of type *big.Int")
+	if err := json.Unmarshal(ri, returnInfo); err != nil {
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
 
 	senderInfo := &StakeInfo{}
-	si, err := json.Marshal(args[3])
+	si, err := json.Marshal(args[1])
 	if err != nil {
-		return nil, fmt.Errorf("simulationResult: %s", err)
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
 	if err := json.Unmarshal(si, senderInfo); err != nil {
-		return nil, fmt.Errorf("simulationResult: %s", err)
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
 
 	factoryInfo := &StakeInfo{}
-	fi, err := json.Marshal(args[4])
+	fi, err := json.Marshal(args[2])
 	if err != nil {
-		return nil, fmt.Errorf("simulationResult: %s", err)
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
 	if err := json.Unmarshal(fi, factoryInfo); err != nil {
-		return nil, fmt.Errorf("simulationResult: %s", err)
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
 
 	paymasterInfo := &StakeInfo{}
-	pmi, err := json.Marshal(args[5])
+	pmi, err := json.Marshal(args[3])
 	if err != nil {
-		return nil, fmt.Errorf("simulationResult: %s", err)
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
 	if err := json.Unmarshal(pmi, paymasterInfo); err != nil {
-		return nil, fmt.Errorf("simulationResult: %s", err)
+		return nil, fmt.Errorf("validationResult: %s", err)
 	}
 
-	return &SimulationResultRevert{
-		PreOpGas:      preOpGas,
-		Prefund:       prefund,
-		Deadline:      deadline,
+	return &ValidationResultRevert{
+		ReturnInfo:    returnInfo,
 		SenderInfo:    senderInfo,
 		FactoryInfo:   factoryInfo,
 		PaymasterInfo: paymasterInfo,
@@ -145,7 +148,10 @@ func failedOp() abi.Error {
 func newFailedOpRevert(err error) (*FailedOpRevert, error) {
 	rpcErr, ok := err.(rpc.DataError)
 	if !ok {
-		return nil, fmt.Errorf("failedOp: cannot assert type: error is not of type rpc.DataError, err: %s", err)
+		return nil, fmt.Errorf(
+			"failedOp: cannot assert type: error is not of type rpc.DataError, err: %s",
+			err,
+		)
 	}
 
 	data, ok := rpcErr.ErrorData().(string)

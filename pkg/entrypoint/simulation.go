@@ -57,7 +57,11 @@ var (
 
 // SimulateValidation makes a static call to Entrypoint.simulateValidation(userop) and returns the
 // results without any state changes.
-func SimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *userop.UserOperation) (*SimulationResultRevert, error) {
+func SimulateValidation(
+	rpc *rpc.Client,
+	entryPoint common.Address,
+	op *userop.UserOperation,
+) (*ValidationResultRevert, error) {
 	ep, err := NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
 	if err != nil {
 		return nil, err
@@ -70,7 +74,7 @@ func SimulateValidation(rpc *rpc.Client, entryPoint common.Address, op *userop.U
 		return nil, errors.New("unexpected result from simulateValidation")
 	}
 
-	sim, simErr := newSimulationResultRevert(err)
+	sim, simErr := newValidationResultRevert(err)
 	if simErr != nil {
 		fo, foErr := newFailedOpRevert(err)
 		if foErr != nil {

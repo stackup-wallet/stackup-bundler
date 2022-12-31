@@ -35,14 +35,18 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
 		}
 	}
 
-	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + ov.perUserOpWord*float64((len(packed)))
+	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + ov.perUserOpWord*float64(
+		(len(packed)),
+	)
 	return big.NewInt(int64(math.Round(pvg)))
 }
 
 // NonZeroValueCall returns an expected gas cost of using the CALL opcode in the context of EIP-4337.
 // See https://github.com/wolflo/evm-opcodes/blob/main/gas.md#aa-1-call.
 func (ov *Overhead) NonZeroValueCall() *big.Int {
-	return big.NewInt(int64(ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend))
+	return big.NewInt(
+		int64(ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend),
+	)
 }
 
 // NewDefaultOverhead returns an instance of Overhead using parameters defined by the Ethereum protocol.

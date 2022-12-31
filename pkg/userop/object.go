@@ -109,7 +109,9 @@ func (op *UserOperation) Pack() []byte {
 		op.Signature,
 	})
 
-	return packed
+	enc := hexutil.Encode(packed)
+	enc = "0x" + enc[66:]
+	return (hexutil.MustDecode(enc))
 }
 
 // PackForSignature returns a minimal message of the userOp. This can be used to generate a userOpHash.

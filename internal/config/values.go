@@ -43,7 +43,7 @@ func GetValues() *Values {
 	// Default variables
 	viper.SetDefault("erc4337_bundler_port", 4337)
 	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
-	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x78d4f01f56b982a3B03C4E127A5D3aFa8EBee686")
+	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x1306b01bC3e4AD202612D3843387e94737673F53")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 1500000)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
@@ -87,7 +87,8 @@ func GetValues() *Values {
 	}
 
 	// Validate required variables
-	if !viper.IsSet("erc4337_bundler_eth_client_url") || viper.GetString("erc4337_bundler_eth_client_url") == "" {
+	if !viper.IsSet("erc4337_bundler_eth_client_url") ||
+		viper.GetString("erc4337_bundler_eth_client_url") == "" {
 		panic("Fatal config error: erc4337_bundler_eth_client_url not set")
 	}
 
@@ -110,15 +111,23 @@ func GetValues() *Values {
 	}
 
 	// Return Values
+	privateKey := viper.GetString("erc4337_bundler_private_key")
+	ethClientUrl := viper.GetString("erc4337_bundler_eth_client_url")
+	port := viper.GetInt("erc4337_bundler_port")
+	dataDirectory := viper.GetString("erc4337_bundler_data_directory")
+	supportedEntryPoints := envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points"))
+	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
+	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
+	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
-		PrivateKey:             viper.GetString("erc4337_bundler_private_key"),
-		EthClientUrl:           viper.GetString("erc4337_bundler_eth_client_url"),
-		Port:                   viper.GetInt("erc4337_bundler_port"),
-		DataDirectory:          viper.GetString("erc4337_bundler_data_directory"),
-		SupportedEntryPoints:   envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points")),
-		Beneficiary:            viper.GetString("erc4337_bundler_beneficiary"),
-		MaxVerificationGas:     big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas"))),
-		GinMode:                viper.GetString("erc4337_bundler_gin_mode"),
+		PrivateKey:             privateKey,
+		EthClientUrl:           ethClientUrl,
+		Port:                   port,
+		DataDirectory:          dataDirectory,
+		SupportedEntryPoints:   supportedEntryPoints,
+		Beneficiary:            beneficiary,
+		MaxVerificationGas:     maxVerificationGas,
+		GinMode:                ginMode,
 		BundlerCollectorTracer: bct,
 	}
 }
