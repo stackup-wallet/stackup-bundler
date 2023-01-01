@@ -9,13 +9,13 @@ import (
 	"reflect"
 
 	"github.com/gin-gonic/gin"
+	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
 
-func jsonrpcError(c *gin.Context, code int, message string, data string, id *float64) {
+func jsonrpcError(c *gin.Context, code int, message string, data any, id *float64) {
 	c.JSON(http.StatusOK, gin.H{
-		"result":  nil,
 		"jsonrpc": "2.0",
 		"error": gin.H{
 			"code":    code,
@@ -98,7 +98,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 			case reflect.Float32:
 				val, ok := arg.(float32)
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -106,7 +112,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 			case reflect.Float64:
 				val, ok := arg.(float64)
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -122,7 +134,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 				}
 
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -137,7 +155,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -152,7 +176,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -167,7 +197,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -182,7 +218,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -193,7 +235,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 			case reflect.Map:
 				val, ok := arg.(map[string]any)
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -201,7 +249,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 			case reflect.Slice:
 				val, ok := arg.([]interface{})
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -209,7 +263,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 			case reflect.String:
 				val, ok := arg.(string)
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -224,7 +284,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -239,7 +305,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -254,7 +326,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -269,7 +347,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -284,7 +368,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 					}
 				}
 				if !ok {
-					jsonrpcError(c, -32602, "Invalid params", fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()), &id)
+					jsonrpcError(
+						c,
+						-32602,
+						"Invalid params",
+						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						&id,
+					)
 					return
 				}
 				args[i] = reflect.ValueOf(val)
@@ -300,7 +390,13 @@ func Controller(api interface{}) gin.HandlerFunc {
 		c.Set("json-rpc-request", data)
 		result := call.Call(args)
 		if err, ok := result[len(result)-1].Interface().(error); ok && err != nil {
-			jsonrpcError(c, -32000, "Method error", err.Error(), &id)
+			rpcErr, ok := err.(*errors.RPCError)
+
+			if !ok {
+				jsonrpcError(c, -32000, err.Error(), err.Error(), &id)
+			} else {
+				jsonrpcError(c, rpcErr.Code(), rpcErr.Error(), rpcErr.Data(), &id)
+			}
 		} else if len(result) > 0 {
 			c.JSON(http.StatusOK, gin.H{
 				"result":  result[0].Interface(),

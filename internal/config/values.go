@@ -23,6 +23,7 @@ type Values struct {
 	Beneficiary          string
 
 	// Undocumented variables.
+	DebugMode              bool
 	GinMode                string
 	BundlerCollectorTracer string
 }
@@ -45,6 +46,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x1306b01bC3e4AD202612D3843387e94737673F53")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 1500000)
+	viper.SetDefault("erc4337_bundler_debug_mode", false)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
 	// Read in from .env file if available
@@ -118,6 +120,7 @@ func GetValues() *Values {
 	supportedEntryPoints := envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points"))
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
+	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
 		PrivateKey:             privateKey,
@@ -127,6 +130,7 @@ func GetValues() *Values {
 		SupportedEntryPoints:   supportedEntryPoints,
 		Beneficiary:            beneficiary,
 		MaxVerificationGas:     maxVerificationGas,
+		DebugMode:              debugMode,
 		GinMode:                ginMode,
 		BundlerCollectorTracer: bct,
 	}

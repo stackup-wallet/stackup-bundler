@@ -6,6 +6,8 @@ import "github.com/ethereum/go-ethereum/common"
 
 type Counts = map[string]float64
 
+type AccessMap = map[common.Address]AccessInfo
+
 // AccessInfo provides context on read and write counts by storage slots.
 type AccessInfo struct {
 	Reads  Counts `json:"reads"`
@@ -15,16 +17,25 @@ type AccessInfo struct {
 // NumberLevelInfo provides context on opcodes and storage access delimited by the use of NUMBER at the
 // EntryPoint.
 type NumberLevelInfo struct {
-	Opcodes Counts                        `json:"opcodes"`
-	Access  map[common.Address]AccessInfo `json:"access"`
+	Opcodes Counts    `json:"opcodes"`
+	Access  AccessMap `json:"access"`
 }
 
 // CallInfo provides context on internal calls made during tracing.
 type CallInfo struct {
-	Type  string         `json:"type"`
-	From  common.Address `json:"from"`
-	To    common.Address `json:"to"`
-	Value any            `json:"value"`
+	// Common
+	Type string `json:"type"`
+
+	// Method info
+	From   common.Address `json:"from"`
+	To     common.Address `json:"to"`
+	Method string         `json:"method"`
+	Value  any            `json:"value"`
+	Gas    float64        `json:"gas"`
+
+	// Exit info
+	GasUsed float64 `json:"gasUsed"`
+	Data    any     `json:"data"`
 }
 
 // LogInfo provides context from LOG opcodes during each step in the EVM trace.
