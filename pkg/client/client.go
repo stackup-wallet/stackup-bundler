@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/go-logr/logr"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
@@ -119,5 +120,5 @@ func (i *Client) SupportedEntryPoints() ([]string, error) {
 // ChainID implements the method call for eth_chainId. It returns the current chainID used by the client.
 // This method is used to validate that the client's chainID is in sync with the caller.
 func (i *Client) ChainID() (string, error) {
-	return i.chainID.String(), nil
+	return hexutil.EncodeBig(i.chainID), nil
 }

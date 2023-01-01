@@ -91,6 +91,12 @@ func PrivateMode() {
 		paymaster.IncOpsSeen(),
 	)
 
+	// init Debug
+	var d *client.Debug
+	if conf.DebugMode {
+		d = client.NewDebug(eoa, eth, mem, chain, conf.SupportedEntryPoints[0], beneficiary)
+	}
+
 	// Init Bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
 	b.UseLogger(logr)
@@ -120,7 +126,7 @@ func PrivateMode() {
 	r.POST(
 		"/",
 		relayer.FilterByClientID(),
-		jsonrpc.Controller(client.NewRpcAdapter(c)),
+		jsonrpc.Controller(client.NewRpcAdapter(c, d)),
 		relayer.MapUserOpHashToClientID(),
 	)
 	if err := r.Run(fmt.Sprintf(":%d", conf.Port)); err != nil {

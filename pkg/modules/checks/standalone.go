@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"golang.org/x/sync/errgroup"
 )
@@ -61,16 +62,30 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 		g := new(errgroup.Group)
 		g.Go(func() error {
 			_, err := entrypoint.SimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp)
-			return err
+
+			if err != nil {
+				return errors.NewRPCError(errors.REJECTED_BY_EP_OR_ACCOUNT, err.Error(), err.Error())
+			}
+			return nil
 		})
 		g.Go(func() error {
-			return entrypoint.TraceSimulateValidation(
+			err := entrypoint.TraceSimulateValidation(
 				s.rpc,
 				ctx.EntryPoint,
 				ctx.UserOp,
 				ctx.ChainID,
 				s.tracer,
+				entrypoint.EntityStakes{
+					ctx.UserOp.GetFactory():   ctx.GetDepositInfo(ctx.UserOp.GetFactory()),
+					ctx.UserOp.Sender:         ctx.GetDepositInfo(ctx.UserOp.Sender),
+					ctx.UserOp.GetPaymaster(): ctx.GetDepositInfo(ctx.UserOp.GetPaymaster()),
+				},
 			)
+
+			if err != nil {
+				return errors.NewRPCError(errors.BANNED_OPCODE, err.Error(), err.Error())
+			}
+			return nil
 		})
 
 		return g.Wait()
