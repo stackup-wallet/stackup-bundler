@@ -392,10 +392,10 @@ func Controller(api interface{}) gin.HandlerFunc {
 		if err, ok := result[len(result)-1].Interface().(error); ok && err != nil {
 			rpcErr, ok := err.(*errors.RPCError)
 
-			if !ok {
-				jsonrpcError(c, -32000, err.Error(), err.Error(), &id)
-			} else {
+			if ok {
 				jsonrpcError(c, rpcErr.Code(), rpcErr.Error(), rpcErr.Data(), &id)
+			} else {
+				jsonrpcError(c, -32000, err.Error(), err.Error(), &id)
 			}
 		} else if len(result) > 0 {
 			c.JSON(http.StatusOK, gin.H{
