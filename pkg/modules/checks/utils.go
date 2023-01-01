@@ -16,9 +16,9 @@ type GetCodeFunc = func(addr common.Address) ([]byte, error)
 // GetStakeFunc provides a general interface for retrieving the EntryPoint stake for a given address.
 type GetStakeFunc = func(entity common.Address) (*entrypoint.IStakeManagerDepositInfo, error)
 
-// GetGasTipFunc provides a general interface for retrieving an EIP-1559 style gas tip to allow for timely
-// execution of a transaction.
-type GetGasTipFunc = func() (*big.Int, error)
+// // GetBaseFeeFunc provides a general interface for retrieving the closest estimate for base fee to allow
+// for timely execution of a transaction.
+type GetBaseFeeFunc = func() (*big.Int, error)
 
 // getCodeWithEthClient returns a GetCodeFunc that uses an eth client to call eth_getCode.
 func getCodeWithEthClient(eth *ethclient.Client) GetCodeFunc {
@@ -46,9 +46,18 @@ func getStakeWithEthClient(ctx *modules.UserOpHandlerCtx, eth *ethclient.Client)
 	}, nil
 }
 
-// getGasTipWithEthClient returns a GetGasTipFunc that uses an eth client to call eth_maxPriorityFeePerGas.
-func getGasTipWithEthClient(eth *ethclient.Client) GetGasTipFunc {
+// getBaseFeeWithEthClient returns a GetBaseFeeFunc using an eth client.
+func getBaseFeeWithEthClient(eth *ethclient.Client) GetBaseFeeFunc {
 	return func() (*big.Int, error) {
-		return eth.SuggestGasTipCap(context.Background())
+		bn, err := eth.BlockNumber(context.Background())
+		if err != nil {
+			return nil, err
+		}
+
+		blk, _ := eth.BlockByNumber(context.Background(), big.NewInt(0).SetUint64(bn))
+		if err != nil {
+			return nil, err
+		}
+		return blk.BaseFee(), nil
 	}
 }

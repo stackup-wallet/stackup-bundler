@@ -76,3 +76,18 @@ func (m *Mempool) RemoveOps(entryPoint common.Address, ops ...*userop.UserOperat
 	m.queue.RemoveOps(entryPoint, ops...)
 	return nil
 }
+
+// Dump will return a list of UserOperations from the mempool by EntryPoint in the order it arrived.
+func (m *Mempool) Dump(entryPoint common.Address) ([]*userop.UserOperation, error) {
+	return m.queue.All(entryPoint), nil
+}
+
+// Clear will clear the entire embedded db and reset it to a clean state.
+func (m *Mempool) Clear() error {
+	if err := m.db.DropAll(); err != nil {
+		return err
+	}
+	m.queue = newUserOpQueue()
+
+	return nil
+}

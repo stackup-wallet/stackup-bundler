@@ -82,7 +82,8 @@ func PrivateMode() {
 	paymaster := paymaster.New(db)
 
 	// Init Client
-	c := client.New(mem, chain, conf.SupportedEntryPoints)
+	c := client.New(mem, chain, conf.SupportedEntryPoints, conf.MaxVerificationGas)
+	c.SetGetUserOpReceiptFunc(client.GetUserOperationReceiptWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
 		check.ValidateOpValues(),
@@ -90,12 +91,6 @@ func PrivateMode() {
 		check.SimulateOp(),
 		paymaster.IncOpsSeen(),
 	)
-
-	// init Debug
-	var d *client.Debug
-	if conf.DebugMode {
-		d = client.NewDebug(eoa, eth, mem, chain, conf.SupportedEntryPoints[0], beneficiary)
-	}
 
 	// Init Bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
@@ -107,6 +102,13 @@ func PrivateMode() {
 	)
 	if err := b.Run(); err != nil {
 		log.Fatal(err)
+	}
+
+	// init Debug
+	var d *client.Debug
+	if conf.DebugMode {
+		d = client.NewDebug(eoa, eth, mem, b, chain, conf.SupportedEntryPoints[0], beneficiary)
+		relayer.SetBannedThreshold(100)
 	}
 
 	// Init HTTP server

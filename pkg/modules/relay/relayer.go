@@ -35,12 +35,13 @@ import (
 // This will only work in the case of a private mempool and will not work in the P2P case where ops are
 // propagated through the network and it is impossible to trust a sender's identifier.
 type Relayer struct {
-	db          *badger.DB
-	eoa         *signer.EOA
-	eth         *ethclient.Client
-	chainID     *big.Int
-	beneficiary common.Address
-	logger      logr.Logger
+	db              *badger.DB
+	eoa             *signer.EOA
+	eth             *ethclient.Client
+	chainID         *big.Int
+	beneficiary     common.Address
+	logger          logr.Logger
+	bannedThreshold int
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
@@ -53,13 +54,20 @@ func New(
 	l logr.Logger,
 ) *Relayer {
 	return &Relayer{
-		db:          db,
-		eoa:         eoa,
-		eth:         eth,
-		chainID:     chainID,
-		beneficiary: beneficiary,
-		logger:      l.WithName("relayer"),
+		db:              db,
+		eoa:             eoa,
+		eth:             eth,
+		chainID:         chainID,
+		beneficiary:     beneficiary,
+		logger:          l.WithName("relayer"),
+		bannedThreshold: defaultBanThreshold,
 	}
+}
+
+// SetBannedThreshold sets the limit for how many ops can be seen from a client  without being included in a
+// batch before it is banned. Default value is 3.
+func (r *Relayer) SetBannedThreshold(limit int) {
+	r.bannedThreshold = limit
 }
 
 // FilterByClientID is a custom Gin middleware used to prevent requests from banned clients from adding their
@@ -85,7 +93,7 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 				WithValues("opsIncluded", opsIncluded)
 
 			OpsFailed := opsSeen - opsIncluded
-			if OpsFailed < banThreshold {
+			if OpsFailed < r.bannedThreshold {
 				return nil
 			}
 

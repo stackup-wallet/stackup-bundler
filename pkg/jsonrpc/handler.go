@@ -395,7 +395,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 			if ok {
 				jsonrpcError(c, rpcErr.Code(), rpcErr.Error(), rpcErr.Data(), &id)
 			} else {
-				jsonrpcError(c, -32000, err.Error(), err.Error(), &id)
+				jsonrpcError(c, -32601, err.Error(), err.Error(), &id)
 			}
 		} else if len(result) > 0 {
 			c.JSON(http.StatusOK, gin.H{

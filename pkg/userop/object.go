@@ -178,14 +178,14 @@ func (op *UserOperation) MarshalJSON() ([]byte, error) {
 		Signature            string `json:"signature"`
 	}{
 		Sender:               op.Sender.String(),
-		Nonce:                op.Nonce.String(),
+		Nonce:                hexutil.EncodeBig(op.Nonce),
 		InitCode:             hexutil.Encode(op.InitCode),
 		CallData:             hexutil.Encode(op.CallData),
-		CallGasLimit:         op.CallGasLimit.String(),
-		VerificationGasLimit: op.VerificationGasLimit.String(),
-		PreVerificationGas:   op.PreVerificationGas.String(),
-		MaxFeePerGas:         op.MaxFeePerGas.String(),
-		MaxPriorityFeePerGas: op.MaxPriorityFeePerGas.String(),
+		CallGasLimit:         hexutil.EncodeBig(op.CallGasLimit),
+		VerificationGasLimit: hexutil.EncodeBig(op.VerificationGasLimit),
+		PreVerificationGas:   hexutil.EncodeBig(op.PreVerificationGas),
+		MaxFeePerGas:         hexutil.EncodeBig(op.MaxFeePerGas),
+		MaxPriorityFeePerGas: hexutil.EncodeBig(op.MaxPriorityFeePerGas),
 		PaymasterAndData:     hexutil.Encode(op.PaymasterAndData),
 		Signature:            hexutil.Encode(op.Signature),
 	})

@@ -37,7 +37,7 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
 		penOps := ctx.GetPendingOps()
 		gc := getCodeWithEthClient(s.eth)
-		gt := getGasTipWithEthClient(s.eth)
+		gbf := getBaseFeeWithEthClient(s.eth)
 		gs, err := getStakeWithEthClient(ctx, s.eth)
 		if err != nil {
 			return err
@@ -49,10 +49,13 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.maxVerificationGas) })
 		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, gs) })
 		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp) })
-		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gt) })
+		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gbf) })
 		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps, gs) })
 
-		return g.Wait()
+		if err := g.Wait(); err != nil {
+			return errors.NewRPCError(errors.INVALID_FIELDS, err.Error(), err.Error())
+		}
+		return nil
 	}
 }
 

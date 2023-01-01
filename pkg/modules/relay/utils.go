@@ -11,7 +11,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-const banThreshold = 3
+const defaultBanThreshold = 3
 const timeWindow = 7 * 24 * time.Hour
 
 const separator = ":"
