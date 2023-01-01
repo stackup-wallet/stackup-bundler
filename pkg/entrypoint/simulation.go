@@ -145,7 +145,7 @@ func parseEntitySlots(stakes EntityStakes, keccak []string) EntitySlots {
 	entitySlots := make(EntitySlots)
 
 	for _, k := range keccak {
-		value := hexutil.Encode(crypto.Keccak256(common.Hex2Bytes(k[2:])))[2:]
+		value := common.Bytes2Hex(crypto.Keccak256(common.Hex2Bytes(k[2:])))
 
 		for addr := range stakes {
 			if addr == common.HexToAddress("0x") {
