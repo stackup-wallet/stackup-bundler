@@ -6,22 +6,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 var (
-	userOp, _ = abi.NewType("tuple", "userOp", []abi.ArgumentMarshaling{
-		{Name: "Sender", Type: "address"},
-		{Name: "Nonce", Type: "uint256"},
-		{Name: "InitCode", Type: "bytes"},
-		{Name: "CallData", Type: "bytes"},
-		{Name: "CallGasLimit", Type: "uint256"},
-		{Name: "VerificationGasLimit", Type: "uint256"},
-		{Name: "PreVerificationGas", Type: "uint256"},
-		{Name: "MaxFeePerGas", Type: "uint256"},
-		{Name: "MaxPriorityFeePerGas", Type: "uint256"},
-		{Name: "PaymasterAndData", Type: "bytes"},
-		{Name: "Signature", Type: "bytes"},
-	})
 	bytes32, _                    = abi.NewType("bytes32", "", nil)
 	uint256, _                    = abi.NewType("uint256", "", nil)
 	bytes, _                      = abi.NewType("bytes", "", nil)
@@ -33,7 +21,7 @@ var (
 		false,
 		false,
 		abi.Arguments{
-			{Name: "userOp", Type: userOp},
+			{Name: "userOp", Type: userop.UserOpType},
 			{Name: "userOpHash", Type: bytes32},
 			{Name: "maxCost", Type: uint256},
 		},

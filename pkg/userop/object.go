@@ -11,8 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func getAbiArgs() abi.Arguments {
-	userOpType, _ := abi.NewType("tuple", "userOp", []abi.ArgumentMarshaling{
+var (
+	// UserOpType is the ABI type of a UserOperation.
+	UserOpType, _ = abi.NewType("tuple", "userOp", []abi.ArgumentMarshaling{
 		{Name: "Sender", Type: "address"},
 		{Name: "Nonce", Type: "uint256"},
 		{Name: "InitCode", Type: "bytes"},
@@ -25,8 +26,11 @@ func getAbiArgs() abi.Arguments {
 		{Name: "PaymasterAndData", Type: "bytes"},
 		{Name: "Signature", Type: "bytes"},
 	})
+)
+
+func getAbiArgs() abi.Arguments {
 	return abi.Arguments{
-		{Name: "UserOp", Type: userOpType},
+		{Name: "UserOp", Type: UserOpType},
 	}
 }
 
