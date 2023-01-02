@@ -83,7 +83,7 @@ func PrivateMode() {
 
 	// Init Client
 	c := client.New(mem, chain, conf.SupportedEntryPoints, conf.MaxVerificationGas)
-	c.SetGetUserOpReceiptFunc(client.GetUserOperationReceiptWithEthClient(eth))
+	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
 		check.ValidateOpValues(),

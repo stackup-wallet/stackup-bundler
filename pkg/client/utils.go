@@ -14,7 +14,7 @@ func getUserOpReceiptNoop() GetUserOpReceiptFunc {
 	}
 }
 
-func GetUserOperationReceiptWithEthClient(eth *ethclient.Client) GetUserOpReceiptFunc {
+func GetUserOpReceiptWithEthClient(eth *ethclient.Client) GetUserOpReceiptFunc {
 	return func(hash string, ep common.Address) (*entrypoint.UserOperationReceipt, error) {
 		return entrypoint.GetUserOperationReceipt(eth, hash, ep)
 	}
