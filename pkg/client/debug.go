@@ -46,7 +46,7 @@ func (d *Debug) ClearState() (string, error) {
 	return "ok", nil
 }
 
-// DumpMempool dumps the current UserOperations mempool.
+// DumpMempool dumps the current UserOperations mempool in order of arrival.
 func (d *Debug) DumpMempool(ep string) ([]map[string]any, error) {
 	ops, err := d.mempool.Dump(common.HexToAddress(ep))
 	if err != nil {
