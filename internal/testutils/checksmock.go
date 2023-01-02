@@ -31,7 +31,7 @@ func MockGetNotStakeZeroDeposit(addr common.Address) (*entrypoint.IStakeManagerD
 	return NonStakedZeroDepositInfo, nil
 }
 
-func GetMockGasTipFunc(val *big.Int) func() (*big.Int, error) {
+func GetMockBaseFeeFunc(val *big.Int) func() (*big.Int, error) {
 	return func() (*big.Int, error) {
 		return val, nil
 	}

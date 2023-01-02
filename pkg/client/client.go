@@ -9,6 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/go-logr/logr"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
@@ -21,19 +23,28 @@ type Client struct {
 	mempool              *mempool.Mempool
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
+	maxVerificationGas   *big.Int
 	userOpHandler        modules.UserOpHandlerFunc
 	logger               logr.Logger
+	getUserOpReceipt     GetUserOpReceiptFunc
 }
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
 // that are allowed to be added to the mempool.
-func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []common.Address) *Client {
+func New(
+	mempool *mempool.Mempool,
+	chainID *big.Int,
+	supportedEntryPoints []common.Address,
+	maxVerificationGas *big.Int,
+) *Client {
 	return &Client{
 		mempool:              mempool,
 		chainID:              chainID,
 		supportedEntryPoints: supportedEntryPoints,
+		maxVerificationGas:   maxVerificationGas,
 		userOpHandler:        noop.UserOpHandler,
 		logger:               logger.NewZeroLogr().WithName("client"),
+		getUserOpReceipt:     getUserOpReceiptNoop(),
 	}
 }
 
@@ -55,6 +66,12 @@ func (i *Client) UseLogger(logger logr.Logger) {
 // UseModules defines the UserOpHandlers to process a userOp after it has gone through the standard checks.
 func (i *Client) UseModules(handlers ...modules.UserOpHandlerFunc) {
 	i.userOpHandler = modules.ComposeUserOpHandlerFunc(handlers...)
+}
+
+// SetGetUserOpReceiptFunc defines a general function for fetching a UserOpReceipt given a userOpHash and
+// EntryPoint address. This function is called in *Client.GetUserOperationReceipt.
+func (i *Client) SetGetUserOpReceiptFunc(fn GetUserOpReceiptFunc) {
+	i.getUserOpReceipt = fn
 }
 
 // SendUserOperation implements the method call for eth_sendUserOperation.
@@ -103,6 +120,59 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 
 	l.Info("eth_sendUserOperation ok")
 	return hash.String(), nil
+}
+
+// EstimateUserOperationGas returns estimates for PreVerificationGas, VerificationGas, and CallGasLimit given
+// a UserOperation and EntryPoint address. The signature field and current gas values will not be validated
+// although there should be dummy values in place for the most reliable results (e.g. a signature with the
+// correct length).
+func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.GasEstimates, error) {
+	// Init logger
+	l := i.logger.WithName("eth_estimateUserOperationGas")
+
+	// Check EntryPoint and userOp is valid.
+	epAddr, err := i.parseEntryPointAddress(ep)
+	if err != nil {
+		l.Error(err, "eth_estimateUserOperationGas error")
+		return nil, err
+	}
+	l = l.
+		WithValues("entrypoint", epAddr.String()).
+		WithValues("chain_id", i.chainID.String())
+
+	userOp, err := userop.New(op)
+	if err != nil {
+		l.Error(err, "eth_estimateUserOperationGas error")
+		return nil, err
+	}
+	hash := userOp.GetUserOpHash(epAddr, i.chainID)
+	l = l.WithValues("userop_hash", hash)
+
+	l.Info("eth_estimateUserOperationGas ok")
+	// TODO: Return more reliable values
+	return &gas.GasEstimates{
+		PreVerificationGas: gas.NewDefaultOverhead().CalcPreVerificationGas(userOp),
+		VerificationGas:    i.maxVerificationGas,
+		CallGasLimit:       gas.NewDefaultOverhead().NonZeroValueCall(),
+	}, nil
+}
+
+// GetUserOperationReceipt fetches a UserOperation receipt based on a userOpHash returned by
+// *Client.SendUserOperation.
+func (i *Client) GetUserOperationReceipt(
+	hash string,
+) (*entrypoint.UserOperationReceipt, error) {
+	// Init logger
+	l := i.logger.WithName("eth_getUserOperationReceipt").WithValues("userop_hash", hash)
+
+	ev, err := i.getUserOpReceipt(hash, i.supportedEntryPoints[0])
+	if err != nil {
+		l.Error(err, "eth_getUserOperationReceipt error")
+		return nil, err
+	}
+
+	l.Info("eth_getUserOperationReceipt ok")
+	return ev, nil
 }
 
 // SupportedEntryPoints implements the method call for eth_supportedEntryPoints. It returns the array of
