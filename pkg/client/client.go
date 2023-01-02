@@ -69,7 +69,7 @@ func (i *Client) UseModules(handlers ...modules.UserOpHandlerFunc) {
 }
 
 // SetGetUserOpReceiptFunc defines a general function for fetching a UserOpReceipt given a userOpHash and
-// EntryPoint address
+// EntryPoint address. This function is called in *Client.GetUserOperationReceipt.
 func (i *Client) SetGetUserOpReceiptFunc(fn GetUserOpReceiptFunc) {
 	i.getUserOpReceipt = fn
 }
