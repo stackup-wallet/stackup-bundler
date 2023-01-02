@@ -122,10 +122,10 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 	return hash.String(), nil
 }
 
-// EstimateUserOperationGas estimates the gas values for a UserOperation. Given UserOperation optionally
-// without gas limits and gas prices, return the needed gas limits. The signature field is ignored by the
-// wallet, so that the operation will not require user's approval. Still, it might require putting a
-// "semi-valid" signature (e.g. a signature in the right length).
+// EstimateUserOperationGas returns estimates for PreVerificationGas, VerificationGas, and CallGasLimit given
+// a UserOperation and EntryPoint address. The signature field and current gas values will not be validated
+// although there should be dummy values in place for the most reliable results (e.g. a signature with the
+// correct length).
 func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.GasEstimates, error) {
 	// Init logger
 	l := i.logger.WithName("eth_estimateUserOperationGas")
@@ -152,13 +152,13 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	// TODO: Return more reliable values
 	return &gas.GasEstimates{
 		PreVerificationGas: gas.NewDefaultOverhead().CalcPreVerificationGas(userOp),
-		CallGasLimit:       gas.NewDefaultOverhead().NonZeroValueCall(),
 		VerificationGas:    i.maxVerificationGas,
+		CallGasLimit:       gas.NewDefaultOverhead().NonZeroValueCall(),
 	}, nil
 }
 
-// GetUserOperationReceipt returns a UserOperation receipt based on a userOpHash returned by
-// SendUserOperation.
+// GetUserOperationReceipt fetches a UserOperation receipt based on a userOpHash returned by
+// *Client.SendUserOperation.
 func (i *Client) GetUserOperationReceipt(
 	hash string,
 ) (*entrypoint.UserOperationReceipt, error) {
