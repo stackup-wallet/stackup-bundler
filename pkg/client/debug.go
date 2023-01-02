@@ -100,8 +100,6 @@ func (d *Debug) SendBundleNow() (string, error) {
 		batch,
 		d.beneficiary,
 		est,
-		big.NewInt((int64(est))),
-		big.NewInt((int64(est))),
 	)
 	if err != nil {
 		return "", err

@@ -83,10 +83,12 @@ func HandleOps(
 	batch []*userop.UserOperation,
 	beneficiary common.Address,
 	gas uint64,
-	tip *big.Int,
-	maxFee *big.Int,
 ) (txn *types.Transaction, revert *FailedOpRevert, err error) {
 	ep, err := NewEntrypoint(entryPoint, eth)
+	if err != nil {
+		return nil, nil, err
+	}
+	tip, err := eth.SuggestGasTipCap(context.Background())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -97,7 +99,6 @@ func HandleOps(
 	}
 	auth.GasLimit = gas
 	auth.GasTipCap = tip
-	auth.GasFeeCap = maxFee
 
 	txn, err = ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {

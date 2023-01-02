@@ -215,8 +215,6 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 					ctx.Batch,
 					r.beneficiary,
 					gas,
-					ctx.Batch[0].MaxPriorityFeePerGas,
-					ctx.Batch[0].MaxFeePerGas,
 				)
 
 				if err != nil {
