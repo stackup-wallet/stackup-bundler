@@ -76,17 +76,18 @@ func GetUserOperationReceipt(
 		if err != nil {
 			return nil, err
 		}
-
 		tx, isPending, err := eth.TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return nil, err
 		} else if isPending {
-			return nil, nil
+			//lint:ignore ST1005 This needs to match the bundler test spec.
+			return nil, errors.New("Missing/invalid userOpHash")
 		}
 		msg, err := tx.AsMessage(types.LatestSignerForChainID(tx.ChainId()), common.Big1)
 		if err != nil {
 			return nil, err
 		}
+
 		txnReceipt := &parsedTransaction{
 			BlockHash:         receipt.BlockHash,
 			BlockNumber:       hexutil.EncodeBig(receipt.BlockNumber),
@@ -99,7 +100,6 @@ func GetUserOperationReceipt(
 			TransactionIndex:  hexutil.EncodeBig(big.NewInt(0).SetUint64(uint64(receipt.TransactionIndex))),
 			EffectiveGasPrice: hexutil.EncodeBig(tx.GasPrice()),
 		}
-
 		return &UserOperationReceipt{
 			UserOpHash:    it.Event.UserOpHash,
 			Sender:        it.Event.Sender,
