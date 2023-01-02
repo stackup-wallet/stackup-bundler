@@ -108,7 +108,7 @@ func PrivateMode() {
 	var d *client.Debug
 	if conf.DebugMode {
 		d = client.NewDebug(eoa, eth, mem, b, chain, conf.SupportedEntryPoints[0], beneficiary)
-		relayer.SetBannedThreshold(100)
+		relayer.SetBannedThreshold(relay.NoBanThreshold)
 	}
 
 	// Init HTTP server

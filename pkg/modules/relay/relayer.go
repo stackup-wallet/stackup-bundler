@@ -60,12 +60,13 @@ func New(
 		chainID:         chainID,
 		beneficiary:     beneficiary,
 		logger:          l.WithName("relayer"),
-		bannedThreshold: defaultBanThreshold,
+		bannedThreshold: DefaultBanThreshold,
 	}
 }
 
 // SetBannedThreshold sets the limit for how many ops can be seen from a client  without being included in a
-// batch before it is banned. Default value is 3.
+// batch before it is banned. Default value is 3. A value of 0 will effectively disable client banning, which
+// is useful for debugging.
 func (r *Relayer) SetBannedThreshold(limit int) {
 	r.bannedThreshold = limit
 }
@@ -93,7 +94,7 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 				WithValues("opsIncluded", opsIncluded)
 
 			OpsFailed := opsSeen - opsIncluded
-			if OpsFailed < r.bannedThreshold {
+			if r.bannedThreshold == NoBanThreshold || OpsFailed < r.bannedThreshold {
 				return nil
 			}
 
