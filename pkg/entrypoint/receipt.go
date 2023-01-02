@@ -38,6 +38,8 @@ type UserOperationReceipt struct {
 	Logs          []*types.Log       `json:"logs"`
 }
 
+// GetUserOperationReceipt filters the EntryPoint contract for UserOperationEvents and returns a receipt for
+// both the UserOperation and accompanying transaction.
 func GetUserOperationReceipt(
 	eth *ethclient.Client,
 	userOpHash string,
