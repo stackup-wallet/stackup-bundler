@@ -64,7 +64,7 @@ func New(
 	}
 }
 
-// SetBannedThreshold sets the limit for how many ops can be seen from a client  without being included in a
+// SetBannedThreshold sets the limit for how many ops can be seen from a client without being included in a
 // batch before it is banned. Default value is 3. A value of 0 will effectively disable client banning, which
 // is useful for debugging.
 func (r *Relayer) SetBannedThreshold(limit int) {
