@@ -90,3 +90,48 @@ func TestReplaceOpEqualMPF(t *testing.T) {
 		t.Fatal("got nil, want err")
 	}
 }
+
+// TestReplaceOpNotEqualIncMF calls checks.ValidatePendingOps with a UserOperation that replaces a pending
+// UserOperation but does not have an equally increasing MaxFeePerGas. Expect error.
+func TestReplaceOpNotEqualIncMF(t *testing.T) {
+	penOp := testutils.MockValidInitUserOp()
+	penOps := []*userop.UserOperation{penOp}
+	op := testutils.MockValidInitUserOp()
+	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big2)
+	op.MaxFeePerGas = big.NewInt(0).Add(penOp.MaxFeePerGas, common.Big1)
+	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+
+	if err == nil {
+		t.Fatal("got nil, want err")
+	}
+}
+
+// TestReplaceOpSameMF calls checks.ValidatePendingOps with a UserOperation that replaces a pending
+// UserOperation but does not increase MaxFeePerGas. Expect error.
+func TestReplaceOpSameMF(t *testing.T) {
+	penOp := testutils.MockValidInitUserOp()
+	penOps := []*userop.UserOperation{penOp}
+	op := testutils.MockValidInitUserOp()
+	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big1)
+	op.MaxFeePerGas = big.NewInt(0).Add(penOp.MaxFeePerGas, common.Big0)
+	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+
+	if err == nil {
+		t.Fatal("got nil, want err")
+	}
+}
+
+// TestReplaceOpDecMF calls checks.ValidatePendingOps with a UserOperation that replaces a pending
+// UserOperation but has a decreasing MaxFeePerGas. Expect error.
+func TestReplaceOpDecMF(t *testing.T) {
+	penOp := testutils.MockValidInitUserOp()
+	penOps := []*userop.UserOperation{penOp}
+	op := testutils.MockValidInitUserOp()
+	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big1)
+	op.MaxFeePerGas = big.NewInt(0).Sub(penOp.MaxFeePerGas, common.Big1)
+	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+
+	if err == nil {
+		t.Fatal("got nil, want err")
+	}
+}
