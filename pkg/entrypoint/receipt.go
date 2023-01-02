@@ -49,12 +49,10 @@ func GetUserOperationReceipt(
 	if err != nil {
 		return nil, err
 	}
-
 	bn, err := eth.BlockNumber(context.Background())
 	if err != nil {
 		return nil, err
 	}
-
 	toBlk := big.NewInt(0).SetUint64(bn)
 	startBlk := big.NewInt(0)
 	sub10kBlk := big.NewInt(0).Sub(toBlk, big.NewInt(10000))
