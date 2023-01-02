@@ -16,8 +16,8 @@ type GetCodeFunc = func(addr common.Address) ([]byte, error)
 // GetStakeFunc provides a general interface for retrieving the EntryPoint stake for a given address.
 type GetStakeFunc = func(entity common.Address) (*entrypoint.IStakeManagerDepositInfo, error)
 
-// // GetBaseFeeFunc provides a general interface for retrieving the closest estimate for base fee to allow
-// for timely execution of a transaction.
+// GetBaseFeeFunc provides a general interface for retrieving the closest estimate for basefee to allow for
+// timely execution of a transaction.
 type GetBaseFeeFunc = func() (*big.Int, error)
 
 // getCodeWithEthClient returns a GetCodeFunc that uses an eth client to call eth_getCode.
