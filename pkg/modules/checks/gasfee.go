@@ -6,9 +6,8 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// ValidateFeePerGas checks the maxFeePerGas and maxPriorityFeePerGas are above a configurable minimum value
-// that the client is willing to accept. At the minimum, they are sufficiently high to be included with the
-// current block.basefee.
+// ValidateFeePerGas checks the maxFeePerGas is sufficiently high to be included with the current
+// block.basefee.
 func ValidateFeePerGas(op *userop.UserOperation, gbf GetBaseFeeFunc) error {
 	bf, err := gbf()
 	if err != nil {
