@@ -119,7 +119,9 @@ func (d *Debug) SetBundlingMode(mode string) (string, error) {
 	case "manual":
 		d.bundler.Stop()
 	case "auto":
-		d.bundler.Run()
+		if err := d.bundler.Run(); err != nil {
+			return "", err
+		}
 	default:
 		return "", fmt.Errorf("debug: unrecognized mode %s", mode)
 	}

@@ -112,5 +112,6 @@ func GetUserOperationReceipt(
 		}, nil
 	}
 
+	//lint:ignore ST1005 This needs to match the bundler test spec.
 	return nil, errors.New("Missing/invalid userOpHash")
 }

@@ -1,6 +1,8 @@
 package client
 
 import (
+	"errors"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
@@ -10,7 +12,8 @@ type GetUserOpReceiptFunc = func(hash string, ep common.Address) (*entrypoint.Us
 
 func getUserOpReceiptNoop() GetUserOpReceiptFunc {
 	return func(hash string, ep common.Address) (*entrypoint.UserOperationReceipt, error) {
-		return nil, nil
+		//lint:ignore ST1005 This needs to match the bundler test spec.
+		return nil, errors.New("Missing/invalid userOpHash")
 	}
 }
 
