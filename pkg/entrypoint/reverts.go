@@ -12,11 +12,12 @@ import (
 )
 
 type ReturnInfo struct {
-	PreOpGas          *big.Int `json:"preOpGas"`
-	Prefund           *big.Int `json:"prefund"`
-	Deadline          *big.Int `json:"deadline"`
-	PaymasterDeadline *big.Int `json:"paymasterDeadline"`
-	PaymasterContext  []byte   `json:"paymasterContext"`
+	PreOpGas         *big.Int `json:"preOpGas"`
+	Prefund          *big.Int `json:"prefund"`
+	SigFailed        bool     `json:"sigFailed"`
+	ValidAfter       *big.Int `json:"validAfter"`
+	ValidUntil       *big.Int `json:"validUntil"`
+	PaymasterContext []byte   `json:"paymasterContext"`
 }
 
 type StakeInfo struct {
@@ -35,8 +36,9 @@ var (
 	returnInfoType = []abi.ArgumentMarshaling{
 		{Name: "preOpGas", Type: "uint256"},
 		{Name: "prefund", Type: "uint256"},
-		{Name: "deadline", Type: "uint256"},
-		{Name: "paymasterDeadline", Type: "uint256"},
+		{Name: "sigFailed", Type: "bool"},
+		{Name: "validAfter", Type: "uint64"},
+		{Name: "validUntil", Type: "uint64"},
 		{Name: "paymasterContext", Type: "bytes"},
 	}
 	stakeInfoType = []abi.ArgumentMarshaling{
