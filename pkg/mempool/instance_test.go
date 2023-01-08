@@ -14,7 +14,7 @@ func TestAddOpToMempool(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := New(db)
-	ep := testutils.ValidAddress
+	ep := testutils.ValidAddress1
 	op := testutils.MockValidInitUserOp()
 
 	if err := mem.AddOp(ep, op); err != nil {
@@ -40,7 +40,7 @@ func TestReplaceOpInMempool(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := New(db)
-	ep := testutils.ValidAddress
+	ep := testutils.ValidAddress1
 	op1 := testutils.MockValidInitUserOp()
 	op2 := testutils.MockValidInitUserOp()
 	op2.MaxPriorityFeePerGas = big.NewInt(0).Add(op1.MaxPriorityFeePerGas, common.Big1)
@@ -70,7 +70,7 @@ func TestRemoveOpsFromMempool(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := New(db)
-	ep := testutils.ValidAddress
+	ep := testutils.ValidAddress1
 	op := testutils.MockValidInitUserOp()
 
 	if err := mem.AddOp(ep, op); err != nil {
@@ -96,9 +96,10 @@ func TestBundleOpsFromMempool(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := New(db)
-	ep := testutils.ValidAddress
+	ep := testutils.ValidAddress1
 	op1 := testutils.MockValidInitUserOp()
 	op2 := testutils.MockValidInitUserOp()
+	op2.Sender = testutils.ValidAddress2
 	op2.Nonce = big.NewInt(0).Add(op1.Nonce, common.Big1)
 	op2.MaxPriorityFeePerGas = big.NewInt(0).Add(op1.MaxPriorityFeePerGas, common.Big1)
 
@@ -128,7 +129,7 @@ func TestNewMempoolLoadsFromDisk(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem1, _ := New(db)
-	ep := testutils.ValidAddress
+	ep := testutils.ValidAddress1
 	op1 := testutils.MockValidInitUserOp()
 	op2 := testutils.MockValidInitUserOp()
 	op2.Nonce = big.NewInt(0).Add(op1.Nonce, common.Big1)
