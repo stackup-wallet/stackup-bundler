@@ -13,7 +13,7 @@ import (
 func TestAddDepositInfoToCtx(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{}
-	ctx := NewUserOpHandlerContext(op, penOps, testutils.ValidAddress, testutils.ChainID)
+	ctx := NewUserOpHandlerContext(op, penOps, testutils.ValidAddress1, testutils.ChainID)
 
 	entity := op.GetFactory()
 	dep := testutils.StakedDepositInfo
@@ -29,7 +29,7 @@ func TestAddDepositInfoToCtx(t *testing.T) {
 func TestGetNilDepositInfoFromCtx(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{}
-	ctx := NewUserOpHandlerContext(op, penOps, testutils.ValidAddress, testutils.ChainID)
+	ctx := NewUserOpHandlerContext(op, penOps, testutils.ValidAddress1, testutils.ChainID)
 
 	if dep := ctx.GetDepositInfo(op.GetFactory()); dep != nil {
 		t.Fatalf("got %+v, want nil", dep)
@@ -46,7 +46,7 @@ func TestGetPendingOps(t *testing.T) {
 	penOp3 := testutils.MockValidInitUserOp()
 	penOp3.Nonce = big.NewInt(0).Add(penOp2.Nonce, common.Big1)
 	initPenOps := []*userop.UserOperation{penOp1, penOp2, penOp3}
-	ctx := NewUserOpHandlerContext(op, initPenOps, testutils.ValidAddress, testutils.ChainID)
+	ctx := NewUserOpHandlerContext(op, initPenOps, testutils.ValidAddress1, testutils.ChainID)
 
 	penOps := ctx.GetPendingOps()
 	if len(penOps) != len(initPenOps) {

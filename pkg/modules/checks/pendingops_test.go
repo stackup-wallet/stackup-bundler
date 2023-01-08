@@ -13,7 +13,12 @@ import (
 func TestNoPendingOps(t *testing.T) {
 	penOps := []*userop.UserOperation{}
 	op := testutils.MockValidInitUserOp()
-	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetNotStakeZeroDeposit,
+	)
 
 	if err != nil {
 		t.Fatalf("got err %v, want nil", err)
@@ -27,7 +32,12 @@ func TestPendingOpsNotStaked(t *testing.T) {
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
 	op.Nonce = big.NewInt(0).Add(penOp.Nonce, common.Big1)
-	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetNotStakeZeroDeposit,
+	)
 
 	if err == nil {
 		t.Fatal("got nil, want err")
@@ -41,7 +51,12 @@ func TestPendingOpsStaked(t *testing.T) {
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
 	op.Nonce = big.NewInt(0).Add(penOp.Nonce, common.Big1)
-	err := ValidatePendingOps(op, penOps, testutils.MockGetStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetStakeZeroDeposit,
+	)
 
 	if err != nil {
 		t.Fatalf("got err %v, want nil", err)
@@ -56,7 +71,12 @@ func TestReplaceOp(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big1)
 	op.MaxFeePerGas = big.NewInt(0).Add(penOp.MaxFeePerGas, common.Big1)
-	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetNotStakeZeroDeposit,
+	)
 
 	if err != nil {
 		t.Fatalf("got err %v, want nil", err)
@@ -70,7 +90,12 @@ func TestReplaceOpLowerMPF(t *testing.T) {
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
 	op.MaxPriorityFeePerGas = big.NewInt(0).Sub(penOp.MaxPriorityFeePerGas, common.Big1)
-	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetNotStakeZeroDeposit,
+	)
 
 	if err == nil {
 		t.Fatal("got nil, want err")
@@ -84,7 +109,12 @@ func TestReplaceOpEqualMPF(t *testing.T) {
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
 	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big0)
-	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetNotStakeZeroDeposit,
+	)
 
 	if err == nil {
 		t.Fatal("got nil, want err")
@@ -99,7 +129,12 @@ func TestReplaceOpNotEqualIncMF(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big2)
 	op.MaxFeePerGas = big.NewInt(0).Add(penOp.MaxFeePerGas, common.Big1)
-	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetNotStakeZeroDeposit,
+	)
 
 	if err == nil {
 		t.Fatal("got nil, want err")
@@ -114,7 +149,12 @@ func TestReplaceOpSameMF(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big1)
 	op.MaxFeePerGas = big.NewInt(0).Add(penOp.MaxFeePerGas, common.Big0)
-	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetNotStakeZeroDeposit,
+	)
 
 	if err == nil {
 		t.Fatal("got nil, want err")
@@ -129,7 +169,12 @@ func TestReplaceOpDecMF(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	op.MaxPriorityFeePerGas = big.NewInt(0).Add(penOp.MaxPriorityFeePerGas, common.Big1)
 	op.MaxFeePerGas = big.NewInt(0).Sub(penOp.MaxFeePerGas, common.Big1)
-	err := ValidatePendingOps(op, penOps, testutils.MockGetNotStakeZeroDeposit)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+		testutils.MaxOpsForUnstakedSender,
+		testutils.MockGetNotStakeZeroDeposit,
+	)
 
 	if err == nil {
 		t.Fatal("got nil, want err")
