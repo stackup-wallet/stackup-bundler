@@ -12,7 +12,7 @@ import (
 //
 //  1. Sender doesn't have another UserOperation already present in the pool.
 //  2. It replaces an existing UserOperation with same nonce and higher fee.
-//  3. Sender is staked and is allowed multiple UserOperations in the pool.
+//  3. Sender is staked and is allowed uncapped UserOperations in the pool.
 func ValidatePendingOps(
 	op *userop.UserOperation,
 	penOps []*userop.UserOperation,
