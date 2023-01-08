@@ -69,6 +69,15 @@ func (q *userOpQueues) Next(entryPoint common.Address) []*userop.UserOperation {
 		batch = append(batch, n.Value.(*userop.UserOperation))
 	}
 
+	// Ensure that ops with same sender is ordered by ascending nonce regardless of MaxPriorityFeePerGas
+	for i := 0; i < len(batch); i++ {
+		for j := i + 1; j < len(batch); j++ {
+			if batch[i].Sender == batch[j].Sender && batch[i].Nonce.Cmp(batch[j].Nonce) > 0 {
+				batch[i], batch[j] = batch[j], batch[i]
+			}
+		}
+	}
+
 	return batch
 }
 

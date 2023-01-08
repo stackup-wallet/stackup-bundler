@@ -77,6 +77,9 @@ func (d *Debug) SendBundleNow() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if len(batch) > 1 {
+		batch = batch[:1]
+	}
 
 	est, revert, err := entrypoint.EstimateHandleOpsGas(
 		d.eoa,
@@ -105,6 +108,10 @@ func (d *Debug) SendBundleNow() (string, error) {
 		return "", err
 	} else if revert != nil {
 		return "", errors.New("debug: bad batch during call")
+	}
+
+	if err := d.mempool.RemoveOps(d.entrypoint, batch...); err != nil {
+		return "", err
 	}
 
 	return txn.Hash().String(), nil

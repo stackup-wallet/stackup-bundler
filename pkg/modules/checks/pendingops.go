@@ -2,6 +2,7 @@ package checks
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
@@ -12,7 +13,12 @@ import (
 //  1. Sender doesn't have another UserOperation already present in the pool.
 //  2. It replaces an existing UserOperation with same nonce and higher fee.
 //  3. Sender is staked and is allowed multiple UserOperations in the pool.
-func ValidatePendingOps(op *userop.UserOperation, penOps []*userop.UserOperation, gs GetStakeFunc) error {
+func ValidatePendingOps(
+	op *userop.UserOperation,
+	penOps []*userop.UserOperation,
+	maxOpsForUnstakedSender int,
+	gs GetStakeFunc,
+) error {
 	dep, err := gs(op.Sender)
 	if err != nil {
 		return err
@@ -38,9 +44,10 @@ func ValidatePendingOps(op *userop.UserOperation, penOps []*userop.UserOperation
 			if op.MaxFeePerGas.Cmp(mf) != 0 {
 				return errors.New("pending ops: replaced op must have an equally higher max fee")
 			}
-		} else if !dep.Staked {
-			return errors.New(
-				"pending ops: sender must be staked to have multiple ops in the mempool",
+		} else if !dep.Staked && len(penOps) >= maxOpsForUnstakedSender {
+			return fmt.Errorf(
+				"pending ops: sender must be staked to have more than %d ops in the mempool",
+				maxOpsForUnstakedSender,
 			)
 		}
 	}

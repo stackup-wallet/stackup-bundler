@@ -18,17 +18,23 @@ import (
 // intended for bundlers that are independent of an Ethereum node and hence relies on a given ethClient to
 // query blockchain state.
 type Standalone struct {
-	rpc                *rpc.Client
-	eth                *ethclient.Client
-	maxVerificationGas *big.Int
-	tracer             string
+	rpc                     *rpc.Client
+	eth                     *ethclient.Client
+	maxVerificationGas      *big.Int
+	maxOpsForUnstakedSender int
+	tracer                  string
 }
 
 // New returns a Standalone instance with methods that can be used in Client and Bundler modules to perform
 // standard checks as specified in EIP-4337.
-func New(rpc *rpc.Client, maxVerificationGas *big.Int, tracer string) *Standalone {
+func New(
+	rpc *rpc.Client,
+	maxVerificationGas *big.Int,
+	maxOpsForUnstakedSender int,
+	tracer string,
+) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{rpc, eth, maxVerificationGas, tracer}
+	return &Standalone{rpc, eth, maxVerificationGas, maxOpsForUnstakedSender, tracer}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -50,7 +56,7 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, gs) })
 		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp) })
 		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gbf) })
-		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps, gs) })
+		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps, s.maxOpsForUnstakedSender, gs) })
 
 		if err := g.Wait(); err != nil {
 			return errors.NewRPCError(errors.INVALID_FIELDS, err.Error(), err.Error())
