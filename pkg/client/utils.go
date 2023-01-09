@@ -30,7 +30,7 @@ func GetUserOpReceiptWithEthClient(eth *ethclient.Client) GetUserOpReceiptFunc {
 	}
 }
 
-// GetSimulateValidationFunc is a general interface for fetching simulate validation results given a userOp
+// GetSimulateValidationFunc is a general interface for fetching simulateValidation results given a userOp
 // and EntryPoint address.
 type GetSimulateValidationFunc = func(ep common.Address, op *userop.UserOperation) (*entrypoint.ValidationResultRevert, error)
 
@@ -42,7 +42,7 @@ func getSimulateValidationNoop() GetSimulateValidationFunc {
 }
 
 // GetSimulateValidationWithRpcClient returns an implementation of GetSimulateValidationFunc that relies on an
-// rpc client to fetch simulate validation results.
+// rpc client to fetch simulateValidation results.
 func GetSimulateValidationWithRpcClient(rpc *rpc.Client) GetSimulateValidationFunc {
 	return func(ep common.Address, op *userop.UserOperation) (*entrypoint.ValidationResultRevert, error) {
 		return entrypoint.SimulateValidation(rpc, ep, op)

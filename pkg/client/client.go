@@ -75,7 +75,7 @@ func (i *Client) SetGetUserOpReceiptFunc(fn GetUserOpReceiptFunc) {
 	i.getUserOpReceipt = fn
 }
 
-// SetGetSimulateValidationFunc defines a general function for fetching simulate validation results given a
+// SetGetSimulateValidationFunc defines a general function for fetching simulateValidation results given a
 // userOp and EntryPoint address. This function is called in *Client.EstimateUserOperationGas.
 func (i *Client) SetGetSimulateValidationFunc(fn GetSimulateValidationFunc) {
 	i.getSimulateValidation = fn
