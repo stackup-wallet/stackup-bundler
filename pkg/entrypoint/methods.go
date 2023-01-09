@@ -34,7 +34,6 @@ var (
 	)
 	validatePaymasterUserOpSelector = hexutil.Encode(validatePaymasterUserOpMethod.ID)
 
-	OpsInputName    = "ops"
 	handleOpsMethod = abi.NewMethod(
 		"handleOps",
 		"handleOps",
@@ -43,7 +42,7 @@ var (
 		false,
 		false,
 		abi.Arguments{
-			{Name: OpsInputName, Type: userop.UserOpArr},
+			{Name: "ops", Type: userop.UserOpArr},
 			{Name: "beneficiary", Type: address},
 		},
 		nil,
