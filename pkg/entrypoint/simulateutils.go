@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// EntityStakesMap provides a mapping for encountered entity addresses and their stake info on the EntryPoint.
-type EntityStakesMap map[common.Address]*IStakeManagerDepositInfo
+// EntityStakes provides a mapping for encountered entity addresses and their stake info on the EntryPoint.
+type EntityStakes map[common.Address]*IStakeManagerDepositInfo
 
 type traceCallReq struct {
 	From common.Address `json:"from"`

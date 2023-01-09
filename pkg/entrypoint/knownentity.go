@@ -17,7 +17,7 @@ type knownEntity map[string]struct {
 func newKnownEntity(
 	op *userop.UserOperation,
 	res *tracer.BundlerCollectorReturn,
-	stakes EntityStakesMap,
+	stakes EntityStakes,
 ) (knownEntity, error) {
 	if len(res.NumberLevels) != 3 {
 		return nil, fmt.Errorf("unexpected NumberLevels length in tracing result: %d", len(res.NumberLevels))

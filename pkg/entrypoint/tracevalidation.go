@@ -23,7 +23,7 @@ func TraceSimulateValidation(
 	op *userop.UserOperation,
 	chainID *big.Int,
 	customTracer string,
-	stakes EntityStakesMap,
+	stakes EntityStakes,
 ) error {
 	ep, err := NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
 	if err != nil {
