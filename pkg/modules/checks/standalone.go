@@ -84,7 +84,7 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 				ctx.UserOp,
 				ctx.ChainID,
 				s.tracer,
-				entrypoint.EntityStakes{
+				entrypoint.EntityStakesMap{
 					ctx.UserOp.GetFactory():   ctx.GetDepositInfo(ctx.UserOp.GetFactory()),
 					ctx.UserOp.Sender:         ctx.GetDepositInfo(ctx.UserOp.Sender),
 					ctx.UserOp.GetPaymaster(): ctx.GetDepositInfo(ctx.UserOp.GetPaymaster()),

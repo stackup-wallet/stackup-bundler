@@ -23,7 +23,7 @@ func TraceSimulateValidation(
 	op *userop.UserOperation,
 	chainID *big.Int,
 	customTracer string,
-	stakes EntityStakes,
+	stakes EntityStakesMap,
 ) error {
 	ep, err := NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
 	if err != nil {
@@ -53,12 +53,12 @@ func TraceSimulateValidation(
 		return err
 	}
 
-	entityMap, err := newEntityMap(op, &res, stakes)
+	knownEntity, err := newKnownEntity(op, &res, stakes)
 	if err != nil {
 		return err
 	}
 
-	for title, entity := range entityMap {
+	for title, entity := range knownEntity {
 		for opcode := range entity.Info.Opcodes {
 			if bannedOpCodes.Contains(opcode) {
 				return fmt.Errorf("%s uses banned opcode: %s", title, opcode)
@@ -66,26 +66,26 @@ func TraceSimulateValidation(
 		}
 	}
 
-	create2Count, ok := entityMap["factory"].Info.Opcodes[create2OpCode]
+	create2Count, ok := knownEntity["factory"].Info.Opcodes[create2OpCode]
 	if ok && (create2Count > 1 || len(op.InitCode) == 0) {
 		return fmt.Errorf("factory with too many %s", create2OpCode)
 	}
-	_, ok = entityMap["account"].Info.Opcodes[create2OpCode]
+	_, ok = knownEntity["account"].Info.Opcodes[create2OpCode]
 	if ok {
 		return fmt.Errorf("account uses banned opcode: %s", create2OpCode)
 	}
-	_, ok = entityMap["paymaster"].Info.Opcodes[create2OpCode]
+	_, ok = knownEntity["paymaster"].Info.Opcodes[create2OpCode]
 	if ok {
 		return fmt.Errorf("paymaster uses banned opcode: %s", create2OpCode)
 	}
 
-	slots := parseEntitySlots(stakes, res.Keccak)
-	for title, entity := range entityMap {
-		if err := validateEntityStorage(
+	slotsByEntity := newStorageSlotsByEntity(stakes, res.Keccak)
+	for title, entity := range knownEntity {
+		if err := validateStorageSlotsForEntity(
 			title,
 			op,
 			entryPoint,
-			slots,
+			slotsByEntity,
 			entity.Info.Access,
 			entity.Address,
 			entity.IsStaked,
@@ -94,7 +94,7 @@ func TraceSimulateValidation(
 		}
 	}
 
-	callStack := parseCallStack(res.Calls)
+	callStack := newCallStack(res.Calls)
 	for _, call := range callStack {
 		if call.Method == validatePaymasterUserOpSelector {
 			out, err := decodeValidatePaymasterUserOpOutput(call.Return)
@@ -106,7 +106,7 @@ func TraceSimulateValidation(
 				)
 			}
 
-			if len(out.Context) != 0 && !entityMap["paymaster"].IsStaked {
+			if len(out.Context) != 0 && !knownEntity["paymaster"].IsStaked {
 				return errors.New("unstaked paymaster must not return context")
 			}
 		}
