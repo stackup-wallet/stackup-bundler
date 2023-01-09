@@ -35,6 +35,13 @@ func (r *RpcAdapter) Eth_getUserOperationReceipt(
 	return r.client.GetUserOperationReceipt(userOpHash)
 }
 
+// Eth_getUserOperationByHash routes method calls to *Client.GetUserOperationByHash.
+func (r *RpcAdapter) Eth_getUserOperationByHash(
+	userOpHash string,
+) (*entrypoint.HashLookupResult, error) {
+	return r.client.GetUserOperationByHash(userOpHash)
+}
+
 // Eth_supportedEntryPoints routes method calls to *Client.SupportedEntryPoints.
 func (r *RpcAdapter) Eth_supportedEntryPoints() ([]string, error) {
 	return r.client.SupportedEntryPoints()

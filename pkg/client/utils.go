@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -65,5 +66,24 @@ func getCallGasEstimateNoop() GetCallGasEstimateFunc {
 func GetCallGasEstimateWithEthClient(eth *ethclient.Client) GetCallGasEstimateFunc {
 	return func(ep common.Address, op *userop.UserOperation) (uint64, error) {
 		return gas.CallGasEstimate(eth, ep, op)
+	}
+}
+
+// GetUserOpByHashFunc is a general interface for fetching a UserOperation given a userOpHash and EntryPoint
+// address and chain ID.
+type GetUserOpByHashFunc func(hash string, ep common.Address, chain *big.Int) (*entrypoint.HashLookupResult, error)
+
+func getUserOpByHashNoop() GetUserOpByHashFunc {
+	return func(hash string, ep common.Address, chain *big.Int) (*entrypoint.HashLookupResult, error) {
+		//lint:ignore ST1005 This needs to match the bundler test spec.
+		return nil, errors.New("Missing/invalid userOpHash")
+	}
+}
+
+// GetUserOpByHashWithEthClient returns an implementation of GetUserOpByHashFunc that relies on an eth client
+// to fetch a UserOperation.
+func GetUserOpByHashWithEthClient(eth *ethclient.Client) GetUserOpByHashFunc {
+	return func(hash string, ep common.Address, chain *big.Int) (*entrypoint.HashLookupResult, error) {
+		return entrypoint.GetUserOperationByHash(eth, hash, ep, chain)
 	}
 }

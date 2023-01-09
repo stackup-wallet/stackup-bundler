@@ -28,6 +28,7 @@ type Client struct {
 	getUserOpReceipt      GetUserOpReceiptFunc
 	getSimulateValidation GetSimulateValidationFunc
 	getCallGasEstimate    GetCallGasEstimateFunc
+	getUserOpByHash       GetUserOpByHashFunc
 }
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
@@ -46,6 +47,7 @@ func New(
 		getUserOpReceipt:      getUserOpReceiptNoop(),
 		getSimulateValidation: getSimulateValidationNoop(),
 		getCallGasEstimate:    getCallGasEstimateNoop(),
+		getUserOpByHash:       getUserOpByHashNoop(),
 	}
 }
 
@@ -85,6 +87,12 @@ func (i *Client) SetGetSimulateValidationFunc(fn GetSimulateValidationFunc) {
 // userOp and EntryPoint address. This function is called in *Client.EstimateUserOperationGas.
 func (i *Client) SetGetCallGasEstimateFunc(fn GetCallGasEstimateFunc) {
 	i.getCallGasEstimate = fn
+}
+
+// SetGetUserOpByHashFunc defines a general function for fetching a userOp given a userOpHash and EntryPoint
+// address. This function is called in *Client.GetUserOperationByHash.
+func (i *Client) SetGetUserOpByHashFunc(fn GetUserOpByHashFunc) {
+	i.getUserOpByHash = fn
 }
 
 // SendUserOperation implements the method call for eth_sendUserOperation.
@@ -197,6 +205,21 @@ func (i *Client) GetUserOperationReceipt(
 
 	l.Info("eth_getUserOperationReceipt ok")
 	return ev, nil
+}
+
+// GetUserOperationByHash returns a UserOperation based a given userOpHash returned by
+// *Client.SendUserOperation.
+func (i *Client) GetUserOperationByHash(hash string) (*entrypoint.HashLookupResult, error) {
+	// Init logger
+	l := i.logger.WithName("eth_getUserOperationByHash").WithValues("userop_hash", hash)
+
+	res, err := i.getUserOpByHash(hash, i.supportedEntryPoints[0], i.chainID)
+	if err != nil {
+		l.Error(err, "eth_getUserOperationByHash error")
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // SupportedEntryPoints implements the method call for eth_supportedEntryPoints. It returns the array of

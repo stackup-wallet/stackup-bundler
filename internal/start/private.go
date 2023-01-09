@@ -91,6 +91,7 @@ func PrivateMode() {
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
 	c.SetGetSimulateValidationFunc(client.GetSimulateValidationWithRpcClient(rpc))
 	c.SetGetCallGasEstimateFunc(client.GetCallGasEstimateWithEthClient(eth))
+	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
 		check.ValidateOpValues(),
