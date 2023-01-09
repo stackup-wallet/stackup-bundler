@@ -2,6 +2,7 @@ package modules
 
 import (
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
@@ -63,7 +64,7 @@ type UserOpHandlerCtx struct {
 	UserOp     *userop.UserOperation
 	EntryPoint common.Address
 	ChainID    *big.Int
-	deposits   map[common.Address]*entrypoint.IStakeManagerDepositInfo
+	deposits   sync.Map
 	pendingOps []*userop.UserOperation
 }
 
@@ -78,20 +79,25 @@ func NewUserOpHandlerContext(
 		UserOp:     op,
 		EntryPoint: entryPoint,
 		ChainID:    chainID,
-		deposits:   make(map[common.Address]*entrypoint.IStakeManagerDepositInfo),
+		deposits:   sync.Map{},
 		pendingOps: append([]*userop.UserOperation{}, pendingOps...),
 	}
 }
 
 // AddDepositInfo adds any entity's EntryPoint stake info to the current context.
 func (c *UserOpHandlerCtx) AddDepositInfo(entity common.Address, dep *entrypoint.IStakeManagerDepositInfo) {
-	c.deposits[entity] = dep
+	c.deposits.Store(entity, dep)
 }
 
 // GetDepositInfo retrieves any entity's EntryPoint stake info from the current context if it was previously
 // added. Otherwise returns nil
 func (c *UserOpHandlerCtx) GetDepositInfo(entity common.Address) *entrypoint.IStakeManagerDepositInfo {
-	return c.deposits[entity]
+	dep, ok := c.deposits.Load(entity)
+	if !ok {
+		return nil
+	}
+
+	return dep.(*entrypoint.IStakeManagerDepositInfo)
 }
 
 // GetPendingOps returns all pending UserOperations in the mempool by the same UserOp.Sender.

@@ -39,8 +39,8 @@ func envArrayToAddressSlice(s string) []common.Address {
 	return slc
 }
 
-// GetValues returns config for the bundler that has been read in from env vars.
-// See https://docs.stackup.sh/docs/packages/bundler/configure for details.
+// GetValues returns config for the bundler that has been read in from env vars. See
+// https://docs.stackup.sh/docs/packages/bundler/configure for details.
 func GetValues() *Values {
 	// Default variables
 	viper.SetDefault("erc4337_bundler_port", 4337)
