@@ -41,7 +41,7 @@ func getSimulateValidationNoop() GetSimulateValidationFunc {
 	}
 }
 
-// GetSimulateValidationWithRpcClient returns an implementation of GetSimulateValidationFunc that relies on an
+// GetSimulateValidationWithRpcClient returns an implementation of GetSimulateValidationFunc that relies on a
 // rpc client to fetch simulateValidation results.
 func GetSimulateValidationWithRpcClient(rpc *rpc.Client) GetSimulateValidationFunc {
 	return func(ep common.Address, op *userop.UserOperation) (*entrypoint.ValidationResultRevert, error) {
