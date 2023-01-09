@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	// UserOpArgumentMarshaling is the primitive ABI types of a UserOp.
-	UserOpArgumentMarshaling = []abi.ArgumentMarshaling{
+	// UserOpPrimitives is the primitive ABI types of a UserOp.
+	UserOpPrimitives = []abi.ArgumentMarshaling{
 		{Name: "sender", InternalType: "Sender", Type: "address"},
 		{Name: "nonce", InternalType: "Nonce", Type: "uint256"},
 		{Name: "initCode", InternalType: "InitCode", Type: "bytes"},
@@ -28,10 +28,10 @@ var (
 	}
 
 	// UserOpType is the ABI type of a UserOperation.
-	UserOpType, _ = abi.NewType("tuple", "op", UserOpArgumentMarshaling)
+	UserOpType, _ = abi.NewType("tuple", "op", UserOpPrimitives)
 
 	// UserOpArr is the ABI type for an array of UserOperations.
-	UserOpArr, _ = abi.NewType("tuple[]", "ops", UserOpArgumentMarshaling)
+	UserOpArr, _ = abi.NewType("tuple[]", "ops", UserOpPrimitives)
 )
 
 func getAbiArgs() abi.Arguments {
