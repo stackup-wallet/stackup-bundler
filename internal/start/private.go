@@ -87,8 +87,10 @@ func PrivateMode() {
 	paymaster := paymaster.New(db)
 
 	// Init Client
-	c := client.New(mem, chain, conf.SupportedEntryPoints, conf.MaxVerificationGas)
+	c := client.New(mem, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
+	c.SetGetSimulateValidationFunc(client.GetSimulateValidationWithRpcClient(rpc))
+	c.SetGetCallGasEstimateFunc(client.GetCallGasEstimateWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
 		check.ValidateOpValues(),

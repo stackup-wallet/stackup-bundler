@@ -20,13 +20,14 @@ import (
 // Client controls the end to end process of adding incoming UserOperations to the mempool. It also
 // implements the required RPC methods as specified in EIP-4337.
 type Client struct {
-	mempool              *mempool.Mempool
-	chainID              *big.Int
-	supportedEntryPoints []common.Address
-	maxVerificationGas   *big.Int
-	userOpHandler        modules.UserOpHandlerFunc
-	logger               logr.Logger
-	getUserOpReceipt     GetUserOpReceiptFunc
+	mempool               *mempool.Mempool
+	chainID               *big.Int
+	supportedEntryPoints  []common.Address
+	userOpHandler         modules.UserOpHandlerFunc
+	logger                logr.Logger
+	getUserOpReceipt      GetUserOpReceiptFunc
+	getSimulateValidation GetSimulateValidationFunc
+	getCallGasEstimate    GetCallGasEstimateFunc
 }
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
@@ -35,16 +36,16 @@ func New(
 	mempool *mempool.Mempool,
 	chainID *big.Int,
 	supportedEntryPoints []common.Address,
-	maxVerificationGas *big.Int,
 ) *Client {
 	return &Client{
-		mempool:              mempool,
-		chainID:              chainID,
-		supportedEntryPoints: supportedEntryPoints,
-		maxVerificationGas:   maxVerificationGas,
-		userOpHandler:        noop.UserOpHandler,
-		logger:               logger.NewZeroLogr().WithName("client"),
-		getUserOpReceipt:     getUserOpReceiptNoop(),
+		mempool:               mempool,
+		chainID:               chainID,
+		supportedEntryPoints:  supportedEntryPoints,
+		userOpHandler:         noop.UserOpHandler,
+		logger:                logger.NewZeroLogr().WithName("client"),
+		getUserOpReceipt:      getUserOpReceiptNoop(),
+		getSimulateValidation: getSimulateValidationNoop(),
+		getCallGasEstimate:    getCallGasEstimateNoop(),
 	}
 }
 
@@ -72,6 +73,18 @@ func (i *Client) UseModules(handlers ...modules.UserOpHandlerFunc) {
 // EntryPoint address. This function is called in *Client.GetUserOperationReceipt.
 func (i *Client) SetGetUserOpReceiptFunc(fn GetUserOpReceiptFunc) {
 	i.getUserOpReceipt = fn
+}
+
+// SetGetSimulateValidationFunc defines a general function for fetching simulateValidation results given a
+// userOp and EntryPoint address. This function is called in *Client.EstimateUserOperationGas.
+func (i *Client) SetGetSimulateValidationFunc(fn GetSimulateValidationFunc) {
+	i.getSimulateValidation = fn
+}
+
+// SetGetCallGasEstimateFunc defines a general function for fetching an estimate for callGasLimit given a
+// userOp and EntryPoint address. This function is called in *Client.EstimateUserOperationGas.
+func (i *Client) SetGetCallGasEstimateFunc(fn GetCallGasEstimateFunc) {
+	i.getCallGasEstimate = fn
 }
 
 // SendUserOperation implements the method call for eth_sendUserOperation.
@@ -148,12 +161,23 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	hash := userOp.GetUserOpHash(epAddr, i.chainID)
 	l = l.WithValues("userop_hash", hash)
 
+	sim, err := i.getSimulateValidation(epAddr, userOp)
+	if err != nil {
+		l.Error(err, "eth_estimateUserOperationGas error")
+		return nil, err
+	}
+
+	cg, err := i.getCallGasEstimate(epAddr, userOp)
+	if err != nil {
+		l.Error(err, "eth_estimateUserOperationGas error")
+		return nil, err
+	}
+
 	l.Info("eth_estimateUserOperationGas ok")
-	// TODO: Return more reliable values
 	return &gas.GasEstimates{
 		PreVerificationGas: gas.NewDefaultOverhead().CalcPreVerificationGas(userOp),
-		VerificationGas:    i.maxVerificationGas,
-		CallGasLimit:       gas.NewDefaultOverhead().NonZeroValueCall(),
+		VerificationGas:    sim.ReturnInfo.PreOpGas,
+		CallGasLimit:       big.NewInt(int64(cg)),
 	}, nil
 }
 

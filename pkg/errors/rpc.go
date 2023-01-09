@@ -9,6 +9,8 @@ var (
 	INVALID_PAYMASTER_STAKE       = -32505
 	INVALID_AGGREGATOR            = -32506
 	INVALID_FIELDS                = -32602
+
+	EXECUTION_REVERTED = -32521
 )
 
 // RPCError is a custom error that fits the JSON-RPC error spec.
