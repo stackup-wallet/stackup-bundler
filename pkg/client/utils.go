@@ -61,7 +61,7 @@ func getCallGasEstimateNoop() GetCallGasEstimateFunc {
 }
 
 // GetCallGasEstimateWithEthClient returns an implementation of GetCallGasEstimateFunc that relies on an eth
-// client to fetch an estimate for callGas.
+// client to fetch an estimate for callGasLimit.
 func GetCallGasEstimateWithEthClient(eth *ethclient.Client) GetCallGasEstimateFunc {
 	return func(ep common.Address, op *userop.UserOperation) (uint64, error) {
 		return gas.CallGasEstimate(eth, ep, op)
