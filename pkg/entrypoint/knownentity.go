@@ -24,15 +24,15 @@ func newKnownEntity(
 	}
 
 	return knownEntity{
-		"factory": {
-			Address:  op.GetFactory(),
-			Info:     res.NumberLevels[factoryNumberLevel],
-			IsStaked: stakes[op.GetFactory()] != nil && stakes[op.GetFactory()].Staked,
-		},
 		"account": {
 			Address:  op.Sender,
 			Info:     res.NumberLevels[accountNumberLevel],
 			IsStaked: stakes[op.Sender] != nil && stakes[op.Sender].Staked,
+		},
+		"factory": {
+			Address:  op.GetFactory(),
+			Info:     res.NumberLevels[factoryNumberLevel],
+			IsStaked: stakes[op.GetFactory()] != nil && stakes[op.GetFactory()].Staked,
 		},
 		"paymaster": {
 			Address:  op.GetPaymaster(),
