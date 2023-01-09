@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	// UserOpPrimitives is the primitive ABI types of a UserOp.
+	// UserOpPrimitives is the primitive ABI types for each UserOperation field.
 	UserOpPrimitives = []abi.ArgumentMarshaling{
 		{Name: "sender", InternalType: "Sender", Type: "address"},
 		{Name: "nonce", InternalType: "Nonce", Type: "uint256"},
