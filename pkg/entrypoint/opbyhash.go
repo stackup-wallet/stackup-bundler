@@ -64,17 +64,17 @@ func GetUserOperationByHash(
 
 			// TODO: Find better way to convert this
 			ops, ok := args[0].([]struct {
-				Sender               common.Address "json:\"sender\""
-				Nonce                *big.Int       "json:\"nonce\""
-				InitCode             []uint8        "json:\"initCode\""
-				CallData             []uint8        "json:\"callData\""
-				CallGasLimit         *big.Int       "json:\"callGasLimit\""
-				VerificationGasLimit *big.Int       "json:\"verificationGasLimit\""
-				PreVerificationGas   *big.Int       "json:\"preVerificationGas\""
-				MaxFeePerGas         *big.Int       "json:\"maxFeePerGas\""
-				MaxPriorityFeePerGas *big.Int       "json:\"maxPriorityFeePerGas\""
-				PaymasterAndData     []uint8        "json:\"paymasterAndData\""
-				Signature            []uint8        "json:\"signature\""
+				Sender               common.Address `json:"sender"`
+				Nonce                *big.Int       `json:"nonce"`
+				InitCode             []uint8        `json:"initCode"`
+				CallData             []uint8        `json:"callData"`
+				CallGasLimit         *big.Int       `json:"callGasLimit"`
+				VerificationGasLimit *big.Int       `json:"verificationGasLimit"`
+				PreVerificationGas   *big.Int       `json:"preVerificationGas"`
+				MaxFeePerGas         *big.Int       `json:"maxFeePerGas"`
+				MaxPriorityFeePerGas *big.Int       `json:"maxPriorityFeePerGas"`
+				PaymasterAndData     []uint8        `json:"paymasterAndData"`
+				Signature            []uint8        `json:"signature"`
 			})
 			if !ok {
 				return nil, errors.New("handleOps: cannot assert type: ops is not of type []struct{...}")
