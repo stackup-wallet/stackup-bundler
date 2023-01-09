@@ -81,8 +81,8 @@ func (i *Client) SetGetSimulateValidationFunc(fn GetSimulateValidationFunc) {
 	i.getSimulateValidation = fn
 }
 
-// SetGetCallGasEstimateFunc defines a general function for fetching a estimate for callGas given a userOp and
-// EntryPoint address. This function is called in *Client.EstimateUserOperationGas.
+// SetGetCallGasEstimateFunc defines a general function for fetching an estimate for callGasLimit given a
+// userOp and EntryPoint address. This function is called in *Client.EstimateUserOperationGas.
 func (i *Client) SetGetCallGasEstimateFunc(fn GetCallGasEstimateFunc) {
 	i.getCallGasEstimate = fn
 }

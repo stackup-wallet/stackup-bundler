@@ -49,6 +49,8 @@ func GetSimulateValidationWithRpcClient(rpc *rpc.Client) GetSimulateValidationFu
 	}
 }
 
+// GetCallGasEstimateFunc is a general interface for fetching an estimate for callGasLimit given a userOp and
+// EntryPoint address.
 type GetCallGasEstimateFunc = func(ep common.Address, op *userop.UserOperation) (uint64, error)
 
 func getCallGasEstimateNoop() GetCallGasEstimateFunc {
