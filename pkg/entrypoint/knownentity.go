@@ -24,15 +24,15 @@ func newKnownEntity(
 	}
 
 	return knownEntity{
-		"account": {
-			Address:  op.Sender,
-			Info:     res.NumberLevels[accountNumberLevel],
-			IsStaked: stakes[op.Sender] != nil && stakes[op.Sender].Staked,
-		},
 		"factory": {
 			Address:  op.GetFactory(),
 			Info:     res.NumberLevels[factoryNumberLevel],
 			IsStaked: stakes[op.GetFactory()] != nil && stakes[op.GetFactory()].Staked,
+		},
+		"account": {
+			Address:  op.Sender,
+			Info:     res.NumberLevels[accountNumberLevel],
+			IsStaked: stakes[op.Sender] != nil && stakes[op.Sender].Staked,
 		},
 		"paymaster": {
 			Address:  op.GetPaymaster(),
@@ -43,12 +43,12 @@ func newKnownEntity(
 }
 
 func addr2KnownEntity(op *userop.UserOperation, addr common.Address) string {
-	if addr == op.Sender {
+	if addr == op.GetFactory() {
+		return "factory"
+	} else if addr == op.Sender {
 		return "account"
 	} else if addr == op.GetPaymaster() {
 		return "paymaster"
-	} else if addr == op.GetFactory() {
-		return "factory"
 	} else {
 		return addr.String()
 	}
