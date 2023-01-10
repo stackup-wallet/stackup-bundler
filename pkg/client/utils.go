@@ -69,8 +69,8 @@ func GetCallGasEstimateWithEthClient(eth *ethclient.Client) GetCallGasEstimateFu
 	}
 }
 
-// GetUserOpByHashFunc is a general interface for fetching a UserOperation given a userOpHash and EntryPoint
-// address and chain ID.
+// GetUserOpByHashFunc is a general interface for fetching a UserOperation given a userOpHash, EntryPoint
+// address, and chain ID.
 type GetUserOpByHashFunc func(hash string, ep common.Address, chain *big.Int) (*entrypoint.HashLookupResult, error)
 
 func getUserOpByHashNoop() GetUserOpByHashFunc {
