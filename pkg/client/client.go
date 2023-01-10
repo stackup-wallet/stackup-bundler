@@ -90,7 +90,7 @@ func (i *Client) SetGetCallGasEstimateFunc(fn GetCallGasEstimateFunc) {
 }
 
 // SetGetUserOpByHashFunc defines a general function for fetching a userOp given a userOpHash and EntryPoint
-// address. This function is called in *Client.GetUserOperationByHash.
+// address and chain ID. This function is called in *Client.GetUserOperationByHash.
 func (i *Client) SetGetUserOpByHashFunc(fn GetUserOpByHashFunc) {
 	i.getUserOpByHash = fn
 }
