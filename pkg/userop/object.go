@@ -12,20 +12,26 @@ import (
 )
 
 var (
+	// UserOpPrimitives is the primitive ABI types for each UserOperation field.
+	UserOpPrimitives = []abi.ArgumentMarshaling{
+		{Name: "sender", InternalType: "Sender", Type: "address"},
+		{Name: "nonce", InternalType: "Nonce", Type: "uint256"},
+		{Name: "initCode", InternalType: "InitCode", Type: "bytes"},
+		{Name: "callData", InternalType: "CallData", Type: "bytes"},
+		{Name: "callGasLimit", InternalType: "CallGasLimit", Type: "uint256"},
+		{Name: "verificationGasLimit", InternalType: "VerificationGasLimit", Type: "uint256"},
+		{Name: "preVerificationGas", InternalType: "PreVerificationGas", Type: "uint256"},
+		{Name: "maxFeePerGas", InternalType: "MaxFeePerGas", Type: "uint256"},
+		{Name: "maxPriorityFeePerGas", InternalType: "MaxPriorityFeePerGas", Type: "uint256"},
+		{Name: "paymasterAndData", InternalType: "PaymasterAndData", Type: "bytes"},
+		{Name: "signature", InternalType: "Signature", Type: "bytes"},
+	}
+
 	// UserOpType is the ABI type of a UserOperation.
-	UserOpType, _ = abi.NewType("tuple", "userOp", []abi.ArgumentMarshaling{
-		{Name: "Sender", Type: "address"},
-		{Name: "Nonce", Type: "uint256"},
-		{Name: "InitCode", Type: "bytes"},
-		{Name: "CallData", Type: "bytes"},
-		{Name: "CallGasLimit", Type: "uint256"},
-		{Name: "VerificationGasLimit", Type: "uint256"},
-		{Name: "PreVerificationGas", Type: "uint256"},
-		{Name: "MaxFeePerGas", Type: "uint256"},
-		{Name: "MaxPriorityFeePerGas", Type: "uint256"},
-		{Name: "PaymasterAndData", Type: "bytes"},
-		{Name: "Signature", Type: "bytes"},
-	})
+	UserOpType, _ = abi.NewType("tuple", "op", UserOpPrimitives)
+
+	// UserOpArr is the ABI type for an array of UserOperations.
+	UserOpArr, _ = abi.NewType("tuple[]", "ops", UserOpPrimitives)
 )
 
 func getAbiArgs() abi.Arguments {

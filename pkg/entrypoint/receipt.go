@@ -5,7 +5,6 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -45,30 +44,11 @@ func GetUserOperationReceipt(
 	userOpHash string,
 	entryPoint common.Address,
 ) (*UserOperationReceipt, error) {
-	ep, err := NewEntrypoint(entryPoint, eth)
+	it, err := filterUserOperationEvent(eth, userOpHash, entryPoint)
 	if err != nil {
 		return nil, err
-	}
-	bn, err := eth.BlockNumber(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	toBlk := big.NewInt(0).SetUint64(bn)
-	startBlk := big.NewInt(0)
-	sub10kBlk := big.NewInt(0).Sub(toBlk, big.NewInt(10000))
-	if sub10kBlk.Cmp(startBlk) > 0 {
-		startBlk = sub10kBlk
 	}
 
-	it, err := ep.FilterUserOperationEvent(
-		&bind.FilterOpts{Start: startBlk.Uint64()},
-		[][32]byte{common.HexToHash(userOpHash)},
-		[]common.Address{},
-		[]common.Address{},
-	)
-	if err != nil {
-		return nil, err
-	}
 	if it.Next() {
 		receipt, err := eth.TransactionReceipt(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {

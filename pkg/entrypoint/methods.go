@@ -10,9 +10,11 @@ import (
 )
 
 var (
-	bytes32, _                    = abi.NewType("bytes32", "", nil)
-	uint256, _                    = abi.NewType("uint256", "", nil)
-	bytes, _                      = abi.NewType("bytes", "", nil)
+	bytes32, _ = abi.NewType("bytes32", "", nil)
+	uint256, _ = abi.NewType("uint256", "", nil)
+	bytes, _   = abi.NewType("bytes", "", nil)
+	address, _ = abi.NewType("address", "", nil)
+
 	validatePaymasterUserOpMethod = abi.NewMethod(
 		"validatePaymasterUserOp",
 		"validatePaymasterUserOp",
@@ -31,6 +33,21 @@ var (
 		},
 	)
 	validatePaymasterUserOpSelector = hexutil.Encode(validatePaymasterUserOpMethod.ID)
+
+	handleOpsMethod = abi.NewMethod(
+		"handleOps",
+		"handleOps",
+		abi.Function,
+		"",
+		false,
+		false,
+		abi.Arguments{
+			{Name: "ops", Type: userop.UserOpArr},
+			{Name: "beneficiary", Type: address},
+		},
+		nil,
+	)
+	handleOpsSelector = hexutil.Encode(handleOpsMethod.ID)
 )
 
 type validatePaymasterUserOpOutput struct {
