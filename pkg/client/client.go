@@ -207,7 +207,7 @@ func (i *Client) GetUserOperationReceipt(
 	return ev, nil
 }
 
-// GetUserOperationByHash returns a UserOperation based a given userOpHash returned by
+// GetUserOperationByHash returns a UserOperation based on a given userOpHash returned by
 // *Client.SendUserOperation.
 func (i *Client) GetUserOperationByHash(hash string) (*entrypoint.HashLookupResult, error) {
 	// Init logger
