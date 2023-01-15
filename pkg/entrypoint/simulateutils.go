@@ -54,6 +54,7 @@ var (
 		"GAS",
 		"CREATE",
 		"COINBASE",
+		"SELFDESTRUCT",
 	)
 
 	revertOpCode = "REVERT"
