@@ -51,7 +51,7 @@ func ValidatePendingOps(
 
 			if op.MaxFeePerGas.Cmp(newMf) < 0 || op.MaxPriorityFeePerGas.Cmp(newMpf) < 0 {
 				return fmt.Errorf(
-					"pending ops: replacement op must increase maxFeePerGas and MaxPriorityFeePerGas by at least %d%%",
+					"pending ops: replacement op must increase maxFeePerGas and MaxPriorityFeePerGas by >= %d%%",
 					minPriceBump,
 				)
 			}
