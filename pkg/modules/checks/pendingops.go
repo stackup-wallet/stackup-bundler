@@ -1,12 +1,26 @@
 package checks
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
+
+const minPriceBump = 10
+
+// calcNewThresholds returns new threshold values where newFee = oldFee  * (100 + minPriceBump) / 100.
+func calcNewThresholds(cap *big.Int, tip *big.Int) (newCap *big.Int, newTip *big.Int) {
+	a := big.NewInt(100 + minPriceBump)
+	aFeeCap := big.NewInt(0).Mul(a, cap)
+	aTip := big.NewInt(0).Mul(a, tip)
+
+	b := big.NewInt(100)
+	newCap = aFeeCap.Div(aFeeCap, b)
+	newTip = aTip.Div(aTip, b)
+
+	return newCap, newTip
+}
 
 // ValidatePendingOps checks the pending UserOperations by the same sender and only passes if:
 //
@@ -33,16 +47,13 @@ func ValidatePendingOps(
 		}
 
 		if oldOp != nil {
-			if op.MaxPriorityFeePerGas.Cmp(oldOp.MaxPriorityFeePerGas) <= 0 {
-				return errors.New(
-					"pending ops: sender has op in mempool with same or higher priority fee",
-				)
-			}
+			newMf, newMpf := calcNewThresholds(oldOp.MaxFeePerGas, oldOp.MaxPriorityFeePerGas)
 
-			diff := big.NewInt(0).Sub(op.MaxPriorityFeePerGas, oldOp.MaxPriorityFeePerGas)
-			mf := big.NewInt(0).Add(oldOp.MaxFeePerGas, diff)
-			if op.MaxFeePerGas.Cmp(mf) != 0 {
-				return errors.New("pending ops: replaced op must have an equally higher max fee")
+			if op.MaxFeePerGas.Cmp(newMf) < 0 || op.MaxPriorityFeePerGas.Cmp(newMpf) < 0 {
+				return fmt.Errorf(
+					"pending ops: replacement op must increase maxFeePerGas and MaxPriorityFeePerGas by >= %d%%",
+					minPriceBump,
+				)
 			}
 		} else if !dep.Staked && len(penOps) >= maxOpsForUnstakedSender {
 			return fmt.Errorf(
