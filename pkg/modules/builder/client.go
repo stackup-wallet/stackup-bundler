@@ -17,9 +17,9 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
-// BuilderAPI provides a connection to an instance of a builder to enable UserOperations to be sent through
+// BuilderClient provides a connection to an instance of a builder to enable UserOperations to be sent through
 // the mev-boost process.
-type BuilderAPI struct {
+type BuilderClient struct {
 	eoa               *signer.EOA
 	eth               *ethclient.Client
 	rpc               *flashbotsrpc.FlashbotsRPC
@@ -27,7 +27,7 @@ type BuilderAPI struct {
 	blocksInTheFuture int
 }
 
-// New returns an instance of a BuilderAPI with modules to send UserOperation bundles via the mev-boost
+// New returns an instance of a BuilderClient with modules to send UserOperation bundles via the mev-boost
 // process.
 func New(
 	eoa *signer.EOA,
@@ -35,8 +35,8 @@ func New(
 	ethBuilderUrl string,
 	beneficiary common.Address,
 	blocksInTheFuture int,
-) *BuilderAPI {
-	return &BuilderAPI{
+) *BuilderClient {
+	return &BuilderClient{
 		eoa:               eoa,
 		eth:               eth,
 		rpc:               flashbotsrpc.New(ethBuilderUrl),
@@ -47,7 +47,7 @@ func New(
 
 // SendUserOperation returns a BatchHandler that is used by the Bundler to send batches to a block builder
 // that supports eth_callBundle and eth_sendBundle.
-func (b *BuilderAPI) SendUserOperation() modules.BatchHandlerFunc {
+func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
 		var gas uint64
