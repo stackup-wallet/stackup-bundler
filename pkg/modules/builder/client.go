@@ -17,8 +17,8 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
-// BuilderClient provides a connection to an instance of a builder to enable UserOperations to be sent through
-// the mev-boost process.
+// BuilderClient provides a connection to a block builder API to enable UserOperations to be sent through the
+// mev-boost process.
 type BuilderClient struct {
 	eoa               *signer.EOA
 	eth               *ethclient.Client
