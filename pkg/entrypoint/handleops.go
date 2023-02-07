@@ -2,6 +2,7 @@
 package entrypoint
 
 import (
+	bytesPkg "bytes"
 	"context"
 	"math"
 	"math/big"
@@ -9,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
@@ -110,4 +112,44 @@ func HandleOps(
 	}
 
 	return txn, nil, nil
+}
+
+// CreateRawHandleOps returns a raw transaction string that calls handleOps() on the EntryPoint with a given
+// batch, gas limit, and tip.
+func CreateRawHandleOps(
+	eoa *signer.EOA,
+	eth *ethclient.Client,
+	chainID *big.Int,
+	entryPoint common.Address,
+	batch []*userop.UserOperation,
+	beneficiary common.Address,
+	gas uint64,
+	baseFee *big.Int,
+) (string, error) {
+	ep, err := NewEntrypoint(entryPoint, eth)
+	if err != nil {
+		return "", err
+	}
+	tip, err := eth.SuggestGasTipCap(context.Background())
+	if err != nil {
+		return "", err
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
+	if err != nil {
+		return "", err
+	}
+	auth.GasLimit = gas
+	auth.GasTipCap = tip
+	auth.GasFeeCap = big.NewInt(0).Add(baseFee, tip)
+	auth.NoSend = true
+	tx, err := ep.HandleOps(auth, toAbiType(batch), beneficiary)
+	if err != nil {
+		return "", err
+	}
+
+	ts := types.Transactions{tx}
+	rawTxBytes := new(bytesPkg.Buffer)
+	ts.EncodeIndex(0, rawTxBytes)
+	return hexutil.Encode(rawTxBytes.Bytes()), nil
 }

@@ -23,6 +23,10 @@ type Values struct {
 	MaxOpsForUnstakedSender int
 	Beneficiary             string
 
+	// Searcher mode variables.
+	EthBuilderUrl     string
+	BlocksInTheFuture int
+
 	// Undocumented variables.
 	DebugMode              bool
 	GinMode                string
@@ -39,6 +43,10 @@ func envArrayToAddressSlice(s string) []common.Address {
 	return slc
 }
 
+func variableNotSetOrIsNil(env string) bool {
+	return !viper.IsSet(env) || viper.GetString(env) == ""
+}
+
 // GetValues returns config for the bundler that has been read in from env vars. See
 // https://docs.stackup.sh/docs/packages/bundler/configure for details.
 func GetValues() *Values {
@@ -49,6 +57,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 1500000)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
+	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
 	// Read in from .env file if available
@@ -73,15 +82,16 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
+	_ = viper.BindEnv("erc4337_bundler_eth_builder_url")
+	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
 
 	// Validate required variables
-	if !viper.IsSet("erc4337_bundler_eth_client_url") ||
-		viper.GetString("erc4337_bundler_eth_client_url") == "" {
+	if variableNotSetOrIsNil("erc4337_bundler_eth_client_url") {
 		panic("Fatal config error: erc4337_bundler_eth_client_url not set")
 	}
 
-	if !viper.IsSet("erc4337_bundler_private_key") || viper.GetString("erc4337_bundler_private_key") == "" {
+	if variableNotSetOrIsNil("erc4337_bundler_private_key") {
 		panic("Fatal config error: erc4337_bundler_private_key not set")
 	}
 
@@ -91,6 +101,13 @@ func GetValues() *Values {
 			panic(err)
 		}
 		viper.SetDefault("erc4337_bundler_beneficiary", s.Address.String())
+	}
+
+	switch viper.GetString("mode") {
+	case "searcher":
+		if variableNotSetOrIsNil("erc4337_bundler_eth_builder_url") {
+			panic("Fatal config error: erc4337_bundler_eth_builder_url not set")
+		}
 	}
 
 	// Load js tracer from embedded file
@@ -108,6 +125,8 @@ func GetValues() *Values {
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxOpsForUnstakedSender := viper.GetInt("erc4337_bundler_max_ops_for_unstaked_sender")
+	ethBuilderUrl := viper.GetString("erc4337_bundler_eth_builder_url")
+	blocksInTheFuture := viper.GetInt("erc4337_bundler_blocks_in_the_future")
 	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
@@ -119,6 +138,8 @@ func GetValues() *Values {
 		Beneficiary:             beneficiary,
 		MaxVerificationGas:      maxVerificationGas,
 		MaxOpsForUnstakedSender: maxOpsForUnstakedSender,
+		EthBuilderUrl:           ethBuilderUrl,
+		BlocksInTheFuture:       blocksInTheFuture,
 		DebugMode:               debugMode,
 		GinMode:                 ginMode,
 		BundlerCollectorTracer:  bct,

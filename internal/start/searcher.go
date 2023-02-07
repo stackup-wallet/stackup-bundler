@@ -21,7 +21,6 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/builder"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
@@ -74,7 +73,7 @@ func SearcherMode() {
 		conf.MaxOpsForUnstakedSender,
 		conf.BundlerCollectorTracer,
 	)
-	relayer := relay.New(db, eoa, eth, chain, beneficiary, logr)
+	builder := builder.New(eoa, eth, conf.EthBuilderUrl, beneficiary, conf.BlocksInTheFuture)
 	paymaster := paymaster.New(db)
 
 	// Init Client
@@ -97,8 +96,7 @@ func SearcherMode() {
 	b.UseLogger(logr)
 	b.UseModules(
 		check.PaymasterDeposit(),
-		// TODO: replace relayer with builder module
-		relayer.SendUserOperation(),
+		builder.SendUserOperation(),
 		paymaster.IncOpsIncluded(),
 	)
 	if err := b.Run(); err != nil {
@@ -109,8 +107,6 @@ func SearcherMode() {
 	var d *client.Debug
 	if conf.DebugMode {
 		d = client.NewDebug(eoa, eth, mem, b, chain, conf.SupportedEntryPoints[0], beneficiary)
-		// TODO: remove this and all references to the relayer module.
-		relayer.SetBannedThreshold(relay.NoBanThreshold)
 	}
 
 	// Init HTTP server
@@ -127,12 +123,7 @@ func SearcherMode() {
 	r.GET("/ping", func(g *gin.Context) {
 		g.Status(http.StatusOK)
 	})
-	r.POST(
-		"/",
-		relayer.FilterByClientID(),
-		jsonrpc.Controller(client.NewRpcAdapter(c, d)),
-		relayer.MapUserOpHashToClientID(),
-	)
+	r.POST("/", jsonrpc.Controller(client.NewRpcAdapter(c, d)))
 	if err := r.Run(fmt.Sprintf(":%d", conf.Port)); err != nil {
 		log.Fatal(err)
 	}
