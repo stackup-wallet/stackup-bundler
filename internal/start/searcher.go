@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/metachris/flashbotsrpc"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
@@ -50,6 +51,7 @@ func SearcherMode() {
 	}
 
 	eth := ethclient.NewClient(rpc)
+	fb := flashbotsrpc.NewFlashbotsRPC(conf.EthBuilderUrl)
 
 	chain, err := eth.ChainID(context.Background())
 	if err != nil {
@@ -73,7 +75,7 @@ func SearcherMode() {
 		conf.MaxOpsForUnstakedSender,
 		conf.BundlerCollectorTracer,
 	)
-	builder := builder.New(eoa, eth, conf.EthBuilderUrl, beneficiary, conf.BlocksInTheFuture)
+	builder := builder.New(eoa, eth, fb, beneficiary, conf.BlocksInTheFuture)
 	paymaster := paymaster.New(db)
 
 	// Init Client

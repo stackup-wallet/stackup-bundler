@@ -32,14 +32,14 @@ type BuilderClient struct {
 func New(
 	eoa *signer.EOA,
 	eth *ethclient.Client,
-	ethBuilderUrl string,
+	fb *flashbotsrpc.FlashbotsRPC,
 	beneficiary common.Address,
 	blocksInTheFuture int,
 ) *BuilderClient {
 	return &BuilderClient{
 		eoa:               eoa,
 		eth:               eth,
-		rpc:               flashbotsrpc.New(ethBuilderUrl),
+		rpc:               fb,
 		beneficiary:       beneficiary,
 		blocksInTheFuture: blocksInTheFuture,
 	}
