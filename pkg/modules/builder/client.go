@@ -118,6 +118,7 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 			return fmt.Errorf("unexpected simulation result length, want 1, got %d", len(sim.Results))
 		}
 		if sim.Results[0].Error != "" {
+			// TODO: Implement better error handling and retry.
 			return errors.New(sim.Results[0].Error)
 		}
 
