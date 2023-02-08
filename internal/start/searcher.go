@@ -51,6 +51,7 @@ func SearcherMode() {
 	}
 
 	eth := ethclient.NewClient(rpc)
+
 	fb := flashbotsrpc.NewFlashbotsRPC(conf.EthBuilderUrl)
 
 	chain, err := eth.ChainID(context.Background())
