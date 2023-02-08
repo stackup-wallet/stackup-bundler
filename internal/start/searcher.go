@@ -76,6 +76,7 @@ func SearcherMode() {
 		conf.MaxOpsForUnstakedSender,
 		conf.BundlerCollectorTracer,
 	)
+	// TODO: Create separate go-routine for tracking transactions sent to the block builder.
 	builder := builder.New(eoa, eth, fb, beneficiary, conf.BlocksInTheFuture)
 	paymaster := paymaster.New(db)
 
