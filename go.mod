@@ -19,7 +19,7 @@ require (
 	github.com/spf13/viper v1.13.0
 	github.com/wangjia184/sortedset v0.0.0-20220209072355-af6d6d227aa7
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.7.0
 )
 
 require (
