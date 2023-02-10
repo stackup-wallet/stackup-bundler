@@ -1,6 +1,8 @@
 package mempool
 
 import (
+	"sync/atomic"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 	"github.com/wangjia184/sortedset"
@@ -24,6 +26,7 @@ func (s *set) getSenderSortedSet(sender common.Address) *sortedset.SortedSet {
 
 type userOpQueues struct {
 	maxBatchSize     int
+	opCount          uint64
 	setsByEntryPoint map[common.Address]*set
 }
 
@@ -47,6 +50,7 @@ func (q *userOpQueues) AddOp(entryPoint common.Address, op *userop.UserOperation
 	eps.all.AddOrUpdate(key, sortedset.SCORE(op.MaxPriorityFeePerGas.Int64()), op)
 	eps.arrival.AddOrUpdate(key, sortedset.SCORE(eps.all.GetCount()), op)
 	sss.AddOrUpdate(key, sortedset.SCORE(op.Nonce.Int64()), op)
+	atomic.AddUint64(&q.opCount, 1)
 }
 
 func (q *userOpQueues) GetOps(entryPoint common.Address, sender common.Address) []*userop.UserOperation {
@@ -101,6 +105,7 @@ func (q *userOpQueues) RemoveOps(entryPoint common.Address, ops ...*userop.UserO
 		eps.arrival.Remove(key)
 		sss.Remove(key)
 	}
+	atomic.AddUint64(&q.opCount, ^uint64(0))
 }
 
 func newUserOpQueue() *userOpQueues {
