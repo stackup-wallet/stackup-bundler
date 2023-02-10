@@ -56,8 +56,8 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x0F46c65C17AA6b4102046935F33301f0510B163A")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 1500000)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
-	viper.SetDefault("erc4337_bundler_debug_mode", false)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
+	viper.SetDefault("erc4337_bundler_debug_mode", false)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
 	// Read in from .env file if available
@@ -84,6 +84,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
 	_ = viper.BindEnv("erc4337_bundler_eth_builder_url")
 	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
+	_ = viper.BindEnv("erc4337_bundler_debug_mode")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
 
 	// Validate required variables

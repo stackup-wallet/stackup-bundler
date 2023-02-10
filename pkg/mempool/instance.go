@@ -5,26 +5,40 @@ package mempool
 import (
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
+
+type watch struct {
+	key string
+	sig chan bool
+}
 
 // Mempool provides read and write access to a pool of pending UserOperations which have passed all Client
 // checks.
 type Mempool struct {
-	db    *badger.DB
-	queue *userOpQueues
+	db      *badger.DB
+	queue   *userOpQueues
+	watches []watch
 }
 
 // New creates an instance of a mempool that uses an embedded DB to persist and load UserOperations from disk
 // incase of a reset.
 func New(db *badger.DB) (*Mempool, error) {
 	queue := newUserOpQueue()
+	watches := []watch{}
 	err := loadFromDisk(db, queue)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Mempool{db, queue}, nil
+	return &Mempool{db, queue, watches}, nil
+}
+
+func (m *Mempool) pushSignals() {
+	for _, watch := range m.watches {
+		watch.sig <- true
+	}
 }
 
 // GetOps returns all the UserOperations associated with an EntryPoint and Sender address.
@@ -49,6 +63,7 @@ func (m *Mempool) AddOp(entryPoint common.Address, op *userop.UserOperation) err
 	}
 
 	m.queue.AddOp(entryPoint, op)
+	m.pushSignals()
 	return nil
 }
 
@@ -75,6 +90,29 @@ func (m *Mempool) RemoveOps(entryPoint common.Address, ops ...*userop.UserOperat
 
 	m.queue.RemoveOps(entryPoint, ops...)
 	return nil
+}
+
+// OnAdd allows entities to register a channel that will receive a signal every time a UserOperation is added.
+// It returns a function to stop receiving.
+func (m *Mempool) OnAdd(sig chan bool) func() {
+	key := uuid.New().String()
+	w := watch{key, sig}
+	m.watches = append(m.watches, w)
+
+	// initial push if queue is non-empty
+	if m.queue.opCount > 0 {
+		w.sig <- true
+	}
+
+	return func() {
+		f := []watch{}
+		for _, w := range m.watches {
+			if w.key != key {
+				f = append(f, w)
+			}
+		}
+		m.watches = f
+	}
 }
 
 // Dump will return a list of UserOperations from the mempool by EntryPoint in the order it arrived.

@@ -24,6 +24,8 @@ type Bundler struct {
 	logger               logr.Logger
 	isRunning            bool
 	stop                 chan bool
+	watch                chan bool
+	onStop               func()
 }
 
 // New initializes a new EIP-4337 bundler which can be extended with modules for validating batches and
@@ -37,6 +39,8 @@ func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []comm
 		logger:               logger.NewZeroLogr().WithName("bundler"),
 		isRunning:            false,
 		stop:                 make(chan bool),
+		watch:                make(chan bool),
+		onStop:               func() {},
 	}
 }
 
@@ -63,7 +67,7 @@ func (i *Bundler) Run() error {
 			select {
 			case <-i.stop:
 				return
-			default:
+			case <-i.watch:
 				for _, ep := range i.supportedEntryPoints {
 					start := time.Now()
 					l := logger.
@@ -115,6 +119,7 @@ func (i *Bundler) Run() error {
 	}(i)
 
 	i.isRunning = true
+	i.onStop = i.mempool.OnAdd(i.watch)
 	return nil
 }
 
@@ -126,4 +131,5 @@ func (i *Bundler) Stop() {
 
 	i.isRunning = false
 	i.stop <- true
+	i.onStop()
 }
