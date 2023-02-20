@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	keyPrefix   = dbutils.JoinValues("checks")
-	tracePrefix = dbutils.JoinValues(keyPrefix, "trace")
+	keyPrefix        = dbutils.JoinValues("checks")
+	codeHashesPrefix = dbutils.JoinValues(keyPrefix, "codeHashes")
 )
 
 func getCodeHashesKey(userOpHash common.Hash) []byte {
-	return []byte(dbutils.JoinValues(tracePrefix, userOpHash.String()))
+	return []byte(dbutils.JoinValues(codeHashesPrefix, userOpHash.String()))
 }
 
 func saveCodeHashes(db *badger.DB, userOpHash common.Hash, codeHashes []codeHash) error {
