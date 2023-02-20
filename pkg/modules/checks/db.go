@@ -46,8 +46,8 @@ func getSavedCodeHashes(db *badger.DB, userOpHash common.Hash) ([]codeHash, erro
 
 func removeSavedCodeHashes(db *badger.DB, userOpHashes ...common.Hash) error {
 	return db.Update(func(txn *badger.Txn) error {
-		for _, h := range userOpHashes {
-			if err := txn.Delete(getCodeHashesKey(h)); err != nil {
+		for _, userOpHash := range userOpHashes {
+			if err := txn.Delete(getCodeHashesKey(userOpHash)); err != nil {
 				return err
 			}
 		}
