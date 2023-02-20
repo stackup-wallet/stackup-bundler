@@ -1,4 +1,4 @@
-package entrypoint
+package filter
 
 import (
 	"context"
@@ -7,14 +7,15 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 )
 
 func filterUserOperationEvent(
 	eth *ethclient.Client,
 	userOpHash string,
 	entryPoint common.Address,
-) (*EntrypointUserOperationEventIterator, error) {
-	ep, err := NewEntrypoint(entryPoint, eth)
+) (*entrypoint.EntrypointUserOperationEventIterator, error) {
+	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package entrypoint
+package filter
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/methods"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -49,9 +50,9 @@ func GetUserOperationByHash(
 		}
 
 		hex := hexutil.Encode(tx.Data())
-		if strings.HasPrefix(hex, handleOpsSelector) {
-			data := common.Hex2Bytes(hex[len(handleOpsSelector):])
-			args, err := handleOpsMethod.Inputs.Unpack(data)
+		if strings.HasPrefix(hex, methods.HandleOpsSelector) {
+			data := common.Hex2Bytes(hex[len(methods.HandleOpsSelector):])
+			args, err := methods.HandleOpsMethod.Inputs.Unpack(data)
 			if err != nil {
 				return nil, err
 			}

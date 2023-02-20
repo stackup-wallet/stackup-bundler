@@ -1,5 +1,4 @@
-// Package entrypoint provides ABI bindings and helper methods for interacting with the EntryPoint contract.
-package entrypoint
+package transaction
 
 import (
 	bytesPkg "bytes"
@@ -13,14 +12,16 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/reverts"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-func toAbiType(batch []*userop.UserOperation) []UserOperation {
-	ops := []UserOperation{}
+func toAbiType(batch []*userop.UserOperation) []entrypoint.UserOperation {
+	ops := []entrypoint.UserOperation{}
 	for _, op := range batch {
-		ops = append(ops, UserOperation(*op))
+		ops = append(ops, entrypoint.UserOperation(*op))
 	}
 
 	return ops
@@ -35,8 +36,8 @@ func EstimateHandleOpsGas(
 	entryPoint common.Address,
 	batch []*userop.UserOperation,
 	beneficiary common.Address,
-) (gas uint64, revert *FailedOpRevert, err error) {
-	ep, err := NewEntrypoint(entryPoint, eth)
+) (gas uint64, revert *reverts.FailedOpRevert, err error) {
+	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -65,7 +66,7 @@ func EstimateHandleOpsGas(
 		AccessList: tx.AccessList(),
 	})
 	if err != nil {
-		revert, err := newFailedOpRevert(err)
+		revert, err := reverts.NewFailedOp(err)
 		if err != nil {
 			return 0, nil, err
 		}
@@ -85,8 +86,8 @@ func HandleOps(
 	batch []*userop.UserOperation,
 	beneficiary common.Address,
 	gas uint64,
-) (txn *types.Transaction, revert *FailedOpRevert, err error) {
-	ep, err := NewEntrypoint(entryPoint, eth)
+) (txn *types.Transaction, revert *reverts.FailedOpRevert, err error) {
+	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -104,7 +105,7 @@ func HandleOps(
 
 	txn, err = ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {
-		revert, err := newFailedOpRevert(err)
+		revert, err := reverts.NewFailedOp(err)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -126,7 +127,7 @@ func CreateRawHandleOps(
 	gas uint64,
 	baseFee *big.Int,
 ) (string, error) {
-	ep, err := NewEntrypoint(entryPoint, eth)
+	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
 	if err != nil {
 		return "", err
 	}

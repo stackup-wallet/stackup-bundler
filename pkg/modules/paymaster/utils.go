@@ -3,11 +3,11 @@ package paymaster
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stackup-wallet/stackup-bundler/internal/dbutils"
 )
 
 type addressCounter map[string]int
@@ -25,24 +25,22 @@ const throttlingSlack = 10
 const banSlack = 50
 const emaHours = 24
 
-const separator = ":"
-const keyPrefix = "module" + separator + "paymaster"
-const opsCountPrefix = keyPrefix + separator + "opsCount"
+var (
+	opsCountPrefix = dbutils.JoinValues("paymaster", "opsCount")
+)
 
 func getOpsCountKey(paymaster common.Address) []byte {
-	return []byte(opsCountPrefix + separator + paymaster.String())
+	return []byte(dbutils.JoinValues(opsCountPrefix, paymaster.String()))
 }
 
 func getOpsCountValue(opsSeen int, opsIncluded int) []byte {
-	return []byte(strconv.Itoa(opsSeen) +
-		separator +
-		strconv.Itoa(opsIncluded) +
-		separator +
-		fmt.Sprint(time.Now().Unix()))
+	return []byte(
+		dbutils.JoinValues(strconv.Itoa(opsSeen), strconv.Itoa(opsIncluded), fmt.Sprint(time.Now().Unix())),
+	)
 }
 
 func applyExpWeights(txn *badger.Txn, key []byte, value []byte) (opsSeen int, opsIncluded int, err error) {
-	counts := strings.Split(string(value), separator)
+	counts := dbutils.SplitValues(string(value))
 	opsSeen, err = strconv.Atoi(counts[0])
 	if err != nil {
 		return 0, 0, err
@@ -72,7 +70,10 @@ func applyExpWeights(txn *badger.Txn, key []byte, value []byte) (opsSeen int, op
 	return opsSeen, opsIncluded, err
 }
 
-func getOpsCountByPaymaster(txn *badger.Txn, paymaster common.Address) (opsSeen int, opsIncluded int, err error) {
+func getOpsCountByPaymaster(
+	txn *badger.Txn,
+	paymaster common.Address,
+) (opsSeen int, opsIncluded int, err error) {
 	key := getOpsCountKey(paymaster)
 	item, err := txn.Get(key)
 	if err != nil && err == badger.ErrKeyNotFound {

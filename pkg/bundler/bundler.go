@@ -26,6 +26,7 @@ type Bundler struct {
 	stop                 chan bool
 	watch                chan bool
 	onStop               func()
+	maxBatch             int
 }
 
 // New initializes a new EIP-4337 bundler which can be extended with modules for validating batches and
@@ -41,7 +42,13 @@ func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []comm
 		stop:                 make(chan bool),
 		watch:                make(chan bool),
 		onStop:               func() {},
+		maxBatch:             0,
 	}
+}
+
+// SetMaxBatch defined the max number of UserOperations per bundle. The default value is 0 (i.e. unlimited).
+func (i *Bundler) SetMaxBatch(max int) {
+	i.maxBatch = max
 }
 
 // UseLogger defines the logger object used by the Bundler instance based on the go-logr/logr interface.
@@ -54,6 +61,57 @@ func (i *Bundler) UseModules(handlers ...modules.BatchHandlerFunc) {
 	i.batchHandler = modules.ComposeBatchHandlerFunc(handlers...)
 }
 
+// Process will create a batch from the mempool and send it through to the EntryPoint.
+func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
+	start := time.Now()
+	l := i.logger.
+		WithName("run").
+		WithValues("entrypoint", ep.String()).
+		WithValues("chain_id", i.chainID.String())
+
+	batch, err := i.mempool.BundleOps(ep)
+	if err != nil {
+		l.Error(err, "bundler run error")
+		return nil, err
+	}
+	if len(batch) == 0 {
+		return nil, nil
+	}
+	batch = adjustBatchSize(i.maxBatch, batch)
+
+	ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID)
+	if err := i.batchHandler(ctx); err != nil {
+		l.Error(err, "bundler run error")
+		return nil, err
+	}
+
+	rmOps := append([]*userop.UserOperation{}, ctx.Batch...)
+	rmOps = append(rmOps, ctx.PendingRemoval...)
+	if err := i.mempool.RemoveOps(ep, rmOps...); err != nil {
+		l.Error(err, "bundler run error")
+		return nil, err
+	}
+
+	bat := []string{}
+	for _, op := range ctx.Batch {
+		bat = append(bat, op.GetUserOpHash(ep, i.chainID).String())
+	}
+	l = l.WithValues("batch_userop_hashes", bat)
+
+	drp := []string{}
+	for _, op := range ctx.PendingRemoval {
+		drp = append(drp, op.GetUserOpHash(ep, i.chainID).String())
+	}
+	l = l.WithValues("dropped_userop_hashes", drp)
+
+	for k, v := range ctx.Data {
+		l = l.WithValues(k, v)
+	}
+	l = l.WithValues("duration", time.Since(start))
+	l.Info("bundler run ok")
+	return ctx, nil
+}
+
 // Run starts a goroutine that will continuously process batches from the mempool.
 func (i *Bundler) Run() error {
 	if i.isRunning {
@@ -61,58 +119,17 @@ func (i *Bundler) Run() error {
 	}
 
 	go func(i *Bundler) {
-		logger := i.logger.WithName("run")
-
 		for {
 			select {
 			case <-i.stop:
 				return
 			case <-i.watch:
 				for _, ep := range i.supportedEntryPoints {
-					start := time.Now()
-					l := logger.
-						WithValues("entrypoint", ep.String()).
-						WithValues("chain_id", i.chainID.String())
-
-					batch, err := i.mempool.BundleOps(ep)
+					_, err := i.Process(ep)
 					if err != nil {
-						l.Error(err, "bundler run error")
+						// Already logged.
 						continue
 					}
-					if len(batch) == 0 {
-						continue
-					}
-
-					ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID)
-					if err := i.batchHandler(ctx); err != nil {
-						l.Error(err, "bundler run error")
-						continue
-					}
-
-					rmOps := append([]*userop.UserOperation{}, ctx.Batch...)
-					rmOps = append(rmOps, ctx.PendingRemoval...)
-					if err := i.mempool.RemoveOps(ep, rmOps...); err != nil {
-						l.Error(err, "bundler run error")
-						continue
-					}
-
-					bat := []string{}
-					for _, op := range ctx.Batch {
-						bat = append(bat, op.GetUserOpHash(ep, i.chainID).String())
-					}
-					l = l.WithValues("batch_userop_hashes", bat)
-
-					drp := []string{}
-					for _, op := range ctx.PendingRemoval {
-						drp = append(drp, op.GetUserOpHash(ep, i.chainID).String())
-					}
-					l = l.WithValues("dropped_userop_hashes", drp)
-
-					for k, v := range ctx.Data {
-						l = l.WithValues(k, v)
-					}
-					l = l.WithValues("duration", time.Since(start))
-					l.Info("bundler run ok")
 				}
 			}
 		}

@@ -3,11 +3,11 @@ package relay
 import (
 	"math/big"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stackup-wallet/stackup-bundler/internal/dbutils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -15,17 +15,18 @@ const NoBanThreshold = 0
 const DefaultBanThreshold = 3
 const timeWindow = 7 * 24 * time.Hour
 
-const separator = ":"
-const keyPrefix = "module" + separator + "relay"
-const opsCountPrefix = keyPrefix + separator + "opsCount"
-const userOpHashPrefix = keyPrefix + separator + "userOpHash"
+var (
+	keyPrefix        = dbutils.JoinValues("relay")
+	opsCountPrefix   = dbutils.JoinValues(keyPrefix, "opsCount")
+	userOpHashPrefix = dbutils.JoinValues(keyPrefix, "userOpHash")
+)
 
 func getOpsCountKey(clientID string) []byte {
-	return []byte(opsCountPrefix + separator + clientID)
+	return []byte(dbutils.JoinValues(opsCountPrefix, clientID))
 }
 
 func getUserOpHashKey(userOpHash string) []byte {
-	return []byte(userOpHashPrefix + separator + userOpHash)
+	return []byte(dbutils.JoinValues(userOpHashPrefix, userOpHash))
 }
 
 func getUserOpHashesFromOps(ep common.Address, chainID *big.Int, ops ...*userop.UserOperation) []string {
@@ -54,7 +55,7 @@ func getOpsCountByClientID(txn *badger.Txn, clientID string) (opsSeen int, opsIn
 		return 0, 0, err
 	}
 
-	counts := strings.Split(string(value), separator)
+	counts := dbutils.SplitValues(string(value))
 	opsSeen, err = strconv.Atoi(counts[0])
 	if err != nil {
 		return 0, 0, err
@@ -73,7 +74,7 @@ func incrementOpsSeenByClientID(txn *badger.Txn, clientID string) error {
 		return err
 	}
 
-	val := strconv.Itoa(opsSeen+1) + separator + strconv.Itoa(opsIncluded)
+	val := dbutils.JoinValues(strconv.Itoa(opsSeen+1), strconv.Itoa(opsIncluded))
 	e := badger.NewEntry(getOpsCountKey(clientID), []byte(val)).WithTTL(timeWindow)
 	return txn.SetEntry(e)
 }
@@ -106,9 +107,9 @@ func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, userOpHashes ...string)
 		var opsCountValue string
 		if opsSeen == 0 && opsIncluded == 0 {
 			// Op has been in the mempool longer than timeWindow
-			opsCountValue = strconv.Itoa(opsSeen+1) + separator + strconv.Itoa(opsIncluded+1)
+			opsCountValue = dbutils.JoinValues(strconv.Itoa(opsSeen+1), strconv.Itoa(opsIncluded+1))
 		} else {
-			opsCountValue = strconv.Itoa(opsSeen) + separator + strconv.Itoa(opsIncluded+1)
+			opsCountValue = dbutils.JoinValues(strconv.Itoa(opsSeen), strconv.Itoa(opsIncluded+1))
 		}
 
 		e := badger.NewEntry(getOpsCountKey(cid), []byte(opsCountValue)).WithTTL(timeWindow)

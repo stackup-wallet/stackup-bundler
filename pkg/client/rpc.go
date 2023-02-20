@@ -3,7 +3,7 @@ package client
 import (
 	"errors"
 
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/filter"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 )
 
@@ -31,14 +31,14 @@ func (r *RpcAdapter) Eth_estimateUserOperationGas(op map[string]any, ep string) 
 // Eth_getUserOperationReceipt routes method calls to *Client.GetUserOperationReceipt.
 func (r *RpcAdapter) Eth_getUserOperationReceipt(
 	userOpHash string,
-) (*entrypoint.UserOperationReceipt, error) {
+) (*filter.UserOperationReceipt, error) {
 	return r.client.GetUserOperationReceipt(userOpHash)
 }
 
 // Eth_getUserOperationByHash routes method calls to *Client.GetUserOperationByHash.
 func (r *RpcAdapter) Eth_getUserOperationByHash(
 	userOpHash string,
-) (*entrypoint.HashLookupResult, error) {
+) (*filter.HashLookupResult, error) {
 	return r.client.GetUserOperationByHash(userOpHash)
 }
 

@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/go-logr/logr"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/filter"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
@@ -193,7 +193,7 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 // *Client.SendUserOperation.
 func (i *Client) GetUserOperationReceipt(
 	hash string,
-) (*entrypoint.UserOperationReceipt, error) {
+) (*filter.UserOperationReceipt, error) {
 	// Init logger
 	l := i.logger.WithName("eth_getUserOperationReceipt").WithValues("userop_hash", hash)
 
@@ -209,7 +209,7 @@ func (i *Client) GetUserOperationReceipt(
 
 // GetUserOperationByHash returns a UserOperation based on a given userOpHash returned by
 // *Client.SendUserOperation.
-func (i *Client) GetUserOperationByHash(hash string) (*entrypoint.HashLookupResult, error) {
+func (i *Client) GetUserOperationByHash(hash string) (*filter.HashLookupResult, error) {
 	// Init logger
 	l := i.logger.WithName("eth_getUserOperationByHash").WithValues("userop_hash", hash)
 

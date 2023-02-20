@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
@@ -73,48 +72,19 @@ func (d *Debug) DumpMempool(ep string) ([]map[string]any, error) {
 
 // SendBundleNow forces the bundler to build and execute a bundle from the mempool as handleOps() transaction.
 func (d *Debug) SendBundleNow() (string, error) {
-	batch, err := d.mempool.BundleOps(d.entrypoint)
+	ctx, err := d.bundler.Process(d.entrypoint)
 	if err != nil {
 		return "", err
 	}
-	if len(batch) > 1 {
-		batch = batch[:1]
+	if ctx == nil {
+		return "", nil
 	}
 
-	est, revert, err := entrypoint.EstimateHandleOpsGas(
-		d.eoa,
-		d.eth,
-		d.chainID,
-		d.entrypoint,
-		batch,
-		d.beneficiary,
-	)
-	if err != nil {
-		return "", err
-	} else if revert != nil {
-		return "", errors.New("debug: bad batch during estimate")
+	hash, ok := ctx.Data["txn_hash"].(string)
+	if !ok {
+		return "", errors.New("txn_hash not in ctx Data")
 	}
-
-	txn, revert, err := entrypoint.HandleOps(
-		d.eoa,
-		d.eth,
-		d.chainID,
-		d.entrypoint,
-		batch,
-		d.beneficiary,
-		est,
-	)
-	if err != nil {
-		return "", err
-	} else if revert != nil {
-		return "", errors.New("debug: bad batch during call")
-	}
-
-	if err := d.mempool.RemoveOps(d.entrypoint, batch...); err != nil {
-		return "", err
-	}
-
-	return txn.Hash().String(), nil
+	return hash, nil
 }
 
 // SetBundlingMode allows the bundler to be stopped so that an explicit call to debug_bundler_sendBundleNow is

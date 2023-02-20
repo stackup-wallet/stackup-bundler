@@ -1,14 +1,15 @@
-package entrypoint
+package simulation
 
 import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 )
 
 // EntityStakes provides a mapping for encountered entity addresses and their stake info on the EntryPoint.
-type EntityStakes map[common.Address]*IStakeManagerDepositInfo
+type EntityStakes map[common.Address]*entrypoint.IStakeManagerDepositInfo
 
 type traceCallReq struct {
 	From common.Address `json:"from"`
