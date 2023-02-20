@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/metachris/flashbotsrpc"
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/transaction"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
@@ -52,7 +52,7 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
 		var gas uint64
 		for len(ctx.Batch) > 0 {
-			est, revert, err := entrypoint.EstimateHandleOpsGas(
+			est, revert, err := transaction.EstimateHandleOpsGas(
 				b.eoa,
 				b.eth,
 				ctx.ChainID,
@@ -90,7 +90,7 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 		}
 
 		// Call CreateRawHandleOps() with gas estimate and max base fee.
-		rawTx, err := entrypoint.CreateRawHandleOps(
+		rawTx, err := transaction.CreateRawHandleOps(
 			b.eoa,
 			b.eth,
 			ctx.ChainID,

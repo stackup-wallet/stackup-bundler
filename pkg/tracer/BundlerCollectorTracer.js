@@ -28,7 +28,8 @@ var tracer = {
       keccak: this.keccak,
       logs: this.logs,
       calls: this.calls,
-      debug: this.debug, // for internal debugging.
+      // for internal debugging.
+      debug: this.debug,
     };
   },
   enter: function enter(frame) {
@@ -87,6 +88,21 @@ var tracer = {
       }
     }
 
+    if (opcode.match(/^(EXT.*|CALL|CALLCODE|DELEGATECALL|STATICCALL)$/) != null) {
+      // this.debug.push('op=' + opcode + ' last=' + this.lastOp + ' stacksize=' + log.stack.length())
+      var idx = opcode.startsWith("EXT") ? 0 : 1;
+      var addr = toAddress(log.stack.peek(idx).toString(16));
+      var addrHex = toHex(addr);
+      var contractSize =
+        (contractSize = this.currentLevel.contractSize[addrHex]) !== null &&
+        contractSize !== void 0
+          ? contractSize
+          : 0;
+      if (contractSize === 0 && !isPrecompiled(addr)) {
+        this.currentLevel.contractSize[addrHex] = db.getCode(addr).length;
+      }
+    }
+
     if (log.getDepth() === 1) {
       // NUMBER opcode at top level split levels
       if (opcode === "NUMBER") this.numberCounter++;
@@ -115,19 +131,6 @@ var tracer = {
         this.countSlot(this.currentLevel.opcodes, opcode);
       }
     }
-    if (
-      opcode.match(/^(EXT.*|CALL|CALLCODE|DELEGATECALL|STATICCALL|CREATE2)$/) !=
-      null
-    ) {
-      // this.debug.push('op=' + opcode + ' last=' + this.lastOp + ' stacksize=' + log.stack.length())
-      var idx = opcode.startsWith("EXT") ? 0 : 1;
-      var addr = toAddress(log.stack.peek(idx).toString(16));
-      var addrHex = toHex(addr);
-      if (this.currentLevel.contractSize[addrHex] == null) {
-        this.currentLevel.contractSize[addrHex] = db.getCode(addr).length;
-      }
-    }
-
     this.lastOp = opcode;
 
     if (opcode === "SLOAD" || opcode === "SSTORE") {

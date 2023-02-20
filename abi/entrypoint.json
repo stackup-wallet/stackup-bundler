@@ -427,6 +427,16 @@
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "sender", "type": "address" },
+      { "internalType": "address", "name": "paymaster", "type": "address" }
+    ],
+    "name": "_simulateFindAggregator",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "uint32", "name": "_unstakeDelaySec", "type": "uint32" }
     ],
     "name": "addStake",

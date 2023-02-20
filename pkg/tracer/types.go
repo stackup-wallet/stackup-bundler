@@ -17,8 +17,9 @@ type AccessInfo struct {
 // NumberLevelInfo provides context on opcodes and storage access delimited by the use of NUMBER at the
 // EntryPoint.
 type NumberLevelInfo struct {
-	Opcodes Counts    `json:"opcodes"`
-	Access  AccessMap `json:"access"`
+	Opcodes      Counts    `json:"opcodes"`
+	Access       AccessMap `json:"access"`
+	ContractSize Counts    `json:"contractSize"`
 }
 
 // CallInfo provides context on internal calls made during tracing.

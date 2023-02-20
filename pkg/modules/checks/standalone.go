@@ -4,13 +4,17 @@ package checks
 
 import (
 	"math/big"
+	"sync"
 
+	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/simulation"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
+	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -18,6 +22,7 @@ import (
 // intended for bundlers that are independent of an Ethereum node and hence relies on a given ethClient to
 // query blockchain state.
 type Standalone struct {
+	db                      *badger.DB
 	rpc                     *rpc.Client
 	eth                     *ethclient.Client
 	maxVerificationGas      *big.Int
@@ -28,13 +33,14 @@ type Standalone struct {
 // New returns a Standalone instance with methods that can be used in Client and Bundler modules to perform
 // standard checks as specified in EIP-4337.
 func New(
+	db *badger.DB,
 	rpc *rpc.Client,
 	maxVerificationGas *big.Int,
 	maxOpsForUnstakedSender int,
 	tracer string,
 ) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{rpc, eth, maxVerificationGas, maxOpsForUnstakedSender, tracer}
+	return &Standalone{db, rpc, eth, maxVerificationGas, maxOpsForUnstakedSender, tracer}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -68,9 +74,10 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 // SimulateOp returns a UserOpHandler that runs through simulation of new UserOps with the EntryPoint.
 func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
+		gc := getCodeWithEthClient(s.eth)
 		g := new(errgroup.Group)
 		g.Go(func() error {
-			_, err := entrypoint.SimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp)
+			_, err := simulation.SimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp)
 
 			if err != nil {
 				return errors.NewRPCError(errors.REJECTED_BY_EP_OR_ACCOUNT, err.Error(), err.Error())
@@ -78,25 +85,63 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 			return nil
 		})
 		g.Go(func() error {
-			err := entrypoint.TraceSimulateValidation(
+			ic, err := simulation.TraceSimulateValidation(
 				s.rpc,
 				ctx.EntryPoint,
 				ctx.UserOp,
 				ctx.ChainID,
 				s.tracer,
-				entrypoint.EntityStakes{
+				simulation.EntityStakes{
 					ctx.UserOp.GetFactory():   ctx.GetDepositInfo(ctx.UserOp.GetFactory()),
 					ctx.UserOp.Sender:         ctx.GetDepositInfo(ctx.UserOp.Sender),
 					ctx.UserOp.GetPaymaster(): ctx.GetDepositInfo(ctx.UserOp.GetPaymaster()),
 				},
 			)
-
 			if err != nil {
 				return errors.NewRPCError(errors.BANNED_OPCODE, err.Error(), err.Error())
 			}
-			return nil
+
+			ch, err := getCodeHashes(ic, gc)
+			if err != nil {
+				return errors.NewRPCError(errors.BANNED_OPCODE, err.Error(), err.Error())
+			}
+			return saveCodeHashes(s.db, ctx.UserOp.GetUserOpHash(ctx.EntryPoint, ctx.ChainID), ch)
 		})
 
+		return g.Wait()
+	}
+}
+
+// CodeHashes returns a BatchHandler that verifies the code for any interacted contracts has not changed since
+// the first simulation.
+func (s *Standalone) CodeHashes() modules.BatchHandlerFunc {
+	return func(ctx *modules.BatchHandlerCtx) error {
+		gc := getCodeWithEthClient(s.eth)
+		g := new(errgroup.Group)
+		mu := &sync.Mutex{}
+		fn := func(i int, op *userop.UserOperation) func() error {
+			return func() error {
+				chs, err := getSavedCodeHashes(s.db, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))
+				if err != nil {
+					return err
+				}
+
+				changed, err := hasCodeHashChanges(chs, gc)
+				if err != nil {
+					return err
+				}
+				if changed {
+					mu.Lock()
+					ctx.MarkOpIndexForRemoval(i)
+					mu.Unlock()
+				}
+				return nil
+			}
+		}
+
+		for i, op := range ctx.Batch {
+			g.Go(fn(i, op))
+		}
 		return g.Wait()
 	}
 }
@@ -133,5 +178,20 @@ func (s *Standalone) PaymasterDeposit() modules.BatchHandlerFunc {
 		}
 
 		return nil
+	}
+}
+
+// Clean returns a BatchHandler that clears the DB of data that is no longer required. This should be one of
+// the last modules executed by the Bundler.
+func (s *Standalone) Clean() modules.BatchHandlerFunc {
+	return func(ctx *modules.BatchHandlerCtx) error {
+		all := append([]*userop.UserOperation{}, ctx.Batch...)
+		all = append(all, ctx.PendingRemoval...)
+		hashes := []common.Hash{}
+		for _, op := range all {
+			hashes = append(hashes, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))
+		}
+
+		return removeSavedCodeHashes(s.db, hashes...)
 	}
 }

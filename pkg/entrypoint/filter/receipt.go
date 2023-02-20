@@ -1,4 +1,4 @@
-package entrypoint
+package filter
 
 import (
 	"context"

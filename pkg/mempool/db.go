@@ -3,24 +3,25 @@ package mempool
 import (
 	"encoding/json"
 	"math/big"
-	"strings"
 
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stackup-wallet/stackup-bundler/internal/dbutils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-const keySeparator = ":"
-const keyPrefix = "mempool"
+var (
+	keyPrefix = dbutils.JoinValues("mempool")
+)
 
 func getUniqueKey(entryPoint common.Address, sender common.Address, nonce *big.Int) []byte {
 	return []byte(
-		keyPrefix + keySeparator + entryPoint.String() + keySeparator + sender.String() + keySeparator + nonce.String(),
+		dbutils.JoinValues(keyPrefix, entryPoint.String(), sender.String(), nonce.String()),
 	)
 }
 
 func getEntryPointFromDBKey(key []byte) common.Address {
-	slc := strings.Split(string(key), keySeparator)
+	slc := dbutils.SplitValues(string(key))
 	return common.HexToAddress(slc[1])
 }
 

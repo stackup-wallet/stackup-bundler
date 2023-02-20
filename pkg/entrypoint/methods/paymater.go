@@ -1,4 +1,4 @@
-package entrypoint
+package methods
 
 import (
 	"errors"
@@ -10,12 +10,7 @@ import (
 )
 
 var (
-	bytes32, _ = abi.NewType("bytes32", "", nil)
-	uint256, _ = abi.NewType("uint256", "", nil)
-	bytes, _   = abi.NewType("bytes", "", nil)
-	address, _ = abi.NewType("address", "", nil)
-
-	validatePaymasterUserOpMethod = abi.NewMethod(
+	ValidatePaymasterUserOpMethod = abi.NewMethod(
 		"validatePaymasterUserOp",
 		"validatePaymasterUserOp",
 		abi.Function,
@@ -32,29 +27,14 @@ var (
 			{Name: "deadline", Type: uint256},
 		},
 	)
-	validatePaymasterUserOpSelector = hexutil.Encode(validatePaymasterUserOpMethod.ID)
-
-	handleOpsMethod = abi.NewMethod(
-		"handleOps",
-		"handleOps",
-		abi.Function,
-		"",
-		false,
-		false,
-		abi.Arguments{
-			{Name: "ops", Type: userop.UserOpArr},
-			{Name: "beneficiary", Type: address},
-		},
-		nil,
-	)
-	handleOpsSelector = hexutil.Encode(handleOpsMethod.ID)
+	ValidatePaymasterUserOpSelector = hexutil.Encode(ValidatePaymasterUserOpMethod.ID)
 )
 
 type validatePaymasterUserOpOutput struct {
 	Context []byte
 }
 
-func decodeValidatePaymasterUserOpOutput(ret any) (*validatePaymasterUserOpOutput, error) {
+func DecodeValidatePaymasterUserOpOutput(ret any) (*validatePaymasterUserOpOutput, error) {
 	hex, ok := ret.(string)
 	if !ok {
 		return nil, errors.New("validatePaymasterUserOp: cannot assert type: hex is not of type string")
@@ -64,7 +44,7 @@ func decodeValidatePaymasterUserOpOutput(ret any) (*validatePaymasterUserOpOutpu
 		return nil, fmt.Errorf("validatePaymasterUserOp: %s", err)
 	}
 
-	args, err := validatePaymasterUserOpMethod.Outputs.Unpack(data)
+	args, err := ValidatePaymasterUserOpMethod.Outputs.Unpack(data)
 	if err != nil {
 		return nil, fmt.Errorf("validatePaymasterUserOp: %s", err)
 	}

@@ -71,6 +71,7 @@ func SearcherMode() {
 	}
 
 	check := checks.New(
+		db,
 		rpc,
 		conf.MaxVerificationGas,
 		conf.MaxOpsForUnstakedSender,
@@ -99,9 +100,11 @@ func SearcherMode() {
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
 	b.UseLogger(logr)
 	b.UseModules(
+		check.CodeHashes(),
 		check.PaymasterDeposit(),
 		builder.SendUserOperation(),
 		paymaster.IncOpsIncluded(),
+		check.Clean(),
 	)
 	if err := b.Run(); err != nil {
 		log.Fatal(err)
@@ -111,6 +114,7 @@ func SearcherMode() {
 	var d *client.Debug
 	if conf.DebugMode {
 		d = client.NewDebug(eoa, eth, mem, b, chain, conf.SupportedEntryPoints[0], beneficiary)
+		b.SetMaxBatch(1)
 	}
 
 	// Init HTTP server

@@ -1,4 +1,4 @@
-package entrypoint
+package simulation
 
 import (
 	"fmt"
