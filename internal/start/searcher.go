@@ -104,6 +104,7 @@ func SearcherMode() {
 		check.PaymasterDeposit(),
 		builder.SendUserOperation(),
 		paymaster.IncOpsIncluded(),
+		check.Clean(),
 	)
 	if err := b.Run(); err != nil {
 		log.Fatal(err)

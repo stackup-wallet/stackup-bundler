@@ -46,7 +46,7 @@ func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []comm
 	}
 }
 
-// SetMaxBatch defined the max number of UserOperations per bundle. The default value is 0 (i.e. unlimited).
+// SetMaxBatch defines the max number of UserOperations per bundle. The default value is 0 (i.e. unlimited).
 func (i *Bundler) SetMaxBatch(max int) {
 	i.maxBatch = max
 }

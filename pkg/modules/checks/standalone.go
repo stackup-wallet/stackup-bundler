@@ -4,6 +4,7 @@ package checks
 
 import (
 	"math/big"
+	"sync"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
@@ -13,6 +14,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/simulation"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
+	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -110,26 +112,37 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 	}
 }
 
-// CodeHashes returns a BatchHandler that checks the code for any interacted contracts have not changed since
+// CodeHashes returns a BatchHandler that verifies the code for any interacted contracts has not changed since
 // the first simulation.
 func (s *Standalone) CodeHashes() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		gc := getCodeWithEthClient(s.eth)
-		for i, op := range ctx.Batch {
-			chs, err := getSavedCodeHashes(s.db, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))
-			if err != nil {
-				return err
-			}
+		g := new(errgroup.Group)
+		mu := &sync.Mutex{}
+		fn := func(i int, op *userop.UserOperation) func() error {
+			return func() error {
+				chs, err := getSavedCodeHashes(s.db, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))
+				if err != nil {
+					return err
+				}
 
-			changed, err := hasCodeHashChanges(chs, gc)
-			if err != nil {
-				return err
-			}
-			if changed {
-				ctx.MarkOpIndexForRemoval(i)
+				changed, err := hasCodeHashChanges(chs, gc)
+				if err != nil {
+					return err
+				}
+				if changed {
+					mu.Lock()
+					ctx.MarkOpIndexForRemoval(i)
+					mu.Unlock()
+				}
+				return nil
 			}
 		}
-		return nil
+
+		for i, op := range ctx.Batch {
+			g.Go(fn(i, op))
+		}
+		return g.Wait()
 	}
 }
 
@@ -165,5 +178,20 @@ func (s *Standalone) PaymasterDeposit() modules.BatchHandlerFunc {
 		}
 
 		return nil
+	}
+}
+
+// Clean returns a BatchHandler that clears the DB of data that is no longer required. This should be one of
+// the last modules executed by the Bundler.
+func (s *Standalone) Clean() modules.BatchHandlerFunc {
+	return func(ctx *modules.BatchHandlerCtx) error {
+		all := append([]*userop.UserOperation{}, ctx.Batch...)
+		all = append(all, ctx.PendingRemoval...)
+		hashes := []common.Hash{}
+		for _, op := range all {
+			hashes = append(hashes, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))
+		}
+
+		return removeSavedCodeHashes(s.db, hashes...)
 	}
 }
