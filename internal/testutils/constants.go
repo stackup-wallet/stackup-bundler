@@ -20,27 +20,27 @@ var (
 		Staked:          true,
 		Stake:           big.NewInt(OneETH.Int64()),
 		UnstakeDelaySec: DefaultUnstakeDelaySec,
-		WithdrawTime:    uint64(time.Now().Unix()),
+		WithdrawTime:    big.NewInt(time.Now().Unix()),
 	}
 	StakedZeroDepositInfo = &entrypoint.IStakeManagerDepositInfo{
 		Deposit:         big.NewInt(0),
 		Staked:          true,
 		Stake:           big.NewInt(OneETH.Int64()),
 		UnstakeDelaySec: DefaultUnstakeDelaySec,
-		WithdrawTime:    uint64(time.Now().Unix()),
+		WithdrawTime:    big.NewInt(time.Now().Unix()),
 	}
 	NonStakedDepositInfo = &entrypoint.IStakeManagerDepositInfo{
 		Deposit:         big.NewInt(OneETH.Int64()),
 		Staked:          false,
 		Stake:           big.NewInt(0),
 		UnstakeDelaySec: uint32(0),
-		WithdrawTime:    uint64(0),
+		WithdrawTime:    big.NewInt(0),
 	}
 	NonStakedZeroDepositInfo = &entrypoint.IStakeManagerDepositInfo{
 		Deposit:         big.NewInt(0),
 		Staked:          false,
 		Stake:           big.NewInt(0),
 		UnstakeDelaySec: uint32(0),
-		WithdrawTime:    uint64(0),
+		WithdrawTime:    big.NewInt(0),
 	}
 )

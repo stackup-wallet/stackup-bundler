@@ -37,8 +37,8 @@ var (
 		{Name: "preOpGas", Type: "uint256"},
 		{Name: "prefund", Type: "uint256"},
 		{Name: "sigFailed", Type: "bool"},
-		{Name: "validAfter", Type: "uint64"},
-		{Name: "validUntil", Type: "uint64"},
+		{Name: "validAfter", Type: "uint48"},
+		{Name: "validUntil", Type: "uint48"},
 		{Name: "paymasterContext", Type: "bytes"},
 	}
 	stakeInfoType = []abi.ArgumentMarshaling{
