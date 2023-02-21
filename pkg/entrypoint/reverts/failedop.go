@@ -11,18 +11,15 @@ import (
 )
 
 type FailedOpRevert struct {
-	OpIndex   int
-	Paymaster common.Address
-	Reason    string
+	OpIndex int
+	Reason  string
 }
 
 func failedOp() abi.Error {
 	opIndex, _ := abi.NewType("uint256", "uint256", nil)
-	paymaster, _ := abi.NewType("address", "address", nil)
 	reason, _ := abi.NewType("string", "string", nil)
 	return abi.NewError("FailedOp", abi.Arguments{
 		{Name: "opIndex", Type: opIndex},
-		{Name: "paymaster", Type: paymaster},
 		{Name: "reason", Type: reason},
 	})
 }
@@ -55,8 +52,8 @@ func NewFailedOp(err error) (*FailedOpRevert, error) {
 	if !ok {
 		return nil, errors.New("failedOp: cannot assert type: args is not of type []any")
 	}
-	if len(args) != 3 {
-		return nil, fmt.Errorf("failedOp: invalid args length: expected 3, got %d", len(args))
+	if len(args) != 2 {
+		return nil, fmt.Errorf("failedOp: invalid args length: expected 2, got %d", len(args))
 	}
 
 	opIndex, ok := args[0].(*big.Int)
@@ -64,19 +61,13 @@ func NewFailedOp(err error) (*FailedOpRevert, error) {
 		return nil, errors.New("failedOp: cannot assert type: opIndex is not of type *big.Int")
 	}
 
-	paymaster, ok := args[1].(common.Address)
-	if !ok {
-		return nil, errors.New("failedOp: cannot assert type: paymaster is not of type common.Address")
-	}
-
-	reason, ok := args[2].(string)
+	reason, ok := args[1].(string)
 	if !ok {
 		return nil, errors.New("failedOp: cannot assert type: reason is not of type string")
 	}
 
 	return &FailedOpRevert{
-		OpIndex:   int(opIndex.Int64()),
-		Paymaster: paymaster,
-		Reason:    reason,
+		OpIndex: int(opIndex.Int64()),
+		Reason:  reason,
 	}, nil
 }

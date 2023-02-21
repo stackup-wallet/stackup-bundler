@@ -53,7 +53,7 @@ func GetValues() *Values {
 	// Default variables
 	viper.SetDefault("erc4337_bundler_port", 4337)
 	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
-	viper.SetDefault("erc4337_bundler_supported_entry_points", "0xCEb7363Cc430D6332D341f5BabBF00dD5f4Ba119")
+	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x0576a174D229E3cFA37253523E645A78A0C91B57")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 1500000)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
