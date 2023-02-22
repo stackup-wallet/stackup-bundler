@@ -55,4 +55,4 @@ Distributed under the GPL-3.0 License. See [LICENSE](./LICENSE) for more informa
 
 # Contact
 
-Feel free to direct any technical related questions to the `dev-hub` channel in the [Stackup Discord](https://discord.gg/FpXmvKrNed).
+Feel free to direct any technical related questions to the `dev-hub` channel in the [Stackup Discord](https://discord.gg/VTjJGvMNyW).
