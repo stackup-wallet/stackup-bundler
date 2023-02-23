@@ -131,7 +131,11 @@ func SearcherMode() {
 	r.GET("/ping", func(g *gin.Context) {
 		g.Status(http.StatusOK)
 	})
-	r.POST("/", jsonrpc.Controller(client.NewRpcAdapter(c, d)))
+	handlers := []gin.HandlerFunc{
+		jsonrpc.Controller(client.NewRpcAdapter(c, d)),
+	}
+	r.POST("/", handlers...)
+	r.POST("/rpc", handlers...)
 	if err := r.Run(fmt.Sprintf(":%d", conf.Port)); err != nil {
 		log.Fatal(err)
 	}
