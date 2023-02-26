@@ -14,7 +14,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-func jsonrpcError(c *gin.Context, code int, message string, data any, id *float64) {
+func jsonrpcError(c *gin.Context, code int, message string, data any, id *uint64) {
 	c.JSON(http.StatusOK, gin.H{
 		"jsonrpc": "2.0",
 		"error": gin.H{
@@ -58,7 +58,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 			return
 		}
 
-		id, ok := data["id"].(float64)
+		id, ok := data["id"].(uint64)
 		if !ok {
 			jsonrpcError(c, -32600, "Invalid Request", "No or invalid 'id' in request", nil)
 			return
