@@ -13,7 +13,7 @@ import (
 
 const NoBanThreshold = 0
 const DefaultBanThreshold = 3
-const timeWindow = 7 * 24 * time.Hour
+const DefaultBanTimeWindow = 7 * 24 * time.Hour
 
 var (
 	keyPrefix        = dbutils.JoinValues("relay")
@@ -68,18 +68,18 @@ func getOpsCountByClientID(txn *badger.Txn, clientID string) (opsSeen int, opsIn
 	return opsSeen, opsIncluded, nil
 }
 
-func incrementOpsSeenByClientID(txn *badger.Txn, clientID string) error {
+func incrementOpsSeenByClientID(txn *badger.Txn, clientID string, ttl time.Duration) error {
 	opsSeen, opsIncluded, err := getOpsCountByClientID(txn, clientID)
 	if err != nil {
 		return err
 	}
 
 	val := dbutils.JoinValues(strconv.Itoa(opsSeen+1), strconv.Itoa(opsIncluded))
-	e := badger.NewEntry(getOpsCountKey(clientID), []byte(val)).WithTTL(timeWindow)
+	e := badger.NewEntry(getOpsCountKey(clientID), []byte(val)).WithTTL(ttl)
 	return txn.SetEntry(e)
 }
 
-func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, userOpHashes ...string) error {
+func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, ttl time.Duration, userOpHashes ...string) error {
 	for _, hash := range userOpHashes {
 		item, err := txn.Get(getUserOpHashKey(hash))
 		if err != nil && err == badger.ErrKeyNotFound {
@@ -106,13 +106,13 @@ func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, userOpHashes ...string)
 
 		var opsCountValue string
 		if opsSeen == 0 && opsIncluded == 0 {
-			// Op has been in the mempool longer than timeWindow
+			// Op has been in the mempool longer than TTL
 			opsCountValue = dbutils.JoinValues(strconv.Itoa(opsSeen+1), strconv.Itoa(opsIncluded+1))
 		} else {
 			opsCountValue = dbutils.JoinValues(strconv.Itoa(opsSeen), strconv.Itoa(opsIncluded+1))
 		}
 
-		e := badger.NewEntry(getOpsCountKey(cid), []byte(opsCountValue)).WithTTL(timeWindow)
+		e := badger.NewEntry(getOpsCountKey(cid), []byte(opsCountValue)).WithTTL(ttl)
 		if err := txn.SetEntry(e); err != nil {
 			return err
 		}

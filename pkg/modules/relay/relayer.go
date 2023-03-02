@@ -3,6 +3,7 @@
 package relay
 
 import (
+	"fmt"
 	"math/big"
 	"net/http"
 	"time"
@@ -35,13 +36,14 @@ import (
 // This will only work in the case of a private mempool and will not work in the P2P case where ops are
 // propagated through the network and it is impossible to trust a sender's identifier.
 type Relayer struct {
-	db              *badger.DB
-	eoa             *signer.EOA
-	eth             *ethclient.Client
-	chainID         *big.Int
-	beneficiary     common.Address
-	logger          logr.Logger
-	bannedThreshold int
+	db               *badger.DB
+	eoa              *signer.EOA
+	eth              *ethclient.Client
+	chainID          *big.Int
+	beneficiary      common.Address
+	logger           logr.Logger
+	bannedThreshold  int
+	bannedTimeWindow time.Duration
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
@@ -54,13 +56,14 @@ func New(
 	l logr.Logger,
 ) *Relayer {
 	return &Relayer{
-		db:              db,
-		eoa:             eoa,
-		eth:             eth,
-		chainID:         chainID,
-		beneficiary:     beneficiary,
-		logger:          l.WithName("relayer"),
-		bannedThreshold: DefaultBanThreshold,
+		db:               db,
+		eoa:              eoa,
+		eth:              eth,
+		chainID:          chainID,
+		beneficiary:      beneficiary,
+		logger:           l.WithName("relayer"),
+		bannedThreshold:  DefaultBanThreshold,
+		bannedTimeWindow: DefaultBanTimeWindow,
 	}
 }
 
@@ -69,6 +72,12 @@ func New(
 // is useful for debugging.
 func (r *Relayer) SetBannedThreshold(limit int) {
 	r.bannedThreshold = limit
+}
+
+// SetBannedTimeWindow sets the limit for how long a banned client will be rejected for. The default value is
+// 24 hours.
+func (r *Relayer) SetBannedTimeWindow(limit time.Duration) {
+	r.bannedTimeWindow = limit
 }
 
 // FilterByClientID is a custom Gin middleware used to prevent requests from banned clients from adding their
@@ -82,6 +91,7 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 		l := r.logger.WithName("filter_by_client")
 
 		isBanned := false
+		var os, oi int
 		cid := ginutils.GetClientIPFromXFF(c)
 		err := r.db.View(func(txn *badger.Txn) error {
 			opsSeen, opsIncluded, err := getOpsCountByClientID(txn, cid)
@@ -99,6 +109,8 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 			}
 
 			isBanned = true
+			os = opsSeen
+			oi = opsIncluded
 			return nil
 		})
 		if err != nil {
@@ -110,6 +122,18 @@ func (r *Relayer) FilterByClientID() gin.HandlerFunc {
 		if isBanned {
 			l.Info("client banned")
 			c.Status(http.StatusForbidden)
+			c.JSON(
+				http.StatusForbidden,
+				gin.H{
+					"error": fmt.Sprintf(
+						"opsSeen (%d) exceeds opsIncluded (%d) by allowed threshold (%d). Wait %s to retry.",
+						os,
+						oi,
+						r.bannedThreshold,
+						r.bannedTimeWindow,
+					),
+				},
+			)
 			c.Abort()
 		} else {
 			l.Info("client ok")
@@ -150,7 +174,7 @@ func (r *Relayer) MapUserOpHashToClientID() gin.HandlerFunc {
 				return err
 			}
 
-			return incrementOpsSeenByClientID(txn, cid)
+			return incrementOpsSeenByClientID(txn, cid, r.bannedTimeWindow)
 		})
 		if err != nil {
 			l.Error(err, "map_userop_hash_to_client_id failed")
@@ -240,7 +264,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 
 			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
 			del = append([]string{}, hashes...)
-			return incrementOpsIncludedByUserOpHashes(txn, hashes...)
+			return incrementOpsIncludedByUserOpHashes(txn, r.bannedTimeWindow, hashes...)
 		})
 		if err != nil {
 			return err

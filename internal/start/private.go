@@ -68,7 +68,15 @@ func PrivateMode() {
 		conf.MaxOpsForUnstakedSender,
 		conf.BundlerCollectorTracer,
 	)
+
 	relayer := relay.New(db, eoa, eth, chain, beneficiary, logr)
+	if conf.RelayerBannedThreshold > 0 {
+		relayer.SetBannedThreshold(conf.RelayerBannedThreshold)
+	}
+	if conf.RelayerBannedTimeWindow > 0 {
+		relayer.SetBannedTimeWindow(conf.RelayerBannedTimeWindow)
+	}
+
 	paymaster := paymaster.New(db)
 
 	// Init Client
