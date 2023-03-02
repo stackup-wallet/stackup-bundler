@@ -180,6 +180,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 
 			// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
 			var gas uint64
+			estRev := []string{}
 			for len(ctx.Batch) > 0 {
 				est, revert, err := transaction.EstimateHandleOpsGas(
 					r.eoa,
@@ -194,6 +195,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 					return err
 				} else if revert != nil {
 					ctx.MarkOpIndexForRemoval(revert.OpIndex)
+					estRev = append(estRev, revert.Reason)
 
 					hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
 					if err := removeUserOpHashEntries(txn, hashes...); err != nil {
@@ -204,8 +206,10 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 					break
 				}
 			}
+			ctx.Data["relayer_est_revert_reasons"] = estRev
 
 			// Call handleOps() with gas estimate and drop all userOps that cause unexpected reverts.
+			txnRev := []string{}
 			for len(ctx.Batch) > 0 {
 				t, revert, err := transaction.HandleOps(
 					r.eoa,
@@ -221,6 +225,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 					return err
 				} else if revert != nil {
 					ctx.MarkOpIndexForRemoval(revert.OpIndex)
+					txnRev = append(txnRev, revert.Reason)
 
 					hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
 					if err := removeUserOpHashEntries(txn, hashes...); err != nil {
@@ -231,6 +236,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 					break
 				}
 			}
+			ctx.Data["relayer_txn_revert_reasons"] = txnRev
 
 			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
 			del = append([]string{}, hashes...)
