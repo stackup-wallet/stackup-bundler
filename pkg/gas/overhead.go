@@ -25,6 +25,7 @@ type Overhead struct {
 // CalcPreVerificationGas returns an expected gas cost for processing a UserOperation from a batch.
 func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
 	packed := op.Pack()
+	lengthInWord := float64(len(packed)+31) / 32
 	callDataCost := float64(0)
 
 	for _, b := range packed {
@@ -35,9 +36,7 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
 		}
 	}
 
-	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + ov.perUserOpWord*float64(
-		(len(packed)),
-	)
+	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + (ov.perUserOpWord * lengthInWord)
 	return big.NewInt(int64(math.Round(pvg)))
 }
 
