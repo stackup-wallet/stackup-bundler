@@ -78,11 +78,11 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 		}
 		blkNum := big.NewInt(0).SetUint64(bn)
 		NxtBlkNum := big.NewInt(0).Add(blkNum, big.NewInt(1))
-		blk, _ := b.eth.BlockByNumber(context.Background(), blkNum)
+		blk, err := b.eth.HeaderByNumber(context.Background(), blkNum)
 		if err != nil {
 			return err
 		}
-		mbf := blk.BaseFee()
+		mbf := blk.BaseFee
 		for i := 0; i < b.blocksInTheFuture; i++ {
 			a := big.NewInt(0).Mul(mbf, big.NewInt(1125))
 			b := big.NewInt(0).Div(a, big.NewInt(1000))
