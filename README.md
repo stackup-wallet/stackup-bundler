@@ -34,6 +34,8 @@ make generate-environment
 make fetch-wallet
 ```
 
+Once you obtained the public key, the account needs to be funded.
+
 ## Run bundler in `private` mode
 
 Start a local bundler instance:
