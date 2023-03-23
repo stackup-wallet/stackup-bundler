@@ -85,7 +85,7 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 			if sim.ReturnInfo.SigFailed {
 				return errors.NewRPCError(
 					errors.INVALID_SIGNATURE,
-					"invalid userOp or paymaster signature",
+					"Invalid UserOp signature or paymaster signature",
 					nil,
 				)
 			}
