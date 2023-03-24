@@ -16,7 +16,7 @@ require (
 	github.com/metachris/flashbotsrpc v0.5.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/rs/zerolog v1.29.0
-	github.com/spf13/cobra v1.6.0
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	github.com/wangjia184/sortedset v0.0.0-20220209072355-af6d6d227aa7
 	golang.org/x/sync v0.1.0
