@@ -54,10 +54,10 @@ func getBaseFeeWithEthClient(eth *ethclient.Client) GetBaseFeeFunc {
 			return nil, err
 		}
 
-		blk, _ := eth.BlockByNumber(context.Background(), big.NewInt(0).SetUint64(bn))
+		blk, err := eth.HeaderByNumber(context.Background(), big.NewInt(0).SetUint64(bn))
 		if err != nil {
 			return nil, err
 		}
-		return blk.BaseFee(), nil
+		return blk.BaseFee, nil
 	}
 }
