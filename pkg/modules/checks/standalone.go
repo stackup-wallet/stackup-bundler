@@ -77,10 +77,17 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 		gc := getCodeWithEthClient(s.eth)
 		g := new(errgroup.Group)
 		g.Go(func() error {
-			_, err := simulation.SimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp)
+			sim, err := simulation.SimulateValidation(s.rpc, ctx.EntryPoint, ctx.UserOp)
 
 			if err != nil {
 				return errors.NewRPCError(errors.REJECTED_BY_EP_OR_ACCOUNT, err.Error(), err.Error())
+			}
+			if sim.ReturnInfo.SigFailed {
+				return errors.NewRPCError(
+					errors.INVALID_SIGNATURE,
+					"Invalid UserOp signature or paymaster signature",
+					nil,
+				)
 			}
 			return nil
 		})
