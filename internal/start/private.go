@@ -28,7 +28,6 @@ func PrivateMode() {
 	conf := config.GetValues()
 
 	logr := logger.NewZeroLogr().
-		WithName("stackup_bundler").
 		WithValues("bundler_mode", "private")
 
 	eoa, err := signer.New(conf.PrivateKey)
@@ -69,6 +68,8 @@ func PrivateMode() {
 		conf.BundlerCollectorTracer,
 	)
 
+	privateAddress := common.HexToAddress(conf.PrivateGuardianContractAddress)
+
 	relayer := relay.New(db, eoa, eth, chain, beneficiary, logr)
 	if conf.RelayerBannedThreshold > 0 {
 		relayer.SetBannedThreshold(conf.RelayerBannedThreshold)
@@ -76,6 +77,8 @@ func PrivateMode() {
 	if conf.RelayerBannedTimeWindow > 0 {
 		relayer.SetBannedTimeWindow(conf.RelayerBannedTimeWindow)
 	}
+
+	privateRelayer := relay.NewPrivateRelayer(eoa, &privateAddress, eth, logr)
 
 	paymaster := paymaster.New(db)
 
@@ -136,6 +139,7 @@ func PrivateMode() {
 	}
 	r.POST("/", handlers...)
 	r.POST("/rpc", handlers...)
+	r.POST("/recover", privateRelayer.PrivateRecover)
 
 	if err := r.Run(fmt.Sprintf(":%d", conf.Port)); err != nil {
 		log.Fatal(err)

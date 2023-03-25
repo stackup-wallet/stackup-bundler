@@ -36,6 +36,8 @@ type Values struct {
 	DebugMode              bool
 	GinMode                string
 	BundlerCollectorTracer string
+
+	PrivateGuardianContractAddress string
 }
 
 func envArrayToAddressSlice(s string) []common.Address {
@@ -93,6 +95,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
 	_ = viper.BindEnv("erc4337_bundler_debug_mode")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
+	_ = viper.BindEnv("private_guardian_address")
 
 	// Validate required variables
 	if variableNotSetOrIsNil("erc4337_bundler_eth_client_url") {

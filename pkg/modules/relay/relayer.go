@@ -3,7 +3,12 @@
 package relay
 
 import (
+	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/guardian"
+	"log"
 	"math/big"
 	"net/http"
 	"time"
@@ -44,6 +49,32 @@ type Relayer struct {
 	logger           logr.Logger
 	bannedThreshold  int
 	bannedTimeWindow time.Duration
+}
+
+type PrivateRelayer struct {
+	Guardian *guardian.Guardian
+	logger   logr.Logger
+	eth      *ethclient.Client
+}
+
+func NewPrivateRelayer(
+	eoa *signer.EOA,
+	privateContractAddress *common.Address,
+	eth *ethclient.Client, l logr.Logger) *PrivateRelayer {
+	pra, err := guardian.NewPrivateRecoveryAccountTransactor(*privateContractAddress, eth)
+	if err != nil {
+		l.Error(err, "failed to initialize private guardian relayer")
+	}
+
+	return &PrivateRelayer{
+		Guardian: &guardian.Guardian{
+			Eoa:                      eoa,
+			ContractAddress:          privateContractAddress,
+			PrivateAccountTransactor: pra,
+		},
+		eth:    eth,
+		logger: l,
+	}
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
@@ -182,6 +213,43 @@ func (r *Relayer) MapUserOpHashToClientID() gin.HandlerFunc {
 			return
 		}
 	}
+}
+
+func (r *PrivateRelayer) PrivateRecover(c *gin.Context) {
+	l := r.logger.WithName("private_recover_req")
+
+	var params guardian.RecoverRequest
+
+	if err := c.ShouldBindJSON(&params); err != nil {
+		l.Error(err, "failed to parse recover req params")
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	fromAddress := crypto.PubkeyToAddress(*r.Guardian.Eoa.PublicKey)
+	nonce, err := r.eth.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		log.Fatalf("Failed to retrieve account nonce: %v", err)
+	}
+
+	gasPrice, err := r.eth.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to suggest gas price: %v", err)
+	}
+
+	auth := bind.NewKeyedTransactor(r.Guardian.Eoa.PrivateKey)
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)      // in wei
+	auth.GasLimit = uint64(1000000) // in units
+	auth.GasPrice = gasPrice
+
+	tx, err := r.Guardian.PrivateAccountTransactor.Recover(auth, params.NewOwner, params.A, params.B, params.C, params.Input)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+	} else {
+		c.JSON(http.StatusOK, tx.Hash())
+	}
+	return
 }
 
 // SendUserOperation returns a BatchHandler that is used by the Bundler to send batches in a regular EOA
