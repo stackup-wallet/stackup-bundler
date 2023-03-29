@@ -61,7 +61,7 @@ func GetUserOperationReceipt(
 			//lint:ignore ST1005 This needs to match the bundler test spec.
 			return nil, errors.New("Missing/invalid userOpHash")
 		}
-		msg, err := tx.AsMessage(types.LatestSignerForChainID(tx.ChainId()), common.Big1)
+		from, err := types.Sender(types.LatestSignerForChainID(tx.ChainId()), tx)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +69,7 @@ func GetUserOperationReceipt(
 		txnReceipt := &parsedTransaction{
 			BlockHash:         receipt.BlockHash,
 			BlockNumber:       hexutil.EncodeBig(receipt.BlockNumber),
-			From:              msg.From(),
+			From:              from,
 			CumulativeGasUsed: hexutil.EncodeBig(big.NewInt(0).SetUint64(receipt.CumulativeGasUsed)),
 			GasUsed:           hexutil.EncodeBig(big.NewInt(0).SetUint64(receipt.GasUsed)),
 			Logs:              receipt.Logs,
@@ -86,7 +86,7 @@ func GetUserOperationReceipt(
 			Success:       it.Event.Success,
 			ActualGasCost: hexutil.EncodeBig(it.Event.ActualGasCost),
 			ActualGasUsed: hexutil.EncodeBig(it.Event.ActualGasUsed),
-			From:          msg.From(),
+			From:          from,
 			Receipt:       txnReceipt,
 			Logs:          []*types.Log{&it.Event.Raw},
 		}, nil
