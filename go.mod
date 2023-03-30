@@ -8,7 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.0
-	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zerologr v1.2.3
 	github.com/go-playground/validator/v10 v10.12.0
 	github.com/google/go-cmp v0.5.9
