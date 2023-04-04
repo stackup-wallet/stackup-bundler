@@ -30,6 +30,11 @@ type Standalone struct {
 	tracer                  string
 }
 
+const (
+	BSCChainID     = 56
+	BSCTestChainID = 97
+)
+
 // New returns a Standalone instance with methods that can be used in Client and Bundler modules to perform
 // standard checks as specified in EIP-4337.
 func New(
@@ -61,7 +66,9 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.maxVerificationGas) })
 		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, gs) })
 		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp) })
-		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gbf) })
+		if !isBSC(ctx.ChainID) {
+			g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gbf) })
+		}
 		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps, s.maxOpsForUnstakedSender, gs) })
 
 		if err := g.Wait(); err != nil {
@@ -201,4 +208,13 @@ func (s *Standalone) Clean() modules.BatchHandlerFunc {
 
 		return removeSavedCodeHashes(s.db, hashes...)
 	}
+}
+
+func isBSC(chainID *big.Int) bool {
+	bsc := big.NewInt(BSCChainID)
+	bscTest := big.NewInt(BSCTestChainID)
+	if (chainID.Cmp(bsc) == 0) || (chainID.Cmp(bscTest) == 0) {
+		return true
+	}
+	return false
 }
