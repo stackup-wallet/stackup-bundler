@@ -5,13 +5,17 @@ import (
 	"errors"
 	"math/big"
 	"reflect"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 )
 
-var validate *validator.Validate
+var (
+	validate = validator.New()
+	onlyOnce = sync.Once{}
+)
 
 func exactFieldMatch(mapKey, fieldName string) bool {
 	return mapKey == fieldName
@@ -100,9 +104,10 @@ func New(data map[string]any) (*UserOperation, error) {
 	}
 
 	// Validate struct
-	validate = validator.New()
-	validate.RegisterCustomTypeFunc(validateAddressType, common.Address{})
-	validate.RegisterCustomTypeFunc(validateBigIntType, big.Int{})
+	onlyOnce.Do(func() {
+		validate.RegisterCustomTypeFunc(validateAddressType, common.Address{})
+		validate.RegisterCustomTypeFunc(validateBigIntType, big.Int{})
+	})
 	err = validate.Struct(op)
 	if err != nil {
 		return nil, err
