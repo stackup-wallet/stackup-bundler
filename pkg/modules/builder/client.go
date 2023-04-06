@@ -66,7 +66,7 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 			} else if revert != nil {
 				ctx.MarkOpIndexForRemoval(revert.OpIndex)
 			} else {
-				gas = est
+				gas = est.Uint64()
 				break
 			}
 		}
@@ -97,7 +97,7 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 			ctx.EntryPoint,
 			ctx.Batch,
 			b.beneficiary,
-			gas,
+			big.NewInt(0).SetUint64(gas),
 			mbf,
 		)
 		if err != nil {

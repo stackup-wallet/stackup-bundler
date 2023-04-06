@@ -203,7 +203,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			}
 
 			// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
-			var gas uint64
+			var gas *big.Int
 			estRev := []string{}
 			for len(ctx.Batch) > 0 {
 				est, revert, err := transaction.EstimateHandleOpsGas(
