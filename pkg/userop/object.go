@@ -191,3 +191,17 @@ func (op *UserOperation) MarshalJSON() ([]byte, error) {
 		Signature:            hexutil.Encode(op.Signature),
 	})
 }
+
+// ToMap returns the current UserOp struct as a map type.
+func (op *UserOperation) ToMap() (map[string]any, error) {
+	data, err := op.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	var opData map[string]any
+	if err := json.Unmarshal(data, &opData); err != nil {
+		return nil, err
+	}
+	return opData, nil
+}
