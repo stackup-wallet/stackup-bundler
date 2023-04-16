@@ -21,8 +21,7 @@ func CallGasEstimate(
 		return 0, err
 	}
 
-	// Set MaxPriorityFeePerGas = MaxFeePerGas to simplify callGasLimit calculation from simulation paid
-	// value.
+	// Set MaxPriorityFeePerGas = MaxFeePerGas to simplify callGasLimit calculation.
 	data["maxPriorityFeePerGas"] = hexutil.EncodeBig(op.MaxFeePerGas)
 	simOp, err := userop.New(data)
 	if err != nil {
@@ -41,6 +40,7 @@ func CallGasEstimate(
 		return 0, errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
 	}
 
-	cgl := big.NewInt(0).Div(sim.Paid, op.MaxFeePerGas)
+	tg := big.NewInt(0).Div(sim.Paid, op.MaxFeePerGas)
+	cgl := big.NewInt(0).Sub(tg, sim.PreOpGas)
 	return cgl.Uint64(), nil
 }
