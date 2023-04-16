@@ -215,6 +215,12 @@
   },
   {
     "anonymous": false,
+    "inputs": [],
+    "name": "BeforeExecution",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
     "inputs": [
       {
         "indexed": true,
@@ -505,6 +511,18 @@
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "sender", "type": "address" },
+      { "internalType": "uint192", "name": "key", "type": "uint192" }
+    ],
+    "name": "getNonce",
+    "outputs": [
+      { "internalType": "uint256", "name": "nonce", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "bytes", "name": "initCode", "type": "bytes" }
     ],
     "name": "getSenderAddress",
@@ -690,6 +708,13 @@
     "type": "function"
   },
   {
+    "inputs": [{ "internalType": "uint192", "name": "key", "type": "uint192" }],
+    "name": "incrementNonce",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "bytes", "name": "callData", "type": "bytes" },
       {
@@ -761,6 +786,16 @@
       { "internalType": "uint256", "name": "actualGasCost", "type": "uint256" }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint192", "name": "", "type": "uint192" }
+    ],
+    "name": "nonceSequenceNumber",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
     "type": "function"
   },
   {
