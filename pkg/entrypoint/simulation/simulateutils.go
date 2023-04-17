@@ -3,28 +3,13 @@ package simulation
 import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 )
 
 // EntityStakes provides a mapping for encountered entity addresses and their stake info on the EntryPoint.
 type EntityStakes map[common.Address]*entrypoint.IStakeManagerDepositInfo
 
-type traceCallReq struct {
-	From common.Address `json:"from"`
-	To   common.Address `json:"to"`
-	Data hexutil.Bytes  `json:"data"`
-}
-
-type traceCallOpts struct {
-	Tracer string `json:"tracer"`
-}
-
 var (
-	// A dummy private key used to build *bind.TransactOpts for simulation.
-	dummyPk, _ = crypto.GenerateKey()
-
 	// Up to the first number marker represents factory validation.
 	factoryNumberLevel = 0
 

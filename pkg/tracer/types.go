@@ -53,3 +53,8 @@ type BundlerCollectorReturn struct {
 	Logs         []LogInfo         `json:"logs"`
 	Debug        []any             `json:"debug"`
 }
+
+// BundlerErrorReturn is the return value from performing an EVM trace with BundlerErrorTracer.js.
+type BundlerErrorReturn struct {
+	Reverts []string `json:"reverts"`
+}

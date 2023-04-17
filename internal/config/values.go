@@ -36,6 +36,7 @@ type Values struct {
 	DebugMode              bool
 	GinMode                string
 	BundlerCollectorTracer string
+	BundlerErrorTracer     string
 }
 
 func envArrayToAddressSlice(s string) []common.Address {
@@ -118,8 +119,8 @@ func GetValues() *Values {
 		}
 	}
 
-	// Load js tracer from embedded file
-	bct, err := tracer.Load()
+	// Load js tracers from embedded file
+	trc, err := tracer.NewTracers()
 	if err != nil {
 		panic(err)
 	}
@@ -154,6 +155,7 @@ func GetValues() *Values {
 		BlocksInTheFuture:       blocksInTheFuture,
 		DebugMode:               debugMode,
 		GinMode:                 ginMode,
-		BundlerCollectorTracer:  bct,
+		BundlerCollectorTracer:  trc.BundlerCollectorTracer,
+		BundlerErrorTracer:      trc.BundlerErrorTracer,
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/methods"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -32,7 +33,7 @@ func TraceSimulateValidation(
 	if err != nil {
 		return nil, err
 	}
-	auth, err := bind.NewKeyedTransactorWithChainID(dummyPk, chainID)
+	auth, err := bind.NewKeyedTransactorWithChainID(utils.DummyPk, chainID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,12 +45,12 @@ func TraceSimulateValidation(
 	}
 
 	var res tracer.BundlerCollectorReturn
-	req := traceCallReq{
+	req := utils.TraceCallReq{
 		From: common.HexToAddress("0x"),
 		To:   entryPoint,
 		Data: tx.Data(),
 	}
-	opts := traceCallOpts{
+	opts := utils.TraceCallOpts{
 		Tracer: customTracer,
 	}
 	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
