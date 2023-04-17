@@ -5,16 +5,21 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/execution"
-	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+// CallGasEstimate uses the simulateHandleOp method on the EntryPoint to derive an estimate for callGasLimit.
+//
+// TODO: This function requires an eth_call and a debug_traceCall. It could probably be optimized further by
+// just using a debug_traceCall.
 func CallGasEstimate(
-	eth *ethclient.Client,
+	rpc *rpc.Client,
 	from common.Address,
 	op *userop.UserOperation,
+	chainID *big.Int,
+	tracer string,
 ) (uint64, error) {
 	data, err := op.ToMap()
 	if err != nil {
@@ -28,19 +33,20 @@ func CallGasEstimate(
 		return 0, err
 	}
 
-	sim, err := execution.SimulateHandleOp(eth, from, simOp, op.Sender, op.CallData)
+	sim, err := execution.SimulateHandleOp(rpc, from, simOp, common.Address{}, []byte{})
 	if err != nil {
 		return 0, err
 	}
-	if !sim.TargetSuccess {
-		reason, err := errors.DecodeRevert(sim.TargetResult)
-		if err != nil {
-			return 0, err
-		}
-		return 0, errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
+
+	if err := execution.TraceSimulateHandleOp(rpc, from, op, chainID, tracer, common.Address{}, []byte{}); err != nil {
+		return 0, err
 	}
 
 	tg := big.NewInt(0).Div(sim.Paid, op.MaxFeePerGas)
 	cgl := big.NewInt(0).Sub(tg, sim.PreOpGas)
-	return cgl.Uint64(), nil
+	call := NewDefaultOverhead().NonZeroValueCall()
+	if cgl.Cmp(call) >= 1 {
+		return cgl.Uint64(), nil
+	}
+	return call.Uint64(), nil
 }

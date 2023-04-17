@@ -10,6 +10,7 @@ import (
 )
 
 //go:embed *BundlerCollectorTracer.js
+//go:embed *BundlerErrorTracer.js
 var files embed.FS
 var (
 	commentRegex    = regexp.MustCompile("(?m)^.*//.*$[\r\n]+")
@@ -28,11 +29,42 @@ func parse(code string) string {
 	return m
 }
 
-// Load reads the BundlerCollectorTracer.js file and returns a string that can be passed to a debug RPC
-// method as a custom tracer.
-func Load() (string, error) {
-	var t string
-	err := fs.WalkDir(files, ".", func(path string, d fs.DirEntry, err error) error {
+type Tracers struct {
+	BundlerCollectorTracer string
+	BundlerErrorTracer     string
+}
+
+// NewBundlerTracers reads the *Tracer.js files and returns a collection of strings that can be passed to a
+// debug RPC method as a custom tracer.
+func NewTracers() (*Tracers, error) {
+	var bct string
+	err := fs.WalkDir(
+		files,
+		"BundlerCollectorTracer.js",
+		func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if d.IsDir() {
+				return nil
+			}
+
+			b, err := fs.ReadFile(files, path)
+			if err != nil {
+				return err
+			}
+
+			bct = parse(string(b))
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var et string
+	err = fs.WalkDir(files, "BundlerErrorTracer.js", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -46,9 +78,15 @@ func Load() (string, error) {
 			return err
 		}
 
-		t = parse(string(b))
+		et = parse(string(b))
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return t, err
+	return &Tracers{
+		BundlerCollectorTracer: bct,
+		BundlerErrorTracer:     et,
+	}, nil
 }

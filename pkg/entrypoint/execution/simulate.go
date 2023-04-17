@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/reverts"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
@@ -12,13 +13,13 @@ import (
 )
 
 func SimulateHandleOp(
-	eth *ethclient.Client,
+	rpc *rpc.Client,
 	entryPoint common.Address,
 	op *userop.UserOperation,
 	target common.Address,
 	data []byte,
 ) (*reverts.ExecutionResultRevert, error) {
-	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
+	ep, err := entrypoint.NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
 	if err != nil {
 		return nil, err
 	}
