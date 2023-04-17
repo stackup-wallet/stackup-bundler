@@ -42,11 +42,13 @@ func CallGasEstimate(
 		return 0, err
 	}
 
+	oh := NewDefaultOverhead()
+	fixed := big.NewInt(int64(oh.fixed))
 	tg := big.NewInt(0).Div(sim.Paid, op.MaxFeePerGas)
-	cgl := big.NewInt(0).Sub(tg, sim.PreOpGas)
-	call := NewDefaultOverhead().NonZeroValueCall()
-	if cgl.Cmp(call) >= 1 {
+	cgl := big.NewInt(0).Add(big.NewInt(0).Sub(tg, sim.PreOpGas), fixed)
+	min := big.NewInt(0).Add(oh.NonZeroValueCall(), fixed)
+	if cgl.Cmp(min) >= 1 {
 		return cgl.Uint64(), nil
 	}
-	return call.Uint64(), nil
+	return min.Uint64(), nil
 }
