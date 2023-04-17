@@ -44,7 +44,7 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
 // See https://github.com/wolflo/evm-opcodes/blob/main/gas.md#aa-1-call.
 func (ov *Overhead) NonZeroValueCall() *big.Int {
 	return big.NewInt(
-		int64(ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend),
+		int64(ov.fixed + ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend),
 	)
 }
 
