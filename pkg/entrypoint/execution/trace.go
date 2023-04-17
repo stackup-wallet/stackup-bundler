@@ -60,6 +60,10 @@ func TraceSimulateHandleOp(
 			return err
 		}
 
+		if len(data) == 0 {
+			return errors.NewRPCError(errors.EXECUTION_REVERTED, "execution reverted", nil)
+		}
+
 		reason, err := errors.DecodeRevert(data)
 		if err != nil {
 			return err
