@@ -8,8 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/filter"
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/reverts"
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/simulation"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -33,41 +31,22 @@ func GetUserOpReceiptWithEthClient(eth *ethclient.Client) GetUserOpReceiptFunc {
 	}
 }
 
-// GetSimulateValidationFunc is a general interface for fetching simulateValidation results given a userOp
-// and EntryPoint address.
-type GetSimulateValidationFunc = func(ep common.Address, op *userop.UserOperation) (*reverts.ValidationResultRevert, error)
+// GetGasEstimateFunc is a general interface for fetching an estimate for verificationGasLimit and
+// callGasLimit given a userOp and EntryPoint address.
+type GetGasEstimateFunc = func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error)
 
-func getSimulateValidationNoop() GetSimulateValidationFunc {
-	return func(ep common.Address, op *userop.UserOperation) (*reverts.ValidationResultRevert, error) {
+func getGasEstimateNoop() GetGasEstimateFunc {
+	return func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error) {
 		//lint:ignore ST1005 This needs to match the bundler test spec.
-		return nil, errors.New("Missing/invalid userOpHash")
+		return 0, 0, errors.New("Missing/invalid userOpHash")
 	}
 }
 
-// GetSimulateValidationWithRpcClient returns an implementation of GetSimulateValidationFunc that relies on a
-// rpc client to fetch simulateValidation results.
-func GetSimulateValidationWithRpcClient(rpc *rpc.Client) GetSimulateValidationFunc {
-	return func(ep common.Address, op *userop.UserOperation) (*reverts.ValidationResultRevert, error) {
-		return simulation.SimulateValidation(rpc, ep, op)
-	}
-}
-
-// GetCallGasEstimateFunc is a general interface for fetching an estimate for callGasLimit given a userOp and
-// EntryPoint address.
-type GetCallGasEstimateFunc = func(ep common.Address, op *userop.UserOperation) (uint64, error)
-
-func getCallGasEstimateNoop() GetCallGasEstimateFunc {
-	return func(ep common.Address, op *userop.UserOperation) (uint64, error) {
-		//lint:ignore ST1005 This needs to match the bundler test spec.
-		return 0, errors.New("Missing/invalid userOpHash")
-	}
-}
-
-// GetCallGasEstimateWithEthClient returns an implementation of GetCallGasEstimateFunc that relies on an eth
-// client to fetch an estimate for callGasLimit.
-func GetCallGasEstimateWithEthClient(rpc *rpc.Client, chain *big.Int, tracer string) GetCallGasEstimateFunc {
-	return func(ep common.Address, op *userop.UserOperation) (uint64, error) {
-		return gas.CallGasEstimate(rpc, ep, op, chain, tracer)
+// GetGasEstimateWithEthClient returns an implementation of GetGasEstimateFunc that relies on an eth client to
+// fetch an estimate for verificationGasLimit and callGasLimit.
+func GetGasEstimateWithEthClient(rpc *rpc.Client, chain *big.Int, tracer string) GetGasEstimateFunc {
+	return func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error) {
+		return gas.EstimateGas(rpc, ep, op, chain, tracer)
 	}
 }
 
