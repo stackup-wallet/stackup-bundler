@@ -75,8 +75,9 @@ func (i *Client) SetGetUserOpReceiptFunc(fn GetUserOpReceiptFunc) {
 	i.getUserOpReceipt = fn
 }
 
-// SetGetGasEstimateFunc defines a general function for fetching an estimate for callGasLimit given a userOp
-// and EntryPoint address. This function is called in *Client.EstimateUserOperationGas.
+// SetGetGasEstimateFunc defines a general function for fetching an estimate for verificationGasLimit and
+// callGasLimit given a userOp and EntryPoint address. This function is called in
+// *Client.EstimateUserOperationGas.
 func (i *Client) SetGetGasEstimateFunc(fn GetGasEstimateFunc) {
 	i.getGasEstimate = fn
 }
