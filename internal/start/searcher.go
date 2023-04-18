@@ -84,8 +84,7 @@ func SearcherMode() {
 	// Init Client
 	c := client.New(mem, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
-	c.SetGetSimulateValidationFunc(client.GetSimulateValidationWithRpcClient(rpc))
-	c.SetGetCallGasEstimateFunc(client.GetCallGasEstimateWithEthClient(rpc, chain, conf.BundlerErrorTracer))
+	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, chain, conf.BundlerErrorTracer))
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
