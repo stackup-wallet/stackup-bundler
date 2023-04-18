@@ -31,8 +31,8 @@ func GetUserOpReceiptWithEthClient(eth *ethclient.Client) GetUserOpReceiptFunc {
 	}
 }
 
-// GetGasEstimateFunc is a general interface for fetching an estimate for callGasLimit given a userOp and
-// EntryPoint address.
+// GetGasEstimateFunc is a general interface for fetching an estimate for verificationGasLimit and
+// callGasLimit given a userOp and EntryPoint address.
 type GetGasEstimateFunc = func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error)
 
 func getGasEstimateNoop() GetGasEstimateFunc {
