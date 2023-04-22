@@ -162,14 +162,14 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	hash := userOp.GetUserOpHash(epAddr, i.chainID)
 	l = l.WithValues("userop_hash", hash)
 
-	// Estimate GasLimits
+	// Estimate gas limits
 	vg, cg, err := i.getGasEstimate(epAddr, userOp)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
 	}
 
-	// Create a new op with updated GasLimits
+	// Create a new op with updated gas limits
 	data, err := userOp.ToMap()
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
