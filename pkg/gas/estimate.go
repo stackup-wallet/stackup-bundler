@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/execution"
+	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -22,6 +23,13 @@ func EstimateGas(
 	chainID *big.Int,
 	tracer string,
 ) (verificationGas uint64, callGas uint64, err error) {
+	if op.MaxFeePerGas.Cmp(big.NewInt(0)) != 1 || op.MaxPriorityFeePerGas.Cmp(big.NewInt(0)) != 1 {
+		return 0, 0, errors.NewRPCError(
+			errors.INVALID_FIELDS,
+			"maxFeePerGas and maxPriorityFeePerGas must be more than 0",
+			nil,
+		)
+	}
 	data, err := op.ToMap()
 	if err != nil {
 		return 0, 0, err
