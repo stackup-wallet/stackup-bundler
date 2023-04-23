@@ -36,22 +36,22 @@ func EstimateHandleOpsGas(
 	entryPoint common.Address,
 	batch []*userop.UserOperation,
 	beneficiary common.Address,
-) (gas uint64, revert *reverts.FailedOpRevert, err error) {
+) (gas *big.Int, revert *reverts.FailedOpRevert, err error) {
 	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
 
 	tx, err := ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 
 	est, err := eth.EstimateGas(context.Background(), ethereum.CallMsg{
@@ -68,12 +68,12 @@ func EstimateHandleOpsGas(
 	if err != nil {
 		revert, err := reverts.NewFailedOp(err)
 		if err != nil {
-			return 0, nil, err
+			return nil, nil, err
 		}
-		return 0, revert, nil
+		return nil, revert, err
 	}
 
-	return est, nil, nil
+	return big.NewInt(0).SetUint64(est), nil, nil
 }
 
 // HandleOps calls handleOps() on the EntryPoint with a given batch, gas limit, and tip. A failed call will
@@ -85,7 +85,7 @@ func HandleOps(
 	entryPoint common.Address,
 	batch []*userop.UserOperation,
 	beneficiary common.Address,
-	gas uint64,
+	gas *big.Int,
 ) (txn *types.Transaction, revert *reverts.FailedOpRevert, err error) {
 	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
 	if err != nil {
@@ -100,7 +100,7 @@ func HandleOps(
 	if err != nil {
 		return nil, nil, err
 	}
-	auth.GasLimit = gas
+	auth.GasLimit = gas.Uint64()
 	auth.GasTipCap = tip
 
 	txn, err = ep.HandleOps(auth, toAbiType(batch), beneficiary)
@@ -124,7 +124,7 @@ func CreateRawHandleOps(
 	entryPoint common.Address,
 	batch []*userop.UserOperation,
 	beneficiary common.Address,
-	gas uint64,
+	gas *big.Int,
 	baseFee *big.Int,
 ) (string, error) {
 	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
@@ -140,7 +140,7 @@ func CreateRawHandleOps(
 	if err != nil {
 		return "", err
 	}
-	auth.GasLimit = gas
+	auth.GasLimit = gas.Uint64()
 	auth.GasTipCap = tip
 	auth.GasFeeCap = big.NewInt(0).Add(baseFee, tip)
 	auth.NoSend = true
