@@ -23,10 +23,10 @@ func EstimateGas(
 	chainID *big.Int,
 	tracer string,
 ) (verificationGas uint64, callGas uint64, err error) {
-	if op.MaxFeePerGas.Cmp(big.NewInt(0)) != 1 || op.MaxPriorityFeePerGas.Cmp(big.NewInt(0)) != 1 {
+	if op.MaxFeePerGas.Cmp(big.NewInt(0)) != 1 {
 		return 0, 0, errors.NewRPCError(
 			errors.INVALID_FIELDS,
-			"maxFeePerGas and maxPriorityFeePerGas must be more than 0",
+			"maxFeePerGas must be more than 0",
 			nil,
 		)
 	}
