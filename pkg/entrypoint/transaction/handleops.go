@@ -91,17 +91,12 @@ func HandleOps(
 	if err != nil {
 		return nil, nil, err
 	}
-	tip, err := eth.SuggestGasTipCap(context.Background())
-	if err != nil {
-		return nil, nil, err
-	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
 	if err != nil {
 		return nil, nil, err
 	}
 	auth.GasLimit = gas
-	auth.GasTipCap = tip
 
 	txn, err = ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {
@@ -131,19 +126,14 @@ func CreateRawHandleOps(
 	if err != nil {
 		return "", err
 	}
-	tip, err := eth.SuggestGasTipCap(context.Background())
-	if err != nil {
-		return "", err
-	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
 	if err != nil {
 		return "", err
 	}
 	auth.GasLimit = gas
-	auth.GasTipCap = tip
-	auth.GasFeeCap = big.NewInt(0).Add(baseFee, tip)
 	auth.NoSend = true
+
 	tx, err := ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {
 		return "", err
