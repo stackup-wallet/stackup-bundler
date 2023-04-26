@@ -2,6 +2,7 @@
 package client
 
 import (
+	"bytes"
 	"errors"
 	"math/big"
 
@@ -177,13 +178,15 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	}
 	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(vg)))
 	data["callGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(cg)))
+	data["signature"] = hexutil.Encode(bytes.Repeat([]byte{1}, len(userOp.Signature)))
 	userOp, err = userop.New(data)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
 	}
 
-	// Return gas values with a PVG calculation that takes into account updated gas limits.
+	// Return gas values with a PVG calculation that takes into account updated gas limits and a signature
+	// with no zero bytes.
 	l.Info("eth_estimateUserOperationGas ok")
 	return &gas.GasEstimates{
 		PreVerificationGas: gas.NewDefaultOverhead().CalcPreVerificationGas(userOp),
