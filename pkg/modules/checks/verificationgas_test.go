@@ -50,7 +50,7 @@ func TestOpVGMoreThanMaxVG(t *testing.T) {
 func TestOpPVGMoreThanOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	ov := gas.NewDefaultOverhead()
-	pvg := ov.CalcPreVerificationGas(op)
+	pvg, _ := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Add(pvg, common.Big1)
 
 	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err != nil {
@@ -63,7 +63,7 @@ func TestOpPVGMoreThanOH(t *testing.T) {
 func TestOpPVGEqualOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	ov := gas.NewDefaultOverhead()
-	pvg := ov.CalcPreVerificationGas(op)
+	pvg, _ := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Add(pvg, common.Big0)
 
 	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err != nil {
@@ -76,7 +76,7 @@ func TestOpPVGEqualOH(t *testing.T) {
 func TestOpPVGLessThanOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
 	ov := gas.NewDefaultOverhead()
-	pvg := ov.CalcPreVerificationGas(op)
+	pvg, _ := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Sub(pvg, common.Big1)
 
 	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err == nil {

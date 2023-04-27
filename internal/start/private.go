@@ -59,7 +59,7 @@ func PrivateMode() {
 
 	ov := gas.NewDefaultOverhead()
 	if chain.Cmp(config.ArbitrumOneChainID) == 0 || chain.Cmp(config.ArbitrumGoerliChainID) == 0 {
-		ov.SetCalcPreVerificationGasFunc(gas.CalcArbitrumPVGWithEthClient(eth))
+		ov.SetCalcPreVerificationGasFunc(gas.CalcArbitrumPVGWithEthClient(rpc))
 	}
 
 	mem, err := mempool.New(db)

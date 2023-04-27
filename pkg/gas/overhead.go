@@ -2,9 +2,11 @@
 package gas
 
 import (
+	"bytes"
 	"math"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -20,6 +22,9 @@ type Overhead struct {
 	nonZeroValueCall    float64
 	callOpcode          float64
 	nonZeroValueStipend float64
+	sanitizedPVG        *big.Int
+	sanitizedVGL        *big.Int
+	sanitizedCGL        *big.Int
 	calcPVGFunc         CalcPreVerificationGasFunc
 }
 
@@ -36,6 +41,9 @@ func NewDefaultOverhead() *Overhead {
 		nonZeroValueCall:    9000,
 		callOpcode:          700,
 		nonZeroValueStipend: 2300,
+		sanitizedPVG:        big.NewInt(100000),
+		sanitizedVGL:        big.NewInt(1000000),
+		sanitizedCGL:        big.NewInt(1000000),
 		calcPVGFunc:         calcPVGFuncNoop(),
 	}
 }
@@ -45,13 +53,31 @@ func (ov *Overhead) SetCalcPreVerificationGasFunc(fn CalcPreVerificationGasFunc)
 }
 
 // CalcPreVerificationGas returns an expected gas cost for processing a UserOperation from a batch.
-func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
-	g := ov.calcPVGFunc(op)
-	if g != nil {
-		return g
+func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, error) {
+	// Sanitize fields to reduce as much variability due to length and zero bytes
+	data, err := op.ToMap()
+	if err != nil {
+		return nil, err
+	}
+	data["preVerificationGas"] = hexutil.EncodeBig(ov.sanitizedPVG)
+	data["verificationGasLimit"] = hexutil.EncodeBig(ov.sanitizedVGL)
+	data["callGasLimit"] = hexutil.EncodeBig(ov.sanitizedCGL)
+	data["signature"] = hexutil.Encode(bytes.Repeat([]byte{1}, len(op.Signature)))
+	tmp, err := userop.New(data)
+	if err != nil {
+		return nil, err
 	}
 
-	packed := op.Pack()
+	// Use value from CalcPreVerificationGasFunc if set
+	g, err := ov.calcPVGFunc(tmp)
+	if err != nil {
+		return nil, err
+	}
+	if g != nil {
+		return g, nil
+	}
+
+	packed := tmp.Pack()
 	lengthInWord := float64(len(packed)+31) / 32
 	callDataCost := float64(0)
 
@@ -64,7 +90,7 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
 	}
 
 	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + (ov.perUserOpWord * lengthInWord)
-	return big.NewInt(int64(math.Round(pvg)))
+	return big.NewInt(int64(math.Round(pvg))), nil
 }
 
 // NonZeroValueCall returns an expected gas cost of using the CALL opcode in the context of EIP-4337.

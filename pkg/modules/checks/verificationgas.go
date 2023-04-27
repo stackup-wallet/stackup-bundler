@@ -19,7 +19,10 @@ func ValidateVerificationGas(op *userop.UserOperation, ov *gas.Overhead, maxVeri
 		)
 	}
 
-	pvg := ov.CalcPreVerificationGas(op)
+	pvg, err := ov.CalcPreVerificationGas(op)
+	if err != nil {
+		return err
+	}
 	if op.PreVerificationGas.Cmp(pvg) < 0 {
 		return fmt.Errorf("preVerificationGas: below expected gas of %s", pvg.String())
 	}
