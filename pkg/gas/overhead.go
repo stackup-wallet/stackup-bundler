@@ -20,10 +20,37 @@ type Overhead struct {
 	nonZeroValueCall    float64
 	callOpcode          float64
 	nonZeroValueStipend float64
+	calcPVGFunc         CalcPreVerificationGasFunc
+}
+
+// NewDefaultOverhead returns an instance of Overhead using parameters defined by the Ethereum protocol.
+func NewDefaultOverhead() *Overhead {
+	return &Overhead{
+		fixed:               21000,
+		perUserOp:           18300,
+		perUserOpWord:       4,
+		zeroByte:            4,
+		nonZeroByte:         16,
+		minBundleSize:       1,
+		warmStorageRead:     100,
+		nonZeroValueCall:    9000,
+		callOpcode:          700,
+		nonZeroValueStipend: 2300,
+		calcPVGFunc:         calcPVGFuncNoop(),
+	}
+}
+
+func (ov *Overhead) SetCalcPreVerificationGasFunc(fn CalcPreVerificationGasFunc) {
+	ov.calcPVGFunc = fn
 }
 
 // CalcPreVerificationGas returns an expected gas cost for processing a UserOperation from a batch.
 func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) *big.Int {
+	g := ov.calcPVGFunc(op)
+	if g != nil {
+		return g
+	}
+
 	packed := op.Pack()
 	lengthInWord := float64(len(packed)+31) / 32
 	callDataCost := float64(0)
@@ -46,20 +73,4 @@ func (ov *Overhead) NonZeroValueCall() *big.Int {
 	return big.NewInt(
 		int64(ov.fixed + ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend),
 	)
-}
-
-// NewDefaultOverhead returns an instance of Overhead using parameters defined by the Ethereum protocol.
-func NewDefaultOverhead() *Overhead {
-	return &Overhead{
-		fixed:               21000,
-		perUserOp:           18300,
-		perUserOpWord:       4,
-		zeroByte:            4,
-		nonZeroByte:         16,
-		minBundleSize:       1,
-		warmStorageRead:     100,
-		nonZeroValueCall:    9000,
-		callOpcode:          700,
-		nonZeroValueStipend: 2300,
-	}
 }

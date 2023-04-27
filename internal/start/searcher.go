@@ -17,6 +17,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
+	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/builder"
@@ -65,6 +66,8 @@ func SearcherMode() {
 		)
 	}
 
+	ov := gas.NewDefaultOverhead()
+
 	mem, err := mempool.New(db)
 	if err != nil {
 		log.Fatal(err)
@@ -73,6 +76,7 @@ func SearcherMode() {
 	check := checks.New(
 		db,
 		rpc,
+		ov,
 		conf.MaxVerificationGas,
 		conf.MaxOpsForUnstakedSender,
 		conf.BundlerCollectorTracer,
@@ -82,9 +86,9 @@ func SearcherMode() {
 	paymaster := paymaster.New(db)
 
 	// Init Client
-	c := client.New(mem, chain, conf.SupportedEntryPoints)
+	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
-	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, chain, conf.BundlerErrorTracer))
+	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.BundlerErrorTracer))
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(

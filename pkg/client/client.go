@@ -22,6 +22,7 @@ import (
 // implements the required RPC methods as specified in EIP-4337.
 type Client struct {
 	mempool              *mempool.Mempool
+	ov                   *gas.Overhead
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
 	userOpHandler        modules.UserOpHandlerFunc
@@ -35,11 +36,13 @@ type Client struct {
 // that are allowed to be added to the mempool.
 func New(
 	mempool *mempool.Mempool,
+	ov *gas.Overhead,
 	chainID *big.Int,
 	supportedEntryPoints []common.Address,
 ) *Client {
 	return &Client{
 		mempool:              mempool,
+		ov:                   ov,
 		chainID:              chainID,
 		supportedEntryPoints: supportedEntryPoints,
 		userOpHandler:        noop.UserOpHandler,
@@ -189,7 +192,7 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	// with no zero bytes.
 	l.Info("eth_estimateUserOperationGas ok")
 	return &gas.GasEstimates{
-		PreVerificationGas: gas.NewDefaultOverhead().CalcPreVerificationGas(userOp),
+		PreVerificationGas: i.ov.CalcPreVerificationGas(userOp),
 		VerificationGas:    userOp.VerificationGasLimit,
 		CallGasLimit:       userOp.CallGasLimit,
 	}, nil

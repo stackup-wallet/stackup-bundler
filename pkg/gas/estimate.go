@@ -20,6 +20,7 @@ func EstimateGas(
 	rpc *rpc.Client,
 	from common.Address,
 	op *userop.UserOperation,
+	ov *Overhead,
 	chainID *big.Int,
 	tracer string,
 ) (verificationGas uint64, callGas uint64, err error) {
@@ -51,7 +52,6 @@ func EstimateGas(
 		return 0, 0, err
 	}
 
-	ov := NewDefaultOverhead()
 	tg := big.NewInt(0).Div(sim.Paid, op.MaxFeePerGas)
 	cgl := big.NewInt(0).Add(big.NewInt(0).Sub(tg, sim.PreOpGas), big.NewInt(int64(ov.fixed)))
 	min := ov.NonZeroValueCall()

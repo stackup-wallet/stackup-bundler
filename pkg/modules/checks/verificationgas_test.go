@@ -13,9 +13,10 @@ import (
 // Expects nil.
 func TestOpVGlessThanMaxVG(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
+	ov := gas.NewDefaultOverhead()
 	mvg := big.NewInt(0).Add(op.VerificationGasLimit, common.Big1)
 
-	if err := ValidateVerificationGas(op, mvg); err != nil {
+	if err := ValidateVerificationGas(op, ov, mvg); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
 }
@@ -24,9 +25,10 @@ func TestOpVGlessThanMaxVG(t *testing.T) {
 // Expects nil.
 func TestOpVGEqualMaxVG(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
+	ov := gas.NewDefaultOverhead()
 	mvg := big.NewInt(0).Add(op.VerificationGasLimit, common.Big0)
 
-	if err := ValidateVerificationGas(op, mvg); err != nil {
+	if err := ValidateVerificationGas(op, ov, mvg); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
 }
@@ -35,9 +37,10 @@ func TestOpVGEqualMaxVG(t *testing.T) {
 // Expects error.
 func TestOpVGMoreThanMaxVG(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
+	ov := gas.NewDefaultOverhead()
 	mvg := big.NewInt(0).Sub(op.VerificationGasLimit, common.Big1)
 
-	if err := ValidateVerificationGas(op, mvg); err == nil {
+	if err := ValidateVerificationGas(op, ov, mvg); err == nil {
 		t.Fatal("got nil, want err")
 	}
 }
@@ -46,10 +49,11 @@ func TestOpVGMoreThanMaxVG(t *testing.T) {
 // Expect nil.
 func TestOpPVGMoreThanOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
-	pvg := gas.NewDefaultOverhead().CalcPreVerificationGas(op)
+	ov := gas.NewDefaultOverhead()
+	pvg := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Add(pvg, common.Big1)
 
-	if err := ValidateVerificationGas(op, op.VerificationGasLimit); err != nil {
+	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
 }
@@ -58,10 +62,11 @@ func TestOpPVGMoreThanOH(t *testing.T) {
 // nil.
 func TestOpPVGEqualOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
-	pvg := gas.NewDefaultOverhead().CalcPreVerificationGas(op)
+	ov := gas.NewDefaultOverhead()
+	pvg := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Add(pvg, common.Big0)
 
-	if err := ValidateVerificationGas(op, op.VerificationGasLimit); err != nil {
+	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
 }
@@ -70,10 +75,11 @@ func TestOpPVGEqualOH(t *testing.T) {
 // Expect error.
 func TestOpPVGLessThanOH(t *testing.T) {
 	op := testutils.MockValidInitUserOp()
-	pvg := gas.NewDefaultOverhead().CalcPreVerificationGas(op)
+	ov := gas.NewDefaultOverhead()
+	pvg := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Sub(pvg, common.Big1)
 
-	if err := ValidateVerificationGas(op, op.VerificationGasLimit); err == nil {
+	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err == nil {
 		t.Fatal("got nil, want err")
 	}
 }
