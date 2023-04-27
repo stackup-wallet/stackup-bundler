@@ -8,8 +8,8 @@ import (
 )
 
 // ValidateCallGasLimit checks the callGasLimit is at least the cost of a CALL with non-zero value.
-func ValidateCallGasLimit(op *userop.UserOperation) error {
-	cg := gas.NewDefaultOverhead().NonZeroValueCall()
+func ValidateCallGasLimit(op *userop.UserOperation, ov *gas.Overhead) error {
+	cg := ov.NonZeroValueCall()
 	if op.CallGasLimit.Cmp(cg) < 0 {
 		return fmt.Errorf("callGasLimit: below expected gas of %s", cg.String())
 	}

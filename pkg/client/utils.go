@@ -44,9 +44,14 @@ func getGasEstimateNoop() GetGasEstimateFunc {
 
 // GetGasEstimateWithEthClient returns an implementation of GetGasEstimateFunc that relies on an eth client to
 // fetch an estimate for verificationGasLimit and callGasLimit.
-func GetGasEstimateWithEthClient(rpc *rpc.Client, chain *big.Int, tracer string) GetGasEstimateFunc {
+func GetGasEstimateWithEthClient(
+	rpc *rpc.Client,
+	chain *big.Int,
+	ov *gas.Overhead,
+	tracer string,
+) GetGasEstimateFunc {
 	return func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error) {
-		return gas.EstimateGas(rpc, ep, op, chain, tracer)
+		return gas.EstimateGas(rpc, ep, op, chain, ov, tracer)
 	}
 }
 

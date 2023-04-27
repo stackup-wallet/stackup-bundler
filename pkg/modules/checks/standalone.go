@@ -13,6 +13,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/simulation"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
+	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 	"golang.org/x/sync/errgroup"
@@ -25,6 +26,7 @@ type Standalone struct {
 	db                      *badger.DB
 	rpc                     *rpc.Client
 	eth                     *ethclient.Client
+	ov                      *gas.Overhead
 	maxVerificationGas      *big.Int
 	maxOpsForUnstakedSender int
 	tracer                  string
@@ -35,12 +37,13 @@ type Standalone struct {
 func New(
 	db *badger.DB,
 	rpc *rpc.Client,
+	ov *gas.Overhead,
 	maxVerificationGas *big.Int,
 	maxOpsForUnstakedSender int,
 	tracer string,
 ) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{db, rpc, eth, maxVerificationGas, maxOpsForUnstakedSender, tracer}
+	return &Standalone{db, rpc, eth, ov, maxVerificationGas, maxOpsForUnstakedSender, tracer}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -58,9 +61,9 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g := new(errgroup.Group)
 		g.Go(func() error { return ValidateSender(ctx.UserOp, gc) })
 		g.Go(func() error { return ValidateInitCode(ctx.UserOp, gs) })
-		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.maxVerificationGas) })
+		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.maxVerificationGas, s.ov) })
 		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, gs) })
-		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp) })
+		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp, s.ov) })
 		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gbf) })
 		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps, s.maxOpsForUnstakedSender, gs) })
 

@@ -21,6 +21,7 @@ func EstimateGas(
 	from common.Address,
 	op *userop.UserOperation,
 	chainID *big.Int,
+	ov *Overhead,
 	tracer string,
 ) (verificationGas uint64, callGas uint64, err error) {
 	if op.MaxFeePerGas.Cmp(big.NewInt(0)) != 1 {
@@ -51,7 +52,6 @@ func EstimateGas(
 		return 0, 0, err
 	}
 
-	ov := NewDefaultOverhead()
 	tg := big.NewInt(0).Div(sim.Paid, op.MaxFeePerGas)
 	cgl := big.NewInt(0).Add(big.NewInt(0).Sub(tg, sim.PreOpGas), big.NewInt(int64(ov.fixed)))
 	min := ov.NonZeroValueCall()

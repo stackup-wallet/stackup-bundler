@@ -24,6 +24,7 @@ type Client struct {
 	mempool              *mempool.Mempool
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
+	overhead             *gas.Overhead
 	userOpHandler        modules.UserOpHandlerFunc
 	logger               logr.Logger
 	getUserOpReceipt     GetUserOpReceiptFunc
@@ -36,12 +37,14 @@ type Client struct {
 func New(
 	mempool *mempool.Mempool,
 	chainID *big.Int,
+	ov *gas.Overhead,
 	supportedEntryPoints []common.Address,
 ) *Client {
 	return &Client{
 		mempool:              mempool,
 		chainID:              chainID,
 		supportedEntryPoints: supportedEntryPoints,
+		overhead:             ov,
 		userOpHandler:        noop.UserOpHandler,
 		logger:               logger.NewZeroLogr().WithName("client"),
 		getUserOpReceipt:     getUserOpReceiptNoop(),
@@ -189,7 +192,7 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	// with no zero bytes.
 	l.Info("eth_estimateUserOperationGas ok")
 	return &gas.GasEstimates{
-		PreVerificationGas: gas.NewDefaultOverhead().CalcPreVerificationGas(userOp),
+		PreVerificationGas: i.overhead.CalcPreVerificationGas(userOp),
 		VerificationGas:    userOp.VerificationGasLimit,
 		CallGasLimit:       userOp.CallGasLimit,
 	}, nil
