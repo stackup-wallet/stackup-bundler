@@ -46,8 +46,8 @@ func getGasEstimateNoop() GetGasEstimateFunc {
 // fetch an estimate for verificationGasLimit and callGasLimit.
 func GetGasEstimateWithEthClient(
 	rpc *rpc.Client,
-	chain *big.Int,
 	ov *gas.Overhead,
+	chain *big.Int,
 	tracer string,
 ) GetGasEstimateFunc {
 	return func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error) {
