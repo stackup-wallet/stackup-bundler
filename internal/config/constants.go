@@ -1,6 +1,8 @@
 package config
 
-import "math/big"
+import (
+	"math/big"
+)
 
 var (
 	EthereumChainID       = big.NewInt(1)
