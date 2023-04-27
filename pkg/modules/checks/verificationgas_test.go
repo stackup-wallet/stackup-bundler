@@ -16,7 +16,7 @@ func TestOpVGlessThanMaxVG(t *testing.T) {
 	ov := gas.NewDefaultOverhead()
 	mvg := big.NewInt(0).Add(op.VerificationGasLimit, common.Big1)
 
-	if err := ValidateVerificationGas(op, mvg, ov); err != nil {
+	if err := ValidateVerificationGas(op, ov, mvg); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
 }
@@ -28,7 +28,7 @@ func TestOpVGEqualMaxVG(t *testing.T) {
 	ov := gas.NewDefaultOverhead()
 	mvg := big.NewInt(0).Add(op.VerificationGasLimit, common.Big0)
 
-	if err := ValidateVerificationGas(op, mvg, ov); err != nil {
+	if err := ValidateVerificationGas(op, ov, mvg); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
 }
@@ -40,7 +40,7 @@ func TestOpVGMoreThanMaxVG(t *testing.T) {
 	ov := gas.NewDefaultOverhead()
 	mvg := big.NewInt(0).Sub(op.VerificationGasLimit, common.Big1)
 
-	if err := ValidateVerificationGas(op, mvg, ov); err == nil {
+	if err := ValidateVerificationGas(op, ov, mvg); err == nil {
 		t.Fatal("got nil, want err")
 	}
 }
@@ -53,7 +53,7 @@ func TestOpPVGMoreThanOH(t *testing.T) {
 	pvg := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Add(pvg, common.Big1)
 
-	if err := ValidateVerificationGas(op, op.VerificationGasLimit, ov); err != nil {
+	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
 }
@@ -66,7 +66,7 @@ func TestOpPVGEqualOH(t *testing.T) {
 	pvg := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Add(pvg, common.Big0)
 
-	if err := ValidateVerificationGas(op, op.VerificationGasLimit, ov); err != nil {
+	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
 }
@@ -79,7 +79,7 @@ func TestOpPVGLessThanOH(t *testing.T) {
 	pvg := ov.CalcPreVerificationGas(op)
 	op.PreVerificationGas = big.NewInt(0).Sub(pvg, common.Big1)
 
-	if err := ValidateVerificationGas(op, op.VerificationGasLimit, ov); err == nil {
+	if err := ValidateVerificationGas(op, ov, op.VerificationGasLimit); err == nil {
 		t.Fatal("got nil, want err")
 	}
 }
