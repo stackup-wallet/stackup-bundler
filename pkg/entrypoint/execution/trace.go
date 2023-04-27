@@ -47,6 +47,12 @@ func TraceSimulateHandleOp(
 		To:   entryPoint,
 		Data: tx.Data(),
 	}
+
+	if op.MaxFeePerGas != nil {
+		var maxFeePerGas = hexutil.Big(*op.MaxFeePerGas)
+		req.MaxFeePerGas = &maxFeePerGas
+	}
+
 	opts := utils.TraceCallOpts{
 		Tracer: customTracer,
 	}

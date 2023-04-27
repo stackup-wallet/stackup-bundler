@@ -10,6 +10,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
@@ -50,6 +51,12 @@ func TraceSimulateValidation(
 		To:   entryPoint,
 		Data: tx.Data(),
 	}
+
+	if op.MaxFeePerGas != nil {
+		var maxFeePerGas = hexutil.Big(*op.MaxFeePerGas)
+		req.MaxFeePerGas = &maxFeePerGas
+	}
+
 	opts := utils.TraceCallOpts{
 		Tracer: customTracer,
 	}
