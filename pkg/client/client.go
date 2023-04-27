@@ -179,8 +179,6 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 		return nil, err
 	}
 
-	// Return gas values with a PVG calculation that takes into account updated gas limits and a signature
-	// with no zero bytes.
 	l.Info("eth_estimateUserOperationGas ok")
 	return &gas.GasEstimates{
 		PreVerificationGas: pvg,
