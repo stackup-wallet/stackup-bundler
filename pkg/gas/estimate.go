@@ -20,8 +20,8 @@ func EstimateGas(
 	rpc *rpc.Client,
 	from common.Address,
 	op *userop.UserOperation,
-	chainID *big.Int,
 	ov *Overhead,
+	chainID *big.Int,
 	tracer string,
 ) (verificationGas uint64, callGas uint64, err error) {
 	if op.MaxFeePerGas.Cmp(big.NewInt(0)) != 1 {
