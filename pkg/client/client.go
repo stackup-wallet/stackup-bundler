@@ -22,9 +22,9 @@ import (
 // implements the required RPC methods as specified in EIP-4337.
 type Client struct {
 	mempool              *mempool.Mempool
+	ov                   *gas.Overhead
 	chainID              *big.Int
 	supportedEntryPoints []common.Address
-	ov                   *gas.Overhead
 	userOpHandler        modules.UserOpHandlerFunc
 	logger               logr.Logger
 	getUserOpReceipt     GetUserOpReceiptFunc
