@@ -172,20 +172,6 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 		return nil, err
 	}
 
-	// Create a new op with updated gas limits
-	data, err := userOp.ToMap()
-	if err != nil {
-		l.Error(err, "eth_estimateUserOperationGas error")
-		return nil, err
-	}
-	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(vg)))
-	data["callGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(cg)))
-	userOp, err = userop.New(data)
-	if err != nil {
-		l.Error(err, "eth_estimateUserOperationGas error")
-		return nil, err
-	}
-
 	// Calculate PreVerificationGas
 	pvg, err := i.ov.CalcPreVerificationGas(userOp)
 	if err != nil {
@@ -198,8 +184,8 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	l.Info("eth_estimateUserOperationGas ok")
 	return &gas.GasEstimates{
 		PreVerificationGas: pvg,
-		VerificationGas:    userOp.VerificationGasLimit,
-		CallGasLimit:       userOp.CallGasLimit,
+		VerificationGas:    big.NewInt(int64(vg)),
+		CallGasLimit:       big.NewInt(int64(cg)),
 	}, nil
 }
 
