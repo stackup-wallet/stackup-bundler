@@ -36,15 +36,15 @@ type Client struct {
 // that are allowed to be added to the mempool.
 func New(
 	mempool *mempool.Mempool,
-	chainID *big.Int,
 	ov *gas.Overhead,
+	chainID *big.Int,
 	supportedEntryPoints []common.Address,
 ) *Client {
 	return &Client{
 		mempool:              mempool,
+		ov:                   ov,
 		chainID:              chainID,
 		supportedEntryPoints: supportedEntryPoints,
-		ov:                   ov,
 		userOpHandler:        noop.UserOpHandler,
 		logger:               logger.NewZeroLogr().WithName("client"),
 		getUserOpReceipt:     getUserOpReceiptNoop(),
