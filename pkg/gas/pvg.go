@@ -65,15 +65,6 @@ func CalcArbitrumPVGWithEthClient(
 			return nil, err
 		}
 
-		req = map[string]any{
-			"from": common.HexToAddress("0x"),
-			"to":   nodeinterface.PrecompileAddress,
-			"data": hexutil.Encode(append(nodeinterface.GasEstimateL1ComponentMethod.ID, ge...)),
-		}
-		if err := rpc.Call(&out, "eth_call", &req, "latest"); err != nil {
-			return nil, err
-		}
-
 		// Return GasEstimateForL1 as PVG
 		gas, err := nodeinterface.DecodeGasEstimateL1ComponentOutput(out)
 		if err != nil {
