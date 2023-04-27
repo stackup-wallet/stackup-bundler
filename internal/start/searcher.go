@@ -86,7 +86,7 @@ func SearcherMode() {
 	paymaster := paymaster.New(db)
 
 	// Init Client
-	c := client.New(mem, chain, ov, conf.SupportedEntryPoints)
+	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
 	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.BundlerErrorTracer))
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
