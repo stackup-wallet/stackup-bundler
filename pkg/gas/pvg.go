@@ -14,10 +14,10 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-type CalcPreVerificationGasFunc = func(op *userop.UserOperation) (*big.Int, error)
+type CalcPreVerificationGasFunc = func(op *userop.UserOperation, static *big.Int) (*big.Int, error)
 
 func calcPVGFuncNoop() CalcPreVerificationGasFunc {
-	return func(op *userop.UserOperation) (*big.Int, error) {
+	return func(op *userop.UserOperation, static *big.Int) (*big.Int, error) {
 		return nil, nil
 	}
 }
@@ -30,7 +30,7 @@ func CalcArbitrumPVGWithEthClient(
 ) CalcPreVerificationGasFunc {
 	pk, _ := crypto.GenerateKey()
 	dummy, _ := signer.New(hexutil.Encode(crypto.FromECDSA(pk))[2:])
-	return func(op *userop.UserOperation) (*big.Int, error) {
+	return func(op *userop.UserOperation, static *big.Int) (*big.Int, error) {
 		// Pack handleOps method inputs
 		ho, err := methods.HandleOpsMethod.Inputs.Pack(
 			[]entrypoint.UserOperation{entrypoint.UserOperation(*op)},
@@ -65,11 +65,11 @@ func CalcArbitrumPVGWithEthClient(
 			return nil, err
 		}
 
-		// Return GasEstimateForL1 as PVG
+		// Return static + GasEstimateForL1 as PVG
 		gas, err := nodeinterface.DecodeGasEstimateL1ComponentOutput(out)
 		if err != nil {
 			return nil, err
 		}
-		return big.NewInt(int64(gas.GasEstimateForL1)), nil
+		return big.NewInt(0).Add(static, big.NewInt(int64(gas.GasEstimateForL1))), nil
 	}
 }
