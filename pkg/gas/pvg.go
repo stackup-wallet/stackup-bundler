@@ -14,6 +14,8 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+// CalcPreVerificationGasFunc defines an interface for a function to calculate PVG given a userOp and a static
+// value. The static input is the value derived from the default overheads.
 type CalcPreVerificationGasFunc = func(op *userop.UserOperation, static *big.Int) (*big.Int, error)
 
 func calcPVGFuncNoop() CalcPreVerificationGasFunc {

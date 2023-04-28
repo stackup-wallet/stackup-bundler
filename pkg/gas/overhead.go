@@ -49,8 +49,7 @@ func NewDefaultOverhead() *Overhead {
 }
 
 // SetCalcPreVerificationGasFunc allows a custom function to be defined that can control how it calculates
-// PVG. This is useful for networks that have different models for gas. The static argument is the value
-// derived using just the userOp and default overheads.
+// PVG. This is useful for networks that have different models for gas.
 func (ov *Overhead) SetCalcPreVerificationGasFunc(fn CalcPreVerificationGasFunc) {
 	ov.calcPVGFunc = fn
 }
