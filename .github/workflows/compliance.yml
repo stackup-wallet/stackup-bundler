@@ -12,6 +12,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+
       - name: Setup PDM
         run: curl -sSL https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py | python3 -
 
@@ -27,18 +29,11 @@ jobs:
           # TODO: Switch to eth-infinitism/bundler-spec-tests once updated to v0.6
           repository: hazim-j/bundler-spec-tests
           ref: ep-v0.6.0
+          path: ./bundler-spec-tests
           submodules: true
 
       - name: Setup bundler spec test
-        run: pdm install && pdm run update-deps
-
-      - name: Checkout Stackup Bundler
-        uses: actions/checkout@v3
-        with:
-          path: ./bundler
-
-      - name: Setup Stackup Bundler
-        run: cd bundler && go mod download && go build -o ./tmp/stackup-bundler main.go
+        run: cd bundler-spec-tests && pdm install && pdm run update-deps
 
       - name: Install Geth
         run: |
@@ -62,6 +57,12 @@ jobs:
           --rpc.allow-unprotected-txs \
           --dev.gaslimit 20000000 &
 
+      - name: Install bundler dependencies
+        run: go mod download
+
+      - name: Build bundler binary
+        run: go build -o ./tmp/stackup-bundler main.go
+
       - name: Deploy ERC-4337 contracts
         run: cd bundler-spec-tests/@account-abstraction && yarn deploy --network localhost
 
@@ -72,7 +73,7 @@ jobs:
           attach http://localhost:8545/
 
       - name: Run Stackup Bundler
-        run: ./bundler/tmp/stackup-bundler start --mode private &
+        run: ./tmp/stackup-bundler start --mode private &
         env:
           ERC4337_BUNDLER_ETH_CLIENT_URL: http://localhost:8545/
           ERC4337_BUNDLER_PORT: 3000
@@ -80,5 +81,5 @@ jobs:
           # This key is for testing purposes only. Do not use for anything else.
           ERC4337_BUNDLER_PRIVATE_KEY: c6cbc5ffad570fdad0544d1b5358a36edeb98d163b6567912ac4754e144d4edb
 
-      - name: Run compliance test suite
-        run: pdm test
+      - name: Run test
+        run: cd bundler-spec-tests && pdm test
