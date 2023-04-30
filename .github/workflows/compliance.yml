@@ -66,7 +66,7 @@ jobs:
 
       - name: Deploy ERC-4337 contracts
         working-directory: ./bundler-spec-tests
-        run: cd @account-abstraction && yarn deploy --network localhost
+        run: cd @account-abstraction && yarn compile && yarn deploy --network localhost
 
       - name: Fund bundler
         run: |
