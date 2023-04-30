@@ -33,7 +33,8 @@ jobs:
           submodules: true
 
       - name: Setup bundler spec test
-        run: cd bundler-spec-tests && pdm install && pdm run update-deps
+        working-directory: ./bundler-spec-tests
+        run: pdm install && pdm run update-deps
 
       - name: Install Geth
         run: |
@@ -64,7 +65,8 @@ jobs:
         run: go build -o ./tmp/stackup-bundler main.go
 
       - name: Deploy ERC-4337 contracts
-        run: cd bundler-spec-tests/@account-abstraction && yarn deploy --network localhost
+        working-directory: ./bundler-spec-tests
+        run: cd @account-abstraction && yarn deploy --network localhost
 
       - name: Fund bundler
         run: |
@@ -82,4 +84,5 @@ jobs:
           ERC4337_BUNDLER_PRIVATE_KEY: c6cbc5ffad570fdad0544d1b5358a36edeb98d163b6567912ac4754e144d4edb
 
       - name: Run test
-        run: cd bundler-spec-tests && pdm test
+        working-directory: ./bundler-spec-tests
+        run: pdm test
