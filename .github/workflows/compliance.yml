@@ -38,18 +38,19 @@ jobs:
 
       - name: Run Geth
         run: |
-          geth --miner.gaslimit 12000000 \
+          geth \
+          --verbosity 1 \
+          --http.vhosts '*,localhost,host.docker.internal' \
           --http \
           --http.api personal,eth,net,web3,debug \
-          --allow-insecure-unlock \
-          --rpc.allow-unprotected-txs \
-          --http.vhosts '*,localhost,host.docker.internal' \
           --http.corsdomain '*' \
           --http.addr "0.0.0.0" \
-          --dev \
           --nodiscover --maxpeers 0 --mine \
-          --miner.threads 1 \
-          --ignore-legacy-receipts &
+          --networkid 1337 \
+          --dev \
+          --allow-insecure-unlock \
+          --rpc.allow-unprotected-txs \
+          --dev.gaslimit 20000000 &
 
       - name: Install dependencies
         run: go mod download
