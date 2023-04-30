@@ -17,7 +17,9 @@ jobs:
       - name: checkout bundler spec test
         uses: actions/checkout@v3
         with:
-          repository: eth-infinitism/bundler-spec-tests
+          # TODO: Switch to eth-infinitism/bundler-spec-tests once updated to v0.6
+          repository: hazim-j/bundler-spec-tests
+          ref: ep-v0.6.0
           path: ./bundler-spec-tests
           submodules: true
 
@@ -42,7 +44,7 @@ jobs:
           --verbosity 1 \
           --http.vhosts '*,localhost,host.docker.internal' \
           --http \
-          --http.api personal,eth,net,web3,debug \
+          --http.api eth,net,web3,debug \
           --http.corsdomain '*' \
           --http.addr "0.0.0.0" \
           --nodiscover --maxpeers 0 --mine \
@@ -58,10 +60,13 @@ jobs:
           --exec "eth.sendTransaction({from: eth.accounts[0], to: \"0x43378ff8C70109Ee4Dbe85aF34428ab0615EBd23\", value: web3.toWei(10000, \"ether\")})" \
           attach http://localhost:8545/
 
-      - name: Install dependencies
+      - name: Setup bundler test spec
+        run: cd bundler-spec-tests && pdm install
+
+      - name: Install bundler dependencies
         run: go mod download
 
-      - name: Build binary
+      - name: Build bundler binary
         run: go build -o ./tmp/stackup-bundler main.go
 
       - name: Run Stackup Bundler
