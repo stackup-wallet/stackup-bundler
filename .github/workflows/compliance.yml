@@ -80,3 +80,6 @@ jobs:
           ERC4337_BUNDLER_DEBUG_MODE: true
           # This key is for testing purposes only. Do not use for anything else.
           ERC4337_BUNDLER_PRIVATE_KEY: c6cbc5ffad570fdad0544d1b5358a36edeb98d163b6567912ac4754e144d4edb
+
+      - name: Run test
+        run: cd bundler-spec-tests && pdm test
