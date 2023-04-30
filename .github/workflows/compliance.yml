@@ -61,7 +61,7 @@ jobs:
           attach http://localhost:8545/
 
       - name: Setup bundler spec test
-        run: cd bundler-spec-tests && pdm install
+        run: cd bundler-spec-tests && pdm install && pdm run update-deps
 
       - name: Deploy ERC-4337 contracts
         run: cd bundler-spec-tests/@account-abstraction && yarn deploy --network localhost
