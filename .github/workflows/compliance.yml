@@ -22,10 +22,7 @@ jobs:
           submodules: true
 
       - name: Setup PDM
-        uses: pdm-project/setup-pdm@v3
-        with:
-          python-version: 3.9
-          cache: true
+        run: curl -sSL https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py | python3 -
 
       - name: Setup Go
         uses: actions/setup-go@v3
