@@ -28,7 +28,7 @@ jobs:
         with:
           # TODO: Switch to eth-infinitism/bundler-spec-tests once updated to v0.6
           repository: hazim-j/bundler-spec-tests
-          ref: ep-v0.6.0
+          ref: develop
           path: ./bundler-spec-tests
           submodules: true
 
