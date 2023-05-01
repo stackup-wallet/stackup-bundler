@@ -17,6 +17,11 @@ jobs:
       - name: Setup PDM
         run: curl -sSL https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py | python3 -
 
+      - name: "Setup Node.js"
+        uses: "actions/setup-node@v3"
+        with:
+          node-version: 18.15
+
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
@@ -66,10 +71,8 @@ jobs:
 
       - name: Deploy ERC-4337 contracts
         working-directory: ./bundler-spec-tests
-        # TODO: Fix this hack. Have to run deploy twice due to flakiness.
         run: |
           cd @account-abstraction && \
-          yarn deploy --network localhost && \
           yarn deploy --network localhost
 
       - name: Fund bundler
