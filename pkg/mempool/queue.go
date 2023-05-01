@@ -1,6 +1,7 @@
 package mempool
 
 import (
+	"sync"
 	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -27,19 +28,21 @@ func (s *set) getSenderSortedSet(sender common.Address) *sortedset.SortedSet {
 type userOpQueues struct {
 	maxBatchSize     int
 	opCount          uint64
-	setsByEntryPoint map[common.Address]*set
+	setsByEntryPoint sync.Map
 }
 
 func (q *userOpQueues) getEntryPointSet(entryPoint common.Address) *set {
-	if _, ok := q.setsByEntryPoint[entryPoint]; !ok {
-		q.setsByEntryPoint[entryPoint] = &set{
+	val, ok := q.setsByEntryPoint.Load(entryPoint)
+	if !ok {
+		val = &set{
 			all:     sortedset.New(),
 			arrival: sortedset.New(),
 			senders: make(map[common.Address]*sortedset.SortedSet),
 		}
+		q.setsByEntryPoint.Store(entryPoint, val)
 	}
 
-	return q.setsByEntryPoint[entryPoint]
+	return val.(*set)
 }
 
 func (q *userOpQueues) AddOp(entryPoint common.Address, op *userop.UserOperation) {
@@ -110,7 +113,6 @@ func (q *userOpQueues) RemoveOps(entryPoint common.Address, ops ...*userop.UserO
 
 func newUserOpQueue() *userOpQueues {
 	return &userOpQueues{
-		maxBatchSize:     defaultMaxBatchSize,
-		setsByEntryPoint: make(map[common.Address]*set),
+		maxBatchSize: defaultMaxBatchSize,
 	}
 }
