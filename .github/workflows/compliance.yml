@@ -31,9 +31,8 @@ jobs:
       - name: Checkout bundler spec test
         uses: actions/checkout@v3
         with:
-          # TODO: Switch to eth-infinitism/bundler-spec-tests once updated to v0.6
-          repository: hazim-j/bundler-spec-tests
-          ref: develop
+          repository: eth-infinitism/bundler-spec-tests
+          ref: 94a0634ebd6e6da657e863c134d20bc46724ed0f
           path: ./bundler-spec-tests
           submodules: true
 
