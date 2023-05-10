@@ -85,6 +85,5 @@ func TraceSimulateHandleOp(
 		}
 		return sim, errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
 	}
-
 	return sim, nil
 }
