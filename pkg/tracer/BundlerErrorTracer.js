@@ -6,6 +6,7 @@ var tracer = {
   result: function result(ctx, db) {
     return {
       reverts: this.reverts,
+      output: toHex(ctx.output),
     };
   },
 

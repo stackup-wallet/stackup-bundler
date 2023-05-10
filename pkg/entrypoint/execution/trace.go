@@ -2,6 +2,7 @@ package execution
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"math/big"
 
@@ -9,36 +10,48 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
+	ethRpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/reverts"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+type outputErrorWrapper struct {
+	output string
+}
+
+func (t *outputErrorWrapper) Error() string {
+	return t.output
+}
+func (t *outputErrorWrapper) ErrorData() any {
+	return t.output
+}
+
 func TraceSimulateHandleOp(
-	rpc *rpc.Client,
+	rpc *ethRpc.Client,
 	entryPoint common.Address,
 	op *userop.UserOperation,
 	chainID *big.Int,
 	customTracer string,
 	target common.Address,
 	data []byte,
-) error {
+) (*reverts.ExecutionResultRevert, error) {
 	ep, err := entrypoint.NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	auth, err := bind.NewKeyedTransactorWithChainID(utils.DummyPk, chainID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
 	tx, err := ep.SimulateHandleOp(auth, entrypoint.UserOperation(*op), target, data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var res tracer.BundlerErrorReturn
@@ -51,24 +64,35 @@ func TraceSimulateHandleOp(
 		Tracer: customTracer,
 	}
 	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
-		return err
+		return nil, err
+	}
+
+	out := &outputErrorWrapper{output: res.Output}
+	sim, simErr := reverts.NewExecutionResult(out)
+	if simErr != nil {
+		fo, foErr := reverts.NewFailedOp(out)
+		if foErr != nil {
+			return nil, fmt.Errorf("%s, %s", simErr, foErr)
+		}
+		return nil, errors.NewRPCError(errors.REJECTED_BY_EP_OR_ACCOUNT, fo.Reason, fo)
 	}
 
 	if len(res.Reverts) != 0 {
 		data, err := hexutil.Decode(res.Reverts[len(res.Reverts)-1])
 		if err != nil {
-			return err
+			return sim, err
 		}
 
 		if len(data) == 0 {
-			return errors.NewRPCError(errors.EXECUTION_REVERTED, "execution reverted", nil)
+			return sim, errors.NewRPCError(errors.EXECUTION_REVERTED, "execution reverted", nil)
 		}
 
 		reason, err := errors.DecodeRevert(data)
 		if err != nil {
-			return err
+			return sim, err
 		}
-		return errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
+		return sim, errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
 	}
-	return nil
+
+	return sim, nil
 }
