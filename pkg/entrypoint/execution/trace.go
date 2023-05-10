@@ -19,17 +19,6 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-type outputErrorWrapper struct {
-	output string
-}
-
-func (t *outputErrorWrapper) Error() string {
-	return t.output
-}
-func (t *outputErrorWrapper) ErrorData() any {
-	return t.output
-}
-
 func TraceSimulateHandleOp(
 	rpc *ethRpc.Client,
 	entryPoint common.Address,
@@ -66,8 +55,11 @@ func TraceSimulateHandleOp(
 	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err
 	}
+	out, err := errors.ParseHexToRpcDataError(res.Output)
+	if err != nil {
+		return nil, err
+	}
 
-	out := &outputErrorWrapper{output: res.Output}
 	sim, simErr := reverts.NewExecutionResult(out)
 	if simErr != nil {
 		fo, foErr := reverts.NewFailedOp(out)
