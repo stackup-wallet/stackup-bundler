@@ -13,9 +13,6 @@ import (
 
 // EstimateGas uses the simulateHandleOp method on the EntryPoint to derive an estimate for
 // verificationGasLimit and callGasLimit.
-//
-// TODO: This function requires an eth_call and a debug_traceCall. It could probably be optimized further by
-// just using a debug_traceCall.
 func EstimateGas(
 	rpc *rpc.Client,
 	from common.Address,
@@ -43,12 +40,8 @@ func EstimateGas(
 		return 0, 0, err
 	}
 
-	sim, err := execution.SimulateHandleOp(rpc, from, simOp, common.Address{}, []byte{})
+	sim, err := execution.TraceSimulateHandleOp(rpc, from, simOp, chainID, tracer, common.Address{}, []byte{})
 	if err != nil {
-		return 0, 0, err
-	}
-
-	if err := execution.TraceSimulateHandleOp(rpc, from, op, chainID, tracer, common.Address{}, []byte{}); err != nil {
 		return 0, 0, err
 	}
 
