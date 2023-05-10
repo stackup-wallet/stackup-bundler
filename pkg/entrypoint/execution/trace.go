@@ -55,14 +55,14 @@ func TraceSimulateHandleOp(
 	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err
 	}
-	out, err := errors.ParseHexToRpcDataError(res.Output)
+	outErr, err := errors.ParseHexToRpcDataError(res.Output)
 	if err != nil {
 		return nil, err
 	}
 
-	sim, simErr := reverts.NewExecutionResult(out)
+	sim, simErr := reverts.NewExecutionResult(outErr)
 	if simErr != nil {
-		fo, foErr := reverts.NewFailedOp(out)
+		fo, foErr := reverts.NewFailedOp(outErr)
 		if foErr != nil {
 			return nil, fmt.Errorf("%s, %s", simErr, foErr)
 		}
