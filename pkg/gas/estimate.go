@@ -35,7 +35,7 @@ func runSimulations(rpc *rpc.Client,
 		return nil, err
 	}
 
-	// Set MaxPriorityFeePerGas = MaxFeePerGas to simplify callGasLimit calculation.
+	// Set MaxPriorityFeePerGas = MaxFeePerGas to simplify downstream calculations.
 	data["maxPriorityFeePerGas"] = hexutil.EncodeBig(op.MaxFeePerGas)
 
 	// Setting default values for gas limits.
