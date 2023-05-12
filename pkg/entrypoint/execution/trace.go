@@ -59,6 +59,9 @@ func TraceSimulateHandleOp(
 	if err != nil {
 		return nil, err
 	}
+	if res.ValidationOOG {
+		return nil, errors.NewRPCError(errors.EXECUTION_REVERTED, "validation OOG", nil)
+	}
 
 	sim, simErr := reverts.NewExecutionResult(outErr)
 	if simErr != nil {
@@ -76,6 +79,9 @@ func TraceSimulateHandleOp(
 		}
 
 		if len(data) == 0 {
+			if res.ExecutionOOG {
+				return sim, errors.NewRPCError(errors.EXECUTION_REVERTED, "execution OOG", nil)
+			}
 			return sim, errors.NewRPCError(errors.EXECUTION_REVERTED, "execution reverted", nil)
 		}
 
