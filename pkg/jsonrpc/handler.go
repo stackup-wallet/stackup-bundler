@@ -75,10 +75,14 @@ func Controller(api interface{}) gin.HandlerFunc {
 			return
 		}
 
-		params, ok := data["params"].([]interface{})
-		if !ok {
-			jsonrpcError(c, -32602, "Invalid params", "No or invalid 'params' in request", &id)
-			return
+		var params []interface{}
+		if p, exist := data["params"]; exist {
+			tmp, ok := p.([]interface{})
+			if !ok {
+				jsonrpcError(c, -32602, "Invalid params", "No or invalid 'params' in request", &id)
+				return
+			}
+			params = tmp
 		}
 
 		call := reflect.ValueOf(api).MethodByName(cases.Title(language.Und, cases.NoLower).String(method))
