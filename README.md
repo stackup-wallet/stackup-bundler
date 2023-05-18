@@ -1,7 +1,7 @@
 ![](https://i.imgur.com/t0P3vWU.png)
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/stackup-wallet/stackup-bundler)
-![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/stackup-wallet/stackup-bundler/pipeline.yml?branch=main)
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/stackup-wallet/stackup-bundler/compliance.yml?branch=main)
 
 # Getting started
 

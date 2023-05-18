@@ -48,6 +48,8 @@ func NewDefaultOverhead() *Overhead {
 	}
 }
 
+// SetCalcPreVerificationGasFunc allows a custom function to be defined that can control how it calculates
+// PVG. This is useful for networks that have different models for gas.
 func (ov *Overhead) SetCalcPreVerificationGasFunc(fn CalcPreVerificationGasFunc) {
 	ov.calcPVGFunc = fn
 }
@@ -68,19 +70,10 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, 
 		return nil, err
 	}
 
-	// Use value from CalcPreVerificationGasFunc if set
-	g, err := ov.calcPVGFunc(tmp)
-	if err != nil {
-		return nil, err
-	}
-	if g != nil {
-		return g, nil
-	}
-
+	// Calculate static value from pre-defined parameters
 	packed := tmp.Pack()
 	lengthInWord := float64(len(packed)+31) / 32
 	callDataCost := float64(0)
-
 	for _, b := range packed {
 		if b == byte(0) {
 			callDataCost += ov.zeroByte
@@ -88,9 +81,18 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, 
 			callDataCost += ov.nonZeroByte
 		}
 	}
-
 	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + (ov.perUserOpWord * lengthInWord)
-	return big.NewInt(int64(math.Round(pvg))), nil
+	static := big.NewInt(int64(math.Round(pvg)))
+
+	// Use value from CalcPreVerificationGasFunc if set, otherwise return the static value.
+	g, err := ov.calcPVGFunc(tmp, static)
+	if err != nil {
+		return nil, err
+	}
+	if g != nil {
+		return g, nil
+	}
+	return static, nil
 }
 
 // NonZeroValueCall returns an expected gas cost of using the CALL opcode in the context of EIP-4337.

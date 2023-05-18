@@ -92,11 +92,17 @@ func HandleOps(
 		return nil, nil, err
 	}
 
+	nonce, err := eth.NonceAt(context.Background(), eoa.Address, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
 	if err != nil {
 		return nil, nil, err
 	}
 	auth.GasLimit = gas
+	auth.Nonce = big.NewInt(int64(nonce))
 
 	txn, err = ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {
