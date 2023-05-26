@@ -5,6 +5,7 @@ package checks
 import (
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
@@ -89,6 +90,14 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 				return errors.NewRPCError(
 					errors.INVALID_SIGNATURE,
 					"Invalid UserOp signature or paymaster signature",
+					nil,
+				)
+			}
+			if sim.ReturnInfo.ValidUntil.Cmp(common.Big0) != 0 &&
+				time.Now().Unix() >= sim.ReturnInfo.ValidUntil.Int64()-30 {
+				return errors.NewRPCError(
+					errors.SHORT_DEADLINE,
+					"expires too soon",
 					nil,
 				)
 			}
