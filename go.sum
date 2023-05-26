@@ -279,8 +279,8 @@ github.com/mattn/go-isatty v0.0.17 h1:BTarxUcIeDqL27Mc+vyvdWYSL28zpIhv3RoTdsLMPn
 github.com/mattn/go-isatty v0.0.17/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
 github.com/mattn/go-runewidth v0.0.9 h1:Lm995f3rfxdpd6TSmuVCHVb/QhupuXlYr8sCI/QdE+0=
 github.com/matttproud/golang_protobuf_extensions v1.0.4 h1:mmDVorXM7PCGKw94cs5zkfA9PSy5pEvNWRP0ET0TIVo=
-github.com/metachris/flashbotsrpc v0.5.0 h1:5OLpm6+6n4kXxeh3TZBeSj0PQWDxqUsOFwy7xertXQQ=
-github.com/metachris/flashbotsrpc v0.5.0/go.mod h1:UrS249kKA1PK27sf12M6tUxo/M4ayfFrBk7IMFY1TNw=
+github.com/metachris/flashbotsrpc v0.6.0 h1:EnMdkd/jgct8kaDYpuMgEZpOew92+ok8Elr4qxbjmu8=
+github.com/metachris/flashbotsrpc v0.6.0/go.mod h1:UrS249kKA1PK27sf12M6tUxo/M4ayfFrBk7IMFY1TNw=
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
