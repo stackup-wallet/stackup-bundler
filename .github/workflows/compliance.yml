@@ -31,8 +31,10 @@ jobs:
       - name: Checkout bundler spec test
         uses: actions/checkout@v3
         with:
-          repository: eth-infinitism/bundler-spec-tests
-          ref: 94a0634ebd6e6da657e863c134d20bc46724ed0f
+          # TODO: Revert back to eth-infinitism/bundler-spec-tests once
+          # https://github.com/eth-infinitism/bundler-spec-tests/pull/23 merged.
+          repository: hazim-j/bundler-spec-tests
+          ref: expires-too-soon-case
           path: ./bundler-spec-tests
           submodules: true
 
