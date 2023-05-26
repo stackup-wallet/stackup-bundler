@@ -14,16 +14,20 @@ import (
 	"golang.org/x/text/language"
 )
 
-func jsonrpcError(c *gin.Context, code int, message string, data any, id any) {
-	c.JSON(http.StatusOK, gin.H{
+func jsonrpcError(c *gin.Context, code int, message string, data any, id any, idIncluded bool) {
+	resp := gin.H{
 		"jsonrpc": "2.0",
 		"error": gin.H{
 			"code":    code,
 			"message": message,
 			"data":    data,
 		},
-		"id": id,
-	})
+	}
+	if idIncluded {
+		resp["id"] = id
+	}
+
+	c.JSON(http.StatusOK, resp)
 	c.Abort()
 }
 
@@ -36,63 +40,65 @@ func jsonrpcError(c *gin.Context, code int, message string, data any, id any) {
 func Controller(api interface{}) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Method != "POST" {
-			jsonrpcError(c, -32700, "Parse error", "POST method excepted", nil)
+			jsonrpcError(c, -32700, "Parse error", "POST method excepted", nil, true)
 			return
 		}
 
 		if c.Request.Body == nil {
-			jsonrpcError(c, -32700, "Parse error", "No POST data", nil)
+			jsonrpcError(c, -32700, "Parse error", "No POST data", nil, true)
 			return
 		}
 
 		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
-			jsonrpcError(c, -32700, "Parse error", "Error while reading request body", nil)
+			jsonrpcError(c, -32700, "Parse error", "Error while reading request body", nil, true)
 			return
 		}
 
 		data := make(map[string]any)
 		err = json.Unmarshal(body, &data)
 		if err != nil {
-			jsonrpcError(c, -32700, "Parse error", "Error parsing json request", nil)
+			jsonrpcError(c, -32700, "Parse error", "Error parsing json request", nil, true)
 			return
 		}
 
 		var id any
-		id, ok := data["id"].(float64)
-		if !ok {
-			id, ok = data["id"].(string)
-			if !ok {
-				jsonrpcError(c, -32600, "Invalid Request", "No or invalid 'id' in request", nil)
+		id, idIncluded := data["id"]
+		if idIncluded && id != nil {
+			switch id.(type) {
+			case string:
+			case float64:
+			default:
+				jsonrpcError(c, -32600, "Invalid Request", "No or invalid 'id' in request", nil, idIncluded)
 				return
 			}
 		}
 
 		if data["jsonrpc"] != "2.0" {
-			jsonrpcError(c, -32600, "Invalid Request", "Version of jsonrpc is not 2.0", &id)
+			jsonrpcError(c, -32600, "Invalid Request", "Version of jsonrpc is not 2.0", id, idIncluded)
 			return
 		}
 
 		method, ok := data["method"].(string)
 		if !ok {
-			jsonrpcError(c, -32600, "Invalid Request", "No or invalid 'method' in request", &id)
+			jsonrpcError(c, -32600, "Invalid Request", "No or invalid 'method' in request", id, idIncluded)
 			return
 		}
 
 		params, ok := data["params"].([]interface{})
 		if !ok {
-			jsonrpcError(c, -32602, "Invalid params", "No or invalid 'params' in request", &id)
+			jsonrpcError(c, -32602, "Invalid params", "No or invalid 'params' in request", id, idIncluded)
 			return
 		}
 
 		call := reflect.ValueOf(api).MethodByName(cases.Title(language.Und, cases.NoLower).String(method))
 		if !call.IsValid() {
-			jsonrpcError(c, -32601, "Method not found", "Method not found", &id)
+			jsonrpcError(c, -32601, "Method not found", "Method not found", id, idIncluded)
 			return
 		}
 
 		if call.Type().NumIn() != len(params) {
-			jsonrpcError(c, -32602, "Invalid params", "Invalid number of params", &id)
+			jsonrpcError(c, -32602, "Invalid params", "Invalid number of params", id, idIncluded)
 			return
 		}
 
@@ -107,7 +113,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -121,7 +128,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -143,7 +151,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -164,7 +173,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -185,7 +195,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -206,7 +217,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -227,7 +239,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -244,7 +257,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -258,7 +272,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -272,7 +287,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -293,7 +309,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -314,7 +331,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -335,7 +353,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -356,7 +375,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -377,7 +397,8 @@ func Controller(api interface{}) gin.HandlerFunc {
 						-32602,
 						"Invalid params",
 						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
-						&id,
+						id,
+						idIncluded,
 					)
 					return
 				}
@@ -385,7 +406,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 
 			default:
 				if !ok {
-					jsonrpcError(c, -32603, "Internal error", "Invalid method definition", &id)
+					jsonrpcError(c, -32603, "Internal error", "Invalid method definition", id, idIncluded)
 					return
 				}
 			}
@@ -395,24 +416,24 @@ func Controller(api interface{}) gin.HandlerFunc {
 		result := call.Call(args)
 		if err, ok := result[len(result)-1].Interface().(error); ok && err != nil {
 			rpcErr, ok := err.(*errors.RPCError)
-
 			if ok {
-				jsonrpcError(c, rpcErr.Code(), rpcErr.Error(), rpcErr.Data(), &id)
+				jsonrpcError(c, rpcErr.Code(), rpcErr.Error(), rpcErr.Data(), id, idIncluded)
 			} else {
-				jsonrpcError(c, -32601, err.Error(), err.Error(), &id)
+				jsonrpcError(c, -32601, err.Error(), err.Error(), id, idIncluded)
 			}
-		} else if len(result) > 0 {
-			c.JSON(http.StatusOK, gin.H{
-				"result":  result[0].Interface(),
-				"jsonrpc": "2.0",
-				"id":      id,
-			})
-		} else {
-			c.JSON(http.StatusOK, gin.H{
-				"result":  nil,
-				"jsonrpc": "2.0",
-				"id":      id,
-			})
+			return
 		}
+
+		resp := gin.H{
+			"result":  nil,
+			"jsonrpc": "2.0",
+		}
+		if len(result) > 0 {
+			resp["result"] = result[0].Interface()
+		}
+		if idIncluded {
+			resp["id"] = id
+		}
+		c.JSON(http.StatusOK, resp)
 	}
 }
