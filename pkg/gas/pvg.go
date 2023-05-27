@@ -29,6 +29,7 @@ func calcPVGFuncNoop() CalcPreVerificationGasFunc {
 // https://medium.com/offchainlabs/understanding-arbitrum-2-dimensional-fees-fd1d582596c9.
 func CalcArbitrumPVGWithEthClient(
 	rpc *rpc.Client,
+	entryPoint common.Address,
 ) CalcPreVerificationGasFunc {
 	pk, _ := crypto.GenerateKey()
 	dummy, _ := signer.New(hexutil.Encode(crypto.FromECDSA(pk))[2:])
@@ -48,7 +49,7 @@ func CalcArbitrumPVGWithEthClient(
 			create = true
 		}
 		ge, err := nodeinterface.GasEstimateL1ComponentMethod.Inputs.Pack(
-			nodeinterface.ERC4337GasHelperAddress,
+			entryPoint,
 			create,
 			append(methods.HandleOpsMethod.ID, ho...),
 		)
