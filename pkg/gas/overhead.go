@@ -26,6 +26,7 @@ type Overhead struct {
 	sanitizedVGL        *big.Int
 	sanitizedCGL        *big.Int
 	calcPVGFunc         CalcPreVerificationGasFunc
+	pvgBufferFactor     int64
 }
 
 // NewDefaultOverhead returns an instance of Overhead using parameters defined by the Ethereum protocol.
@@ -45,6 +46,7 @@ func NewDefaultOverhead() *Overhead {
 		sanitizedVGL:        big.NewInt(1000000),
 		sanitizedCGL:        big.NewInt(1000000),
 		calcPVGFunc:         calcPVGFuncNoop(),
+		pvgBufferFactor:     0,
 	}
 }
 
@@ -52,6 +54,14 @@ func NewDefaultOverhead() *Overhead {
 // PVG. This is useful for networks that have different models for gas.
 func (ov *Overhead) SetCalcPreVerificationGasFunc(fn CalcPreVerificationGasFunc) {
 	ov.calcPVGFunc = fn
+}
+
+// SetPVGBufferFactor defines the percentage to increase the preVerificationGas by during an estimation. This
+// is useful for rollups that use 2D gas values where the L1 gas component is non-deterministic. This buffer
+// accounts for any variability in-between eth_estimateUserOperationGas and eth_sendUserOperation. Defaults to
+// 0.
+func (ov *Overhead) SetPVGBufferFactor(factor int64) {
+	ov.pvgBufferFactor = factor
 }
 
 // CalcPreVerificationGas returns an expected gas cost for processing a UserOperation from a batch.
@@ -93,6 +103,15 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, 
 		return g, nil
 	}
 	return static, nil
+}
+
+// CalcPreVerificationGasWithBuffer returns CalcPreVerificationGas increased by the set PVG buffer factor.
+func (ov *Overhead) CalcPreVerificationGasWithBuffer(op *userop.UserOperation) (*big.Int, error) {
+	pvg, err := ov.CalcPreVerificationGas(op)
+	if err != nil {
+		return nil, err
+	}
+	return addBuffer(pvg, ov.pvgBufferFactor), nil
 }
 
 // NonZeroValueCall returns an expected gas cost of using the CALL opcode in the context of EIP-4337.
