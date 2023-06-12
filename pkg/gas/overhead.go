@@ -56,11 +56,11 @@ func (ov *Overhead) SetCalcPreVerificationGasFunc(fn CalcPreVerificationGasFunc)
 	ov.calcPVGFunc = fn
 }
 
-// SetPVGBufferFactor defines the percentage to increase the preVerificationGas by during an estimation. This
-// is useful for rollups that use 2D gas values where the L1 gas component is non-deterministic. This buffer
-// accounts for any variability in-between eth_estimateUserOperationGas and eth_sendUserOperation. Defaults to
-// 0.
-func (ov *Overhead) SetPVGBufferFactor(factor int64) {
+// SetPreVerificationGasBufferFactor defines the percentage to increase the preVerificationGas by during an
+// estimation. This is useful for rollups that use 2D gas values where the L1 gas component is
+// non-deterministic. This buffer accounts for any variability in-between eth_estimateUserOperationGas and
+// eth_sendUserOperation. Defaults to 0.
+func (ov *Overhead) SetPreVerificationGasBufferFactor(factor int64) {
 	ov.pvgBufferFactor = factor
 }
 
