@@ -61,6 +61,11 @@ func PrivateMode() {
 	if chain.Cmp(config.ArbitrumOneChainID) == 0 || chain.Cmp(config.ArbitrumGoerliChainID) == 0 {
 		ov.SetCalcPreVerificationGasFunc(gas.CalcArbitrumPVGWithEthClient(rpc, conf.SupportedEntryPoints[0]))
 	}
+	if chain.Cmp(config.OptimismChainID) == 0 || chain.Cmp(config.OptimismGoerliChainID) == 0 {
+		ov.SetCalcPreVerificationGasFunc(
+			gas.CalcOptimismPVGWithEthClient(rpc, chain, conf.SupportedEntryPoints[0]),
+		)
+	}
 
 	mem, err := mempool.New(db)
 	if err != nil {

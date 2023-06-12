@@ -139,6 +139,15 @@ func CreateRawHandleOps(
 	}
 	auth.GasLimit = gas
 	auth.NoSend = true
+	if baseFee != nil {
+		tip, err := eth.SuggestGasTipCap(context.Background())
+		if err != nil {
+			return "", err
+		}
+
+		auth.GasTipCap = tip
+		auth.GasFeeCap = big.NewInt(0).Add(baseFee, tip)
+	}
 
 	tx, err := ep.HandleOps(auth, toAbiType(batch), beneficiary)
 	if err != nil {
