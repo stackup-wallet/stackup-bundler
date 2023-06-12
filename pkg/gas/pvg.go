@@ -2,7 +2,6 @@ package gas
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"math/big"
 
@@ -141,7 +140,6 @@ func CalcOptimismPVGWithEthClient(
 		}
 		l2price := op.MaxFeePerGas
 		l2priority := big.NewInt(0).Add(op.MaxPriorityFeePerGas, head.BaseFee)
-		fmt.Println("PVG params:", l1fee, l2price, l2priority)
 		if l2priority.Cmp(l2price) == -1 {
 			l2price = l2priority
 		}
