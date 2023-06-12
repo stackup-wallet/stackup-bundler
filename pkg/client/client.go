@@ -179,6 +179,16 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 		return nil, err
 	}
 
+	// Add a buffer to PVG for non-static values
+	static, err := gas.NewDefaultOverhead().CalcPreVerificationGas(userOp)
+	if err != nil {
+		return nil, err
+	}
+	if pvg.Cmp(static) == 1 {
+		// Using a custom PVG calculation. Add a small buffer to account for variability.
+		pvg = addBuffer(pvg, 1)
+	}
+
 	l.Info("eth_estimateUserOperationGas ok")
 	return &gas.GasEstimates{
 		PreVerificationGas: pvg,
