@@ -1,6 +1,7 @@
 package gas
 
 import (
+	"bytes"
 	"context"
 	"math"
 	"math/big"
@@ -39,9 +40,22 @@ func CalcArbitrumPVGWithEthClient(
 	pk, _ := crypto.GenerateKey()
 	dummy, _ := signer.New(hexutil.Encode(crypto.FromECDSA(pk))[2:])
 	return func(op *userop.UserOperation, static *big.Int) (*big.Int, error) {
+		// Sanitize paymasterAndData.
+		// TODO: Figure out why variability in this field is causing Arbitrum's precompile to return different
+		// values.
+		data, err := op.ToMap()
+		if err != nil {
+			return nil, err
+		}
+		data["paymasterAndData"] = hexutil.Encode(bytes.Repeat([]byte{1}, len(op.PaymasterAndData)))
+		tmp, err := userop.New(data)
+		if err != nil {
+			return nil, err
+		}
+
 		// Pack handleOps method inputs
 		ho, err := methods.HandleOpsMethod.Inputs.Pack(
-			[]entrypoint.UserOperation{entrypoint.UserOperation(*op)},
+			[]entrypoint.UserOperation{entrypoint.UserOperation(*tmp)},
 			dummy.Address,
 		)
 		if err != nil {
@@ -50,7 +64,7 @@ func CalcArbitrumPVGWithEthClient(
 
 		// Encode function data for gasEstimateL1Component
 		create := false
-		if op.Nonce.Cmp(common.Big0) == 0 {
+		if tmp.Nonce.Cmp(common.Big0) == 0 {
 			create = true
 		}
 		ge, err := nodeinterface.GasEstimateL1ComponentMethod.Inputs.Pack(
