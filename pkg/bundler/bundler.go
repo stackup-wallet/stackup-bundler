@@ -10,6 +10,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -27,6 +28,8 @@ type Bundler struct {
 	watch                chan bool
 	onStop               func()
 	maxBatch             int
+	gbf                  gasprice.GetBaseFeeFunc
+	ggp                  gasprice.GetLegacyGasPriceFunc
 }
 
 // New initializes a new EIP-4337 bundler which can be extended with modules for validating batches and
@@ -43,12 +46,25 @@ func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []comm
 		watch:                make(chan bool),
 		onStop:               func() {},
 		maxBatch:             0,
+		gbf:                  gasprice.NoopGetBaseFeeFunc(),
+		ggp:                  gasprice.NoopGetLegacyGasPriceFunc(),
 	}
 }
 
 // SetMaxBatch defines the max number of UserOperations per bundle. The default value is 0 (i.e. unlimited).
 func (i *Bundler) SetMaxBatch(max int) {
 	i.maxBatch = max
+}
+
+// SetGetBaseFeeFunc defines the function used to retrieve an estimate for basefee during each bundler run.
+func (i *Bundler) SetGetBaseFeeFunc(gbf gasprice.GetBaseFeeFunc) {
+	i.gbf = gbf
+}
+
+// SetGetLegacyGasPriceFunc defines the function used to retrieve an estimate for gas price during each
+// bundler run.
+func (i *Bundler) SetGetLegacyGasPriceFunc(ggp gasprice.GetLegacyGasPriceFunc) {
+	i.ggp = ggp
 }
 
 // UseLogger defines the logger object used by the Bundler instance based on the go-logr/logr interface.
@@ -63,11 +79,26 @@ func (i *Bundler) UseModules(handlers ...modules.BatchHandlerFunc) {
 
 // Process will create a batch from the mempool and send it through to the EntryPoint.
 func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
+	// Init logger
 	start := time.Now()
 	l := i.logger.
 		WithName("run").
 		WithValues("entrypoint", ep.String()).
 		WithValues("chain_id", i.chainID.String())
+
+	// Get current block basefee
+	bf, err := i.gbf()
+	if err != nil {
+		l.Error(err, "bundler run error")
+		return nil, err
+	}
+
+	// Get suggested gas price (for networks that don't support EIP-1559)
+	gp, err := i.ggp()
+	if err != nil {
+		l.Error(err, "bundler run error")
+		return nil, err
+	}
 
 	batch, err := i.mempool.BundleOps(ep)
 	if err != nil {
@@ -79,7 +110,7 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 	}
 	batch = adjustBatchSize(i.maxBatch, batch)
 
-	ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID)
+	ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID, bf, gp)
 	if err := i.batchHandler(ctx); err != nil {
 		l.Error(err, "bundler run error")
 		return nil, err

@@ -88,6 +88,20 @@ func (op *UserOperation) GetMaxPrefund() *big.Int {
 	return big.NewInt(0).Mul(requiredGas, op.MaxFeePerGas)
 }
 
+// GetGasPrice returns the effective gas price paid by the UserOperation given a basefee.
+func (op *UserOperation) GetGasPrice(basefee *big.Int) *big.Int {
+	bf := basefee
+	if bf == nil {
+		bf = big.NewInt(0)
+	}
+
+	gp := big.NewInt(0).Add(bf, op.MaxPriorityFeePerGas)
+	if gp.Cmp(op.MaxFeePerGas) == 1 {
+		return op.MaxFeePerGas
+	}
+	return gp
+}
+
 // Pack returns a standard message of the userOp. This cannot be used to generate a userOpHash.
 func (op *UserOperation) Pack() []byte {
 	args := abi.Arguments{

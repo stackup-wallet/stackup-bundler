@@ -90,18 +90,27 @@ func TestRemoveOpsFromMempool(t *testing.T) {
 	}
 }
 
-// TestBundleOpsFromMempool verifies that bundles are being built with the correct ordering of highest
-// MaxPriorityFeePerGas first.
+// TestBundleOpsFromMempool verifies that bundles are being built UserOperations in the mempool. Ordering is
+// FIFO and more specific sorting and filtering is left up to downstream modules to implement.
 func TestBundleOpsFromMempool(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := New(db)
 	ep := testutils.ValidAddress1
+
 	op1 := testutils.MockValidInitUserOp()
+	op1.MaxFeePerGas = big.NewInt(4)
+	op1.MaxPriorityFeePerGas = big.NewInt(3)
+
 	op2 := testutils.MockValidInitUserOp()
 	op2.Sender = testutils.ValidAddress2
-	op2.Nonce = big.NewInt(0).Add(op1.Nonce, common.Big1)
-	op2.MaxPriorityFeePerGas = big.NewInt(0).Add(op1.MaxPriorityFeePerGas, common.Big1)
+	op2.MaxFeePerGas = big.NewInt(5)
+	op2.MaxPriorityFeePerGas = big.NewInt(2)
+
+	op3 := testutils.MockValidInitUserOp()
+	op3.Sender = testutils.ValidAddress3
+	op3.MaxFeePerGas = big.NewInt(6)
+	op3.MaxPriorityFeePerGas = big.NewInt(1)
 
 	if err := mem.AddOp(ep, op1); err != nil {
 		t.Fatalf("got %v, want nil", err)
@@ -109,17 +118,20 @@ func TestBundleOpsFromMempool(t *testing.T) {
 	if err := mem.AddOp(ep, op2); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
-
-	memOps, err := mem.BundleOps(ep)
-	if err != nil {
+	if err := mem.AddOp(ep, op3); err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
-	if len(memOps) != 2 {
-		t.Fatalf("got length %d, want 2", len(memOps))
-	}
 
-	if !testutils.IsOpsEqual(op2, memOps[0]) {
-		t.Fatalf("incorrect order, expect ops with highest MaxPriorityFeePerGas first")
+	if memOps, err := mem.BundleOps(ep); err != nil {
+		t.Fatalf("got %v, want nil", err)
+	} else if len(memOps) != 3 {
+		t.Fatalf("got length %d, want 3", len(memOps))
+	} else if !testutils.IsOpsEqual(memOps[0], op1) {
+		t.Fatal("incorrect order: first op out of place")
+	} else if !testutils.IsOpsEqual(memOps[1], op2) {
+		t.Fatal("incorrect order: second op out of place")
+	} else if !testutils.IsOpsEqual(memOps[2], op3) {
+		t.Fatal("incorrect order: third op out of place")
 	}
 }
 

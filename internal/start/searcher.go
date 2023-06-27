@@ -20,8 +20,10 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/batch"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/builder"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
@@ -101,8 +103,13 @@ func SearcherMode() {
 
 	// Init Bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
+	b.SetGetBaseFeeFunc(gasprice.GetBaseFeeWithEthClient(eth))
+	b.SetGetLegacyGasPriceFunc(gasprice.GetLegacyGasPriceWithEthClient(eth))
 	b.UseLogger(logr)
 	b.UseModules(
+		gasprice.SortByGasPrice(),
+		gasprice.FilterUnderpriced(),
+		batch.SortNonce(),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
 		builder.SendUserOperation(),

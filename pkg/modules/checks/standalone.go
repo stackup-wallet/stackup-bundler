@@ -16,6 +16,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 	"golang.org/x/sync/errgroup"
 )
@@ -53,7 +54,7 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
 		penOps := ctx.GetPendingOps()
 		gc := getCodeWithEthClient(s.eth)
-		gbf := getBaseFeeWithEthClient(s.eth)
+		gbf := gasprice.GetBaseFeeWithEthClient(s.eth)
 		gs, err := getStakeWithEthClient(ctx, s.eth)
 		if err != nil {
 			return err

@@ -192,6 +192,17 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 		// TODO: Increment badger nextTxnTs to read latest data from MapUserOpHashToClientID.
 		time.Sleep(5 * time.Millisecond)
 
+		opts := transaction.Opts{
+			EOA:         r.eoa,
+			Eth:         r.eth,
+			ChainID:     ctx.ChainID,
+			EntryPoint:  ctx.EntryPoint,
+			Batch:       ctx.Batch,
+			Beneficiary: r.beneficiary,
+			BaseFee:     ctx.BaseFee,
+			GasPrice:    ctx.GasPrice,
+			GasLimit:    0,
+		}
 		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {
 			// Delete any userOpHash entries from dropped userOps.
@@ -203,17 +214,9 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			}
 
 			// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
-			var gas uint64
 			estRev := []string{}
 			for len(ctx.Batch) > 0 {
-				est, revert, err := transaction.EstimateHandleOpsGas(
-					r.eoa,
-					r.eth,
-					ctx.ChainID,
-					ctx.EntryPoint,
-					ctx.Batch,
-					r.beneficiary,
-				)
+				est, revert, err := transaction.EstimateHandleOpsGas(&opts)
 
 				if err != nil {
 					return err
@@ -226,7 +229,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 						return err
 					}
 				} else {
-					gas = est
+					opts.GasLimit = est
 					break
 				}
 			}
@@ -235,15 +238,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			// Call handleOps() with gas estimate and drop all userOps that cause unexpected reverts.
 			txnRev := []string{}
 			for len(ctx.Batch) > 0 {
-				t, revert, err := transaction.HandleOps(
-					r.eoa,
-					r.eth,
-					ctx.ChainID,
-					ctx.EntryPoint,
-					ctx.Batch,
-					r.beneficiary,
-					gas,
-				)
+				t, revert, err := transaction.HandleOps(&opts)
 
 				if err != nil {
 					return err

@@ -67,7 +67,7 @@ func (m *Mempool) AddOp(entryPoint common.Address, op *userop.UserOperation) err
 	return nil
 }
 
-// BundleOps builds a bundle of UserOperations from the mempool to be sent to the EntryPoint.
+// BundleOps builds a bundle of UserOperations from the mempool that is ordered by effective gas price.
 func (m *Mempool) BundleOps(entryPoint common.Address) ([]*userop.UserOperation, error) {
 	return m.queue.Next(entryPoint), nil
 }

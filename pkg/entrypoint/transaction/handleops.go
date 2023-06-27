@@ -3,6 +3,7 @@ package transaction
 import (
 	bytesPkg "bytes"
 	"context"
+	"errors"
 	"math"
 	"math/big"
 
@@ -18,6 +19,25 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+// Opts contains all the fields required for submitting a transaction to call HandleOps on the EntryPoint
+// contract.
+type Opts struct {
+	// Options for the network
+	EOA     *signer.EOA
+	Eth     *ethclient.Client
+	ChainID *big.Int
+
+	// Options for the EntryPoint
+	EntryPoint  common.Address
+	Batch       []*userop.UserOperation
+	Beneficiary common.Address
+
+	// Options for the EOA transaction
+	BaseFee  *big.Int
+	GasPrice *big.Int
+	GasLimit uint64
+}
+
 func toAbiType(batch []*userop.UserOperation) []entrypoint.UserOperation {
 	ops := []entrypoint.UserOperation{}
 	for _, op := range batch {
@@ -29,33 +49,26 @@ func toAbiType(batch []*userop.UserOperation) []entrypoint.UserOperation {
 
 // EstimateHandleOpsGas returns a gas estimate required to call handleOps() with a given batch. A failed call
 // will return the cause of the revert.
-func EstimateHandleOpsGas(
-	eoa *signer.EOA,
-	eth *ethclient.Client,
-	chainID *big.Int,
-	entryPoint common.Address,
-	batch []*userop.UserOperation,
-	beneficiary common.Address,
-) (gas uint64, revert *reverts.FailedOpRevert, err error) {
-	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
+func EstimateHandleOpsGas(opts *Opts) (gas uint64, revert *reverts.FailedOpRevert, err error) {
+	ep, err := entrypoint.NewEntrypoint(opts.EntryPoint, opts.Eth)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
+	auth, err := bind.NewKeyedTransactorWithChainID(opts.EOA.PrivateKey, opts.ChainID)
 	if err != nil {
 		return 0, nil, err
 	}
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
 
-	tx, err := ep.HandleOps(auth, toAbiType(batch), beneficiary)
+	tx, err := ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	est, err := eth.EstimateGas(context.Background(), ethereum.CallMsg{
-		From:       eoa.Address,
+	est, err := opts.Eth.EstimateGas(context.Background(), ethereum.CallMsg{
+		From:       opts.EOA.Address,
 		To:         tx.To(),
 		Gas:        tx.Gas(),
 		GasPrice:   tx.GasPrice(),
@@ -78,33 +91,37 @@ func EstimateHandleOpsGas(
 
 // HandleOps calls handleOps() on the EntryPoint with a given batch, gas limit, and tip. A failed call will
 // return the cause of the revert.
-func HandleOps(
-	eoa *signer.EOA,
-	eth *ethclient.Client,
-	chainID *big.Int,
-	entryPoint common.Address,
-	batch []*userop.UserOperation,
-	beneficiary common.Address,
-	gas uint64,
-) (txn *types.Transaction, revert *reverts.FailedOpRevert, err error) {
-	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
+func HandleOps(opts *Opts) (txn *types.Transaction, revert *reverts.FailedOpRevert, err error) {
+	ep, err := entrypoint.NewEntrypoint(opts.EntryPoint, opts.Eth)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	nonce, err := eth.NonceAt(context.Background(), eoa.Address, nil)
+	nonce, err := opts.Eth.NonceAt(context.Background(), opts.EOA.Address, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
+	auth, err := bind.NewKeyedTransactorWithChainID(opts.EOA.PrivateKey, opts.ChainID)
 	if err != nil {
 		return nil, nil, err
 	}
-	auth.GasLimit = gas
+	auth.GasLimit = opts.GasLimit
 	auth.Nonce = big.NewInt(int64(nonce))
+	if opts.BaseFee != nil {
+		if tip, err := SuggestMeanGasTipCap(opts.Eth, opts.Batch); err != nil {
+			return nil, nil, err
+		} else {
+			auth.GasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
+			auth.GasTipCap = tip
+		}
+	} else if opts.GasPrice != nil {
+		auth.GasPrice = SuggestMeanGasPrice(opts.GasPrice, opts.Batch)
+	} else {
+		return nil, nil, errors.New("transaction: opts.BaseFee and opts.GasPrice cannot both be nil")
+	}
 
-	txn, err = ep.HandleOps(auth, toAbiType(batch), beneficiary)
+	txn, err = ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
 	if err != nil {
 		revert, err := reverts.NewFailedOp(err)
 		if err != nil {
@@ -118,38 +135,29 @@ func HandleOps(
 
 // CreateRawHandleOps returns a raw transaction string that calls handleOps() on the EntryPoint with a given
 // batch, gas limit, and tip.
-func CreateRawHandleOps(
-	eoa *signer.EOA,
-	eth *ethclient.Client,
-	chainID *big.Int,
-	entryPoint common.Address,
-	batch []*userop.UserOperation,
-	beneficiary common.Address,
-	gas uint64,
-	baseFee *big.Int,
-) (string, error) {
-	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
+func CreateRawHandleOps(opts *Opts) (string, error) {
+	ep, err := entrypoint.NewEntrypoint(opts.EntryPoint, opts.Eth)
 	if err != nil {
 		return "", err
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(eoa.PrivateKey, chainID)
+	auth, err := bind.NewKeyedTransactorWithChainID(opts.EOA.PrivateKey, opts.ChainID)
 	if err != nil {
 		return "", err
 	}
-	auth.GasLimit = gas
+	auth.GasLimit = opts.GasLimit
 	auth.NoSend = true
-	if baseFee != nil {
-		tip, err := eth.SuggestGasTipCap(context.Background())
+	if opts.BaseFee != nil {
+		tip, err := opts.Eth.SuggestGasTipCap(context.Background())
 		if err != nil {
 			return "", err
 		}
 
 		auth.GasTipCap = tip
-		auth.GasFeeCap = big.NewInt(0).Add(baseFee, tip)
+		auth.GasFeeCap = big.NewInt(0).Add(opts.BaseFee, tip)
 	}
 
-	tx, err := ep.HandleOps(auth, toAbiType(batch), beneficiary)
+	tx, err := ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
 	if err != nil {
 		return "", err
 	}
