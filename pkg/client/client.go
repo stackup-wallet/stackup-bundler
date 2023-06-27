@@ -173,7 +173,7 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	}
 
 	// Calculate PreVerificationGas
-	pvg, err := i.ov.CalcPreVerificationGas(userOp)
+	pvg, err := i.ov.CalcPreVerificationGasWithBuffer(userOp)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
