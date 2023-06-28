@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/stackup-wallet/stackup-bundler/internal/utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -111,7 +112,7 @@ func (ov *Overhead) CalcPreVerificationGasWithBuffer(op *userop.UserOperation) (
 	if err != nil {
 		return nil, err
 	}
-	return addBuffer(pvg, ov.pvgBufferFactor), nil
+	return utils.AddBuffer(pvg, ov.pvgBufferFactor), nil
 }
 
 // NonZeroValueCall returns an expected gas cost of using the CALL opcode in the context of EIP-4337.

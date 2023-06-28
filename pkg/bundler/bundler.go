@@ -100,6 +100,8 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 		return nil, err
 	}
 
+	// Get all pending userOps from the mempool. This will be in FIFO order. Downstream modules should sort it
+	// accordingly.
 	batch, err := i.mempool.BundleOps(ep)
 	if err != nil {
 		l.Error(err, "bundler run error")
@@ -110,12 +112,14 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 	}
 	batch = adjustBatchSize(i.maxBatch, batch)
 
+	// Create context and execute modules.
 	ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID, bf, gp)
 	if err := i.batchHandler(ctx); err != nil {
 		l.Error(err, "bundler run error")
 		return nil, err
 	}
 
+	// Remove included and dropped userOps from the mempool.
 	rmOps := append([]*userop.UserOperation{}, ctx.Batch...)
 	rmOps = append(rmOps, ctx.PendingRemoval...)
 	if err := i.mempool.RemoveOps(ep, rmOps...); err != nil {

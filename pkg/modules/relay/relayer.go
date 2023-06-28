@@ -44,6 +44,8 @@ type Relayer struct {
 	logger           logr.Logger
 	bannedThreshold  int
 	bannedTimeWindow time.Duration
+	waitTimeout      time.Duration
+	waitInterval     time.Duration
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
@@ -64,6 +66,8 @@ func New(
 		logger:           l.WithName("relayer"),
 		bannedThreshold:  DefaultBanThreshold,
 		bannedTimeWindow: DefaultBanTimeWindow,
+		waitTimeout:      DefaultWaitTimeout,
+		waitInterval:     DefaultWaitInterval,
 	}
 }
 
@@ -78,6 +82,17 @@ func (r *Relayer) SetBannedThreshold(limit int) {
 // 24 hours.
 func (r *Relayer) SetBannedTimeWindow(limit time.Duration) {
 	r.bannedTimeWindow = limit
+}
+
+// SetWaitTimeoutAndInterval sets the total time to wait for a transaction to be included and the interval at
+// which to check. When a timeout is reached, the transaction's gas values will be bumped up. This ensures
+// that the mempool isn't stuck during periods of high network congestion.
+//
+// The default value is 30 seconds timeout with a 1 second interval. Setting either value to 0 will skip
+// waiting for a transaction to be mined.
+func (r *Relayer) SetWaitTimeoutAndInterval(timeout, interval time.Duration) {
+	r.waitTimeout = timeout
+	r.waitInterval = interval
 }
 
 // FilterByClientID is a custom Gin middleware used to prevent requests from banned clients from adding their
@@ -193,15 +208,17 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 		time.Sleep(5 * time.Millisecond)
 
 		opts := transaction.Opts{
-			EOA:         r.eoa,
-			Eth:         r.eth,
-			ChainID:     ctx.ChainID,
-			EntryPoint:  ctx.EntryPoint,
-			Batch:       ctx.Batch,
-			Beneficiary: r.beneficiary,
-			BaseFee:     ctx.BaseFee,
-			GasPrice:    ctx.GasPrice,
-			GasLimit:    0,
+			EOA:          r.eoa,
+			Eth:          r.eth,
+			ChainID:      ctx.ChainID,
+			EntryPoint:   ctx.EntryPoint,
+			Batch:        ctx.Batch,
+			Beneficiary:  r.beneficiary,
+			BaseFee:      ctx.BaseFee,
+			GasPrice:     ctx.GasPrice,
+			GasLimit:     0,
+			WaitTimeout:  r.waitTimeout,
+			WaitInterval: r.waitInterval,
 		}
 		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {
@@ -235,27 +252,16 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			}
 			ctx.Data["relayer_est_revert_reasons"] = estRev
 
-			// Call handleOps() with gas estimate and drop all userOps that cause unexpected reverts.
-			txnRev := []string{}
-			for len(ctx.Batch) > 0 {
-				t, revert, err := transaction.HandleOps(&opts)
-
-				if err != nil {
+			// Call handleOps() with gas estimate. Any userOps that cause a revert at this stage will be
+			// caught and dropped in the next batch.
+			if len(ctx.Batch) > 0 {
+				if txn, err := transaction.HandleOps(&opts); err != nil {
 					return err
-				} else if revert != nil {
-					ctx.MarkOpIndexForRemoval(revert.OpIndex)
-					txnRev = append(txnRev, revert.Reason)
-
-					hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
-					if err := removeUserOpHashEntries(txn, hashes...); err != nil {
-						return err
-					}
 				} else {
-					ctx.Data["txn_hash"] = t.Hash().String()
-					break
+					ctx.Data["txn_hash"] = txn.Hash().String()
+					ctx.Data["txn_attempts"] = opts.Attempt
 				}
 			}
-			ctx.Data["relayer_txn_revert_reasons"] = txnRev
 
 			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
 			del = append([]string{}, hashes...)

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -13,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stackup-wallet/stackup-bundler/internal/utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/reverts"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
@@ -33,9 +35,18 @@ type Opts struct {
 	Beneficiary common.Address
 
 	// Options for the EOA transaction
-	BaseFee  *big.Int
-	GasPrice *big.Int
-	GasLimit uint64
+	BaseFee      *big.Int
+	GasPrice     *big.Int
+	GasLimit     uint64
+	WaitTimeout  time.Duration
+	WaitInterval time.Duration
+
+	// Re-attempts
+	Attempt       uint64
+	NonceUsed     *big.Int
+	LastGasFeeCap *big.Int
+	LastGasTipCap *big.Int
+	LastGasPrice  *big.Int
 }
 
 func toAbiType(batch []*userop.UserOperation) []entrypoint.UserOperation {
@@ -89,48 +100,76 @@ func EstimateHandleOpsGas(opts *Opts) (gas uint64, revert *reverts.FailedOpRever
 	return est, nil, nil
 }
 
-// HandleOps calls handleOps() on the EntryPoint with a given batch, gas limit, and tip. A failed call will
-// return the cause of the revert.
-func HandleOps(opts *Opts) (txn *types.Transaction, revert *reverts.FailedOpRevert, err error) {
+// HandleOps submits a transaction to send a batch of UserOperations to the EntryPoint.
+func HandleOps(opts *Opts) (*types.Transaction, error) {
 	ep, err := entrypoint.NewEntrypoint(opts.EntryPoint, opts.Eth)
 	if err != nil {
-		return nil, nil, err
-	}
-
-	nonce, err := opts.Eth.NonceAt(context.Background(), opts.EOA.Address, nil)
-	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(opts.EOA.PrivateKey, opts.ChainID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	auth.GasLimit = opts.GasLimit
-	auth.Nonce = big.NewInt(int64(nonce))
-	if opts.BaseFee != nil {
-		if tip, err := SuggestMeanGasTipCap(opts.Eth, opts.Batch); err != nil {
-			return nil, nil, err
-		} else {
-			auth.GasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
-			auth.GasTipCap = tip
-		}
-	} else if opts.GasPrice != nil {
-		auth.GasPrice = SuggestMeanGasPrice(opts.GasPrice, opts.Batch)
-	} else {
-		return nil, nil, errors.New("transaction: opts.BaseFee and opts.GasPrice cannot both be nil")
-	}
 
-	txn, err = ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
-	if err != nil {
-		revert, err := reverts.NewFailedOp(err)
+	if opts.Attempt == 0 {
+		nonce, err := opts.Eth.NonceAt(context.Background(), opts.EOA.Address, nil)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		return nil, revert, nil
+		opts.NonceUsed = big.NewInt(int64(nonce))
+		auth.Nonce = opts.NonceUsed
+
+		if opts.BaseFee != nil {
+			if tip, err := SuggestMeanGasTipCap(opts.Eth, opts.Batch); err != nil {
+				return nil, err
+			} else {
+				opts.LastGasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
+				auth.GasFeeCap = opts.LastGasFeeCap
+
+				opts.LastGasTipCap = tip
+				auth.GasTipCap = opts.LastGasTipCap
+			}
+		} else if opts.GasPrice != nil {
+			opts.LastGasPrice = SuggestMeanGasPrice(opts.GasPrice, opts.Batch)
+			auth.GasPrice = opts.LastGasPrice
+		} else {
+			return nil, errors.New("transaction: opts.BaseFee and opts.GasPrice cannot both be nil")
+		}
+	} else {
+		auth.Nonce = opts.NonceUsed
+
+		opts.LastGasFeeCap = utils.AddBuffer(opts.LastGasFeeCap, 10)
+		auth.GasFeeCap = opts.LastGasFeeCap
+
+		opts.LastGasTipCap = utils.AddBuffer(opts.LastGasTipCap, 10)
+		auth.GasTipCap = opts.LastGasTipCap
+
+		opts.LastGasPrice = utils.AddBuffer(opts.LastGasPrice, 10)
+		auth.GasPrice = opts.LastGasPrice
 	}
 
-	return txn, nil, nil
+	opts.Attempt += 1
+	txn, err := ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
+	if err != nil {
+		return nil, err
+	} else if opts.WaitTimeout == 0 || opts.WaitInterval == 0 {
+		// Don't wait for transaction to be mined.
+		return txn, nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), opts.WaitTimeout)
+	defer cancel()
+	receipt, err := wait(ctx, opts.Eth, txn, opts.WaitInterval)
+	if errors.Is(err, context.DeadlineExceeded) {
+		return HandleOps(opts)
+	} else if err != nil {
+		return nil, err
+	} else if receipt.Status == types.ReceiptStatusFailed {
+		return nil, errors.New("transaction: failed status")
+	}
+	return txn, nil
 }
 
 // CreateRawHandleOps returns a raw transaction string that calls handleOps() on the EntryPoint with a given

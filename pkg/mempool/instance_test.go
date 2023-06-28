@@ -90,8 +90,8 @@ func TestRemoveOpsFromMempool(t *testing.T) {
 	}
 }
 
-// TestBundleOpsFromMempool verifies that bundles are being built UserOperations in the mempool. Ordering is
-// FIFO and more specific sorting and filtering is left up to downstream modules to implement.
+// TestBundleOpsFromMempool verifies that bundles are being built with UserOperations in the mempool. Ordering
+// is FIFO and more specific sorting and filtering is left up to downstream modules to implement.
 func TestBundleOpsFromMempool(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
