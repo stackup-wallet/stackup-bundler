@@ -24,9 +24,8 @@ type Bundler struct {
 	batchHandler         modules.BatchHandlerFunc
 	logger               logr.Logger
 	isRunning            bool
-	stop                 chan bool
-	watch                chan bool
-	onStop               func()
+	done                 chan bool
+	stop                 func()
 	maxBatch             int
 	gbf                  gasprice.GetBaseFeeFunc
 	ggp                  gasprice.GetLegacyGasPriceFunc
@@ -42,9 +41,8 @@ func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []comm
 		batchHandler:         noop.BatchHandler,
 		logger:               logger.NewZeroLogr().WithName("bundler"),
 		isRunning:            false,
-		stop:                 make(chan bool),
-		watch:                make(chan bool),
-		onStop:               func() {},
+		done:                 make(chan bool),
+		stop:                 func() {},
 		maxBatch:             0,
 		gbf:                  gasprice.NoopGetBaseFeeFunc(),
 		ggp:                  gasprice.NoopGetLegacyGasPriceFunc(),
@@ -101,7 +99,7 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 	}
 
 	// Get all pending userOps from the mempool. This will be in FIFO order. Downstream modules should sort it
-	// accordingly.
+	// based on more specific strategies.
 	batch, err := i.mempool.BundleOps(ep)
 	if err != nil {
 		l.Error(err, "bundler run error")
@@ -119,7 +117,7 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 		return nil, err
 	}
 
-	// Remove included and dropped userOps from the mempool.
+	// Remove userOps that remain in the context from mempool.
 	rmOps := append([]*userop.UserOperation{}, ctx.Batch...)
 	rmOps = append(rmOps, ctx.PendingRemoval...)
 	if err := i.mempool.RemoveOps(ep, rmOps...); err != nil {
@@ -127,6 +125,7 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 		return nil, err
 	}
 
+	// Update logs for the current run.
 	bat := []string{}
 	for _, op := range ctx.Batch {
 		bat = append(bat, op.GetUserOpHash(ep, i.chainID).String())
@@ -153,12 +152,13 @@ func (i *Bundler) Run() error {
 		return nil
 	}
 
+	ticker := time.NewTicker(1 * time.Second)
 	go func(i *Bundler) {
 		for {
 			select {
-			case <-i.stop:
+			case <-i.done:
 				return
-			case <-i.watch:
+			case <-ticker.C:
 				for _, ep := range i.supportedEntryPoints {
 					_, err := i.Process(ep)
 					if err != nil {
@@ -171,7 +171,7 @@ func (i *Bundler) Run() error {
 	}(i)
 
 	i.isRunning = true
-	i.onStop = i.mempool.OnAdd(i.watch)
+	i.stop = ticker.Stop
 	return nil
 }
 
@@ -182,6 +182,6 @@ func (i *Bundler) Stop() {
 	}
 
 	i.isRunning = false
-	i.stop <- true
-	i.onStop()
+	i.stop()
+	i.done <- true
 }

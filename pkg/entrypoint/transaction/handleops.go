@@ -14,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/stackup-wallet/stackup-bundler/internal/utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/reverts"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
@@ -40,13 +39,6 @@ type Opts struct {
 	GasLimit     uint64
 	WaitTimeout  time.Duration
 	WaitInterval time.Duration
-
-	// Re-attempts
-	Attempt       uint64
-	NonceUsed     *big.Int
-	LastGasFeeCap *big.Int
-	LastGasTipCap *big.Int
-	LastGasPrice  *big.Int
 }
 
 func toAbiType(batch []*userop.UserOperation) []entrypoint.UserOperation {
@@ -101,7 +93,7 @@ func EstimateHandleOpsGas(opts *Opts) (gas uint64, revert *reverts.FailedOpRever
 }
 
 // HandleOps submits a transaction to send a batch of UserOperations to the EntryPoint.
-func HandleOps(opts *Opts) (*types.Transaction, error) {
+func HandleOps(opts *Opts) (txn *types.Transaction, err error) {
 	ep, err := entrypoint.NewEntrypoint(opts.EntryPoint, opts.Eth)
 	if err != nil {
 		return nil, err
@@ -113,45 +105,26 @@ func HandleOps(opts *Opts) (*types.Transaction, error) {
 	}
 	auth.GasLimit = opts.GasLimit
 
-	if opts.Attempt == 0 {
-		nonce, err := opts.Eth.NonceAt(context.Background(), opts.EOA.Address, nil)
-		if err != nil {
+	nonce, err := opts.Eth.NonceAt(context.Background(), opts.EOA.Address, nil)
+	if err != nil {
+		return nil, err
+	}
+	auth.Nonce = big.NewInt(int64(nonce))
+
+	if opts.BaseFee != nil {
+		if tip, err := SuggestMeanGasTipCap(opts.Eth, opts.Batch); err != nil {
 			return nil, err
-		}
-		opts.NonceUsed = big.NewInt(int64(nonce))
-		auth.Nonce = opts.NonceUsed
-
-		if opts.BaseFee != nil {
-			if tip, err := SuggestMeanGasTipCap(opts.Eth, opts.Batch); err != nil {
-				return nil, err
-			} else {
-				opts.LastGasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
-				auth.GasFeeCap = opts.LastGasFeeCap
-
-				opts.LastGasTipCap = tip
-				auth.GasTipCap = opts.LastGasTipCap
-			}
-		} else if opts.GasPrice != nil {
-			opts.LastGasPrice = SuggestMeanGasPrice(opts.GasPrice, opts.Batch)
-			auth.GasPrice = opts.LastGasPrice
 		} else {
-			return nil, errors.New("transaction: opts.BaseFee and opts.GasPrice cannot both be nil")
+			auth.GasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
+			auth.GasTipCap = tip
 		}
+	} else if opts.GasPrice != nil {
+		auth.GasPrice = SuggestMeanGasPrice(opts.GasPrice, opts.Batch)
 	} else {
-		auth.Nonce = opts.NonceUsed
-
-		opts.LastGasFeeCap = utils.AddBuffer(opts.LastGasFeeCap, 10)
-		auth.GasFeeCap = opts.LastGasFeeCap
-
-		opts.LastGasTipCap = utils.AddBuffer(opts.LastGasTipCap, 10)
-		auth.GasTipCap = opts.LastGasTipCap
-
-		opts.LastGasPrice = utils.AddBuffer(opts.LastGasPrice, 10)
-		auth.GasPrice = opts.LastGasPrice
+		return nil, errors.New("transaction: opts.BaseFee and opts.GasPrice cannot both be nil")
 	}
 
-	opts.Attempt += 1
-	txn, err := ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
+	txn, err = ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
 	if err != nil {
 		return nil, err
 	} else if opts.WaitTimeout == 0 || opts.WaitInterval == 0 {
@@ -161,10 +134,7 @@ func HandleOps(opts *Opts) (*types.Transaction, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), opts.WaitTimeout)
 	defer cancel()
-	receipt, err := wait(ctx, opts.Eth, txn, opts.WaitInterval)
-	if errors.Is(err, context.DeadlineExceeded) {
-		return HandleOps(opts)
-	} else if err != nil {
+	if receipt, err := wait(ctx, opts.Eth, txn, opts.WaitInterval); err != nil {
 		return nil, err
 	} else if receipt.Status == types.ReceiptStatusFailed {
 		return nil, errors.New("transaction: failed status")
