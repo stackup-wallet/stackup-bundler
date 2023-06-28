@@ -88,8 +88,9 @@ func (op *UserOperation) GetMaxPrefund() *big.Int {
 	return big.NewInt(0).Mul(requiredGas, op.MaxFeePerGas)
 }
 
-// GetGasPrice returns the effective gas price paid by the UserOperation given a basefee.
-func (op *UserOperation) GetGasPrice(basefee *big.Int) *big.Int {
+// GetDynamicGasPrice returns the effective gas price paid by the UserOperation given a basefee. If basefee is
+// nil, it will assume a value of 0.
+func (op *UserOperation) GetDynamicGasPrice(basefee *big.Int) *big.Int {
 	bf := basefee
 	if bf == nil {
 		bf = big.NewInt(0)

@@ -12,7 +12,7 @@ func FilterUnderpriced() modules.BatchHandlerFunc {
 		b := []*userop.UserOperation{}
 		for _, op := range ctx.Batch {
 			if ctx.BaseFee != nil {
-				if op.GetGasPrice(ctx.BaseFee).Cmp(ctx.BaseFee) >= 0 {
+				if op.GetDynamicGasPrice(ctx.BaseFee).Cmp(ctx.BaseFee) >= 0 {
 					b = append(b, op)
 				}
 			} else if ctx.GasPrice != nil {

@@ -11,7 +11,9 @@ func SortByGasPrice() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		if ctx.BaseFee != nil {
 			sort.SliceStable(ctx.Batch, func(i, j int) bool {
-				return ctx.Batch[i].GetGasPrice(ctx.BaseFee).Cmp(ctx.Batch[j].GetGasPrice(ctx.BaseFee)) == 1
+				return ctx.Batch[i].GetDynamicGasPrice(ctx.BaseFee).
+					Cmp(ctx.Batch[j].GetDynamicGasPrice(ctx.BaseFee)) ==
+					1
 			})
 		} else if ctx.GasPrice != nil {
 			sort.SliceStable(ctx.Batch, func(i, j int) bool {
