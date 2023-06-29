@@ -109,7 +109,7 @@ func SearcherMode() {
 	b.UseModules(
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
-		batch.SortNonce(),
+		batch.SortByNonce(),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
 		builder.SendUserOperation(),

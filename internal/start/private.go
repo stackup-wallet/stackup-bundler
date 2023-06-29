@@ -116,7 +116,7 @@ func PrivateMode() {
 	b.UseModules(
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
-		batch.SortNonce(),
+		batch.SortByNonce(),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
 		relayer.SendUserOperation(),
