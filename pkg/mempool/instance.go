@@ -52,11 +52,6 @@ func (m *Mempool) AddOp(entryPoint common.Address, op *userop.UserOperation) err
 	return nil
 }
 
-// BundleOps builds a bundle of UserOperations from the mempool with FIFO ordering.
-func (m *Mempool) BundleOps(entryPoint common.Address) ([]*userop.UserOperation, error) {
-	return m.queue.Next(entryPoint), nil
-}
-
 // RemoveOps removes a list of UserOperations from the mempool by EntryPoint, Sender, and Nonce values.
 func (m *Mempool) RemoveOps(entryPoint common.Address, ops ...*userop.UserOperation) error {
 	err := m.db.Update(func(txn *badger.Txn) error {

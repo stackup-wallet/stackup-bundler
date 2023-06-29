@@ -59,17 +59,6 @@ func (q *userOpQueues) GetOps(entryPoint common.Address, sender common.Address) 
 	return batch
 }
 
-func (q *userOpQueues) Next(entryPoint common.Address) []*userop.UserOperation {
-	eps := q.getEntryPointSet(entryPoint)
-	nodes := eps.all.GetByRankRange(1, -1, false)
-	batch := []*userop.UserOperation{}
-	for _, n := range nodes {
-		batch = append(batch, n.Value.(*userop.UserOperation))
-	}
-
-	return batch
-}
-
 func (q *userOpQueues) All(entryPoint common.Address) []*userop.UserOperation {
 	eps := q.getEntryPointSet(entryPoint)
 	nodes := eps.all.GetByRankRange(1, -1, false)

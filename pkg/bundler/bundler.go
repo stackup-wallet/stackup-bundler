@@ -100,7 +100,7 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 
 	// Get all pending userOps from the mempool. This will be in FIFO order. Downstream modules should sort it
 	// based on more specific strategies.
-	batch, err := i.mempool.BundleOps(ep)
+	batch, err := i.mempool.Dump(ep)
 	if err != nil {
 		l.Error(err, "bundler run error")
 		return nil, err
