@@ -89,7 +89,7 @@ func (r *Relayer) SetBannedTimeWindow(limit time.Duration) {
 // been included or has been included but with a failed status.
 //
 // The default value is 30 seconds timeout with a 1 second interval. Setting either value to 0 will skip
-// waiting for a transaction to be mined.
+// waiting for a transaction to be included.
 func (r *Relayer) SetWaitTimeoutAndInterval(timeout, interval time.Duration) {
 	r.waitTimeout = timeout
 	r.waitInterval = interval
