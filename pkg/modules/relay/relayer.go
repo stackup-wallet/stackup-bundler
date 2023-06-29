@@ -85,8 +85,8 @@ func (r *Relayer) SetBannedTimeWindow(limit time.Duration) {
 }
 
 // SetWaitTimeoutAndInterval sets the total time to wait for a transaction to be included and the interval at
-// which to check. When a timeout is reached, the transaction's gas values will be bumped up. This ensures
-// that the mempool isn't stuck during periods of high network congestion.
+// which to check. When a timeout is reached, the BatchHandler will throw an error if the transaction has not
+// been included or has been included but with a failed status.
 //
 // The default value is 30 seconds timeout with a 1 second interval. Setting either value to 0 will skip
 // waiting for a transaction to be mined.
