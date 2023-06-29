@@ -15,7 +15,6 @@ const NoBanThreshold = 0
 const DefaultBanThreshold = 3
 const DefaultBanTimeWindow = 7 * 24 * time.Hour
 const DefaultWaitTimeout = 30 * time.Second
-const DefaultWaitInterval = 1 * time.Second
 
 var (
 	keyPrefix        = dbutils.JoinValues("relay")

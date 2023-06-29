@@ -45,7 +45,6 @@ type Relayer struct {
 	bannedThreshold  int
 	bannedTimeWindow time.Duration
 	waitTimeout      time.Duration
-	waitInterval     time.Duration
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
@@ -67,7 +66,6 @@ func New(
 		bannedThreshold:  DefaultBanThreshold,
 		bannedTimeWindow: DefaultBanTimeWindow,
 		waitTimeout:      DefaultWaitTimeout,
-		waitInterval:     DefaultWaitInterval,
 	}
 }
 
@@ -84,15 +82,13 @@ func (r *Relayer) SetBannedTimeWindow(limit time.Duration) {
 	r.bannedTimeWindow = limit
 }
 
-// SetWaitTimeoutAndInterval sets the total time to wait for a transaction to be included and the interval at
-// which to check. When a timeout is reached, the BatchHandler will throw an error if the transaction has not
-// been included or has been included but with a failed status.
+// SetWaitTimeout sets the total time to wait for a transaction to be included. When a timeout is reached, the
+// BatchHandler will throw an error if the transaction has not been included or has been included but with a
+// failed status.
 //
-// The default value is 30 seconds timeout with a 1 second interval. Setting either value to 0 will skip
-// waiting for a transaction to be included.
-func (r *Relayer) SetWaitTimeoutAndInterval(timeout, interval time.Duration) {
+// The default value is 30 seconds. Setting the value to 0 will skip waiting for a transaction to be included.
+func (r *Relayer) SetWaitTimeout(timeout time.Duration) {
 	r.waitTimeout = timeout
-	r.waitInterval = interval
 }
 
 // FilterByClientID is a custom Gin middleware used to prevent requests from banned clients from adding their
@@ -208,17 +204,16 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 		time.Sleep(5 * time.Millisecond)
 
 		opts := transaction.Opts{
-			EOA:          r.eoa,
-			Eth:          r.eth,
-			ChainID:      ctx.ChainID,
-			EntryPoint:   ctx.EntryPoint,
-			Batch:        ctx.Batch,
-			Beneficiary:  r.beneficiary,
-			BaseFee:      ctx.BaseFee,
-			GasPrice:     ctx.GasPrice,
-			GasLimit:     0,
-			WaitTimeout:  r.waitTimeout,
-			WaitInterval: r.waitInterval,
+			EOA:         r.eoa,
+			Eth:         r.eth,
+			ChainID:     ctx.ChainID,
+			EntryPoint:  ctx.EntryPoint,
+			Batch:       ctx.Batch,
+			Beneficiary: r.beneficiary,
+			BaseFee:     ctx.BaseFee,
+			GasPrice:    ctx.GasPrice,
+			GasLimit:    0,
+			WaitTimeout: r.waitTimeout,
 		}
 		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {

@@ -133,7 +133,7 @@ func PrivateMode() {
 		d = client.NewDebug(eoa, eth, mem, b, chain, conf.SupportedEntryPoints[0], beneficiary)
 		b.SetMaxBatch(1)
 		relayer.SetBannedThreshold(relay.NoBanThreshold)
-		relayer.SetWaitTimeoutAndInterval(0, 0)
+		relayer.SetWaitTimeout(0)
 	}
 
 	// Init HTTP server

@@ -34,11 +34,10 @@ type Opts struct {
 	Beneficiary common.Address
 
 	// Options for the EOA transaction
-	BaseFee      *big.Int
-	GasPrice     *big.Int
-	GasLimit     uint64
-	WaitTimeout  time.Duration
-	WaitInterval time.Duration
+	BaseFee     *big.Int
+	GasPrice    *big.Int
+	GasLimit    uint64
+	WaitTimeout time.Duration
 }
 
 func toAbiType(batch []*userop.UserOperation) []entrypoint.UserOperation {
@@ -127,15 +126,15 @@ func HandleOps(opts *Opts) (txn *types.Transaction, err error) {
 	txn, err = ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
 	if err != nil {
 		return nil, err
-	} else if opts.WaitTimeout == 0 || opts.WaitInterval == 0 {
-		// Don't wait for transaction to be mined. All userOps in the current batch will be dropped regardless
-		// of the transaction status.
+	} else if opts.WaitTimeout == 0 {
+		// Don't wait for transaction to be included. All userOps in the current batch will be dropped
+		// regardless of the transaction status.
 		return txn, nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), opts.WaitTimeout)
 	defer cancel()
-	if receipt, err := wait(ctx, opts.Eth, txn, opts.WaitInterval); err != nil {
+	if receipt, err := bind.WaitMined(ctx, opts.Eth, txn); err != nil {
 		return nil, err
 	} else if receipt.Status == types.ReceiptStatusFailed {
 		// Return an error here so that the current batch stays in the mempool. In the next bundler iteration,
