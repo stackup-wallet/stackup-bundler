@@ -34,7 +34,7 @@ type Overhead struct {
 func NewDefaultOverhead() *Overhead {
 	return &Overhead{
 		fixed:               21000,
-		perUserOp:           18300,
+		perUserOp:           19865,
 		perUserOpWord:       4,
 		zeroByte:            4,
 		nonZeroByte:         16,
