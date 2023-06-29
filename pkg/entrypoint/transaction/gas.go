@@ -15,7 +15,7 @@ import (
 func SuggestMeanGasTipCap(eth *ethclient.Client, batch []*userop.UserOperation) (*big.Int, error) {
 	tip, err := eth.SuggestGasTipCap(context.Background())
 	if err != nil {
-		return big.NewInt(0), err
+		return nil, err
 	}
 
 	sum := big.NewInt(0)
