@@ -128,7 +128,8 @@ func HandleOps(opts *Opts) (txn *types.Transaction, err error) {
 	if err != nil {
 		return nil, err
 	} else if opts.WaitTimeout == 0 || opts.WaitInterval == 0 {
-		// Don't wait for transaction to be mined.
+		// Don't wait for transaction to be mined. All userOps in the current batch will be dropped regardless
+		// of the transaction status.
 		return txn, nil
 	}
 
@@ -137,6 +138,8 @@ func HandleOps(opts *Opts) (txn *types.Transaction, err error) {
 	if receipt, err := wait(ctx, opts.Eth, txn, opts.WaitInterval); err != nil {
 		return nil, err
 	} else if receipt.Status == types.ReceiptStatusFailed {
+		// Return an error here so that the current batch stays in the mempool. In the next bundler iteration,
+		// the offending userOps will be dropped during gas estimation.
 		return nil, errors.New("transaction: failed status")
 	}
 	return txn, nil
