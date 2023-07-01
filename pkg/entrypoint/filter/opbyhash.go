@@ -21,6 +21,7 @@ type HashLookupResult struct {
 	BlockNumber     *big.Int              `json:"blockNumber"`
 	BlockHash       common.Hash           `json:"blockHash"`
 	TransactionHash common.Hash           `json:"transactionHash"`
+	IsPending       bool                  `json:"isPending"`
 }
 
 // GetUserOperationByHash filters the EntryPoint contract for UserOperationEvents and returns the
@@ -44,9 +45,6 @@ func GetUserOperationByHash(
 		tx, isPending, err := eth.TransactionByHash(context.Background(), it.Event.Raw.TxHash)
 		if err != nil {
 			return nil, err
-		} else if isPending {
-			//lint:ignore ST1005 This needs to match the bundler test spec.
-			return nil, errors.New("Missing/invalid userOpHash")
 		}
 
 		hex := hexutil.Encode(tx.Data())
@@ -99,6 +97,7 @@ func GetUserOperationByHash(
 						BlockNumber:     receipt.BlockNumber,
 						BlockHash:       receipt.BlockHash,
 						TransactionHash: it.Event.Raw.TxHash,
+						IsPending:       isPending,
 					}, nil
 				}
 			}
