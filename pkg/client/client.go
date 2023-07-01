@@ -29,6 +29,7 @@ type Client struct {
 	getUserOpReceipt     GetUserOpReceiptFunc
 	getGasEstimate       GetGasEstimateFunc
 	getUserOpByHash      GetUserOpByHashFunc
+	getUserOpBySender    GetUserOpBySenderFunc
 }
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
@@ -49,6 +50,7 @@ func New(
 		getUserOpReceipt:     getUserOpReceiptNoop(),
 		getGasEstimate:       getGasEstimateNoop(),
 		getUserOpByHash:      getUserOpByHashNoop(),
+		getUserOpBySender:    getUserOpBySenderNoop(),
 	}
 }
 
@@ -212,6 +214,21 @@ func (i *Client) GetUserOperationByHash(hash string) (*filter.HashLookupResult, 
 	l := i.logger.WithName("eth_getUserOperationByHash").WithValues("userop_hash", hash)
 
 	res, err := i.getUserOpByHash(hash, i.supportedEntryPoints[0], i.chainID)
+	if err != nil {
+		l.Error(err, "eth_getUserOperationByHash error")
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// GetUserOperationBySender returns a UserOperation based on a given sender returned by
+// *Client.SendUserOperation.
+func (i *Client) GetUserOperationBySender(sender string) (*filter.SenderLookupResult, error) {
+	// Init logger
+	l := i.logger.WithName("eth_getUserOperationBySender").WithValues("sender", sender)
+
+	res, err := i.getUserOpBySender(sender, i.supportedEntryPoints[0], i.chainID)
 	if err != nil {
 		l.Error(err, "eth_getUserOperationByHash error")
 		return nil, err

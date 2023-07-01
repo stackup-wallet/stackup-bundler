@@ -37,3 +37,31 @@ func filterUserOperationEvent(
 		[]common.Address{},
 	)
 }
+
+func filterUserOperationSenderEvent(
+	eth *ethclient.Client,
+	sender,
+	entryPoint common.Address,
+) (*entrypoint.EntrypointUserOperationEventIterator, error) {
+	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
+	if err != nil {
+		return nil, err
+	}
+	bn, err := eth.BlockNumber(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	toBlk := big.NewInt(0).SetUint64(bn)
+	startBlk := big.NewInt(0)
+	sub10kBlk := big.NewInt(0).Sub(toBlk, big.NewInt(10000))
+	if sub10kBlk.Cmp(startBlk) > 0 {
+		startBlk = sub10kBlk
+	}
+
+	return ep.FilterUserOperationEvent(
+		&bind.FilterOpts{Start: startBlk.Uint64()},
+		[][32]byte{},
+		[]common.Address{sender},
+		[]common.Address{},
+	)
+}

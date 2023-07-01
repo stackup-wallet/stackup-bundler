@@ -73,3 +73,22 @@ func GetUserOpByHashWithEthClient(eth *ethclient.Client) GetUserOpByHashFunc {
 		return filter.GetUserOperationByHash(eth, hash, ep, chain)
 	}
 }
+
+// GetUserOpBySenderFunc is a general interface for fetching a UserOperation given a sender, EntryPoint
+// address, and chain ID.
+type GetUserOpBySenderFunc func(sender string, ep common.Address, chain *big.Int) (*filter.SenderLookupResult, error)
+
+func getUserOpBySenderNoop() GetUserOpBySenderFunc {
+	return func(sender string, ep common.Address, chain *big.Int) (*filter.SenderLookupResult, error) {
+		//lint:ignore ST1005 This needs to match the bundler test spec.
+		return nil, errors.New("Missing/invalid sender")
+	}
+}
+
+// GetUserOpBySenderWithEthClient returns an implementation of GetUserOpBySenderFunc that relies on an eth client
+// to fetch a UserOperation.
+func GetUserOpBySenderWithEthClient(eth *ethclient.Client) GetUserOpBySenderFunc {
+	return func(sender string, ep common.Address, chain *big.Int) (*filter.SenderLookupResult, error) {
+		return filter.GetUserOperationBySender(eth, common.HexToAddress(sender), ep, chain)
+	}
+}
