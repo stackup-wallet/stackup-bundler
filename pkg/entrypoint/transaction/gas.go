@@ -26,8 +26,11 @@ func SuggestMeanGasTipCap(tip *big.Int, batch []*userop.UserOperation) *big.Int 
 // SuggestMeanGasFeeCap suggests a Max Fee for an EIP-1559 transaction to submit a batch of UserOperations to
 // the EntryPoint. It returns the larger value between the recommended max fee or the average maxFeePerGas of
 // the entire batch.
-func SuggestMeanGasFeeCap(basefee *big.Int, batch []*userop.UserOperation) *big.Int {
-	mf := big.NewInt(0).Mul(basefee, common.Big2)
+func SuggestMeanGasFeeCap(basefee *big.Int, tip *big.Int, batch []*userop.UserOperation) *big.Int {
+	mf := big.NewInt(0).Add(
+		tip,
+		big.NewInt(0).Mul(basefee, common.Big2),
+	)
 
 	sum := big.NewInt(0)
 	for _, op := range batch {

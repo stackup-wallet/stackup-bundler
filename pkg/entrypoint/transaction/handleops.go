@@ -112,8 +112,8 @@ func HandleOps(opts *Opts) (txn *types.Transaction, err error) {
 	auth.Nonce = big.NewInt(int64(nonce))
 
 	if opts.BaseFee != nil && opts.Tip != nil {
-		auth.GasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
 		auth.GasTipCap = SuggestMeanGasTipCap(opts.Tip, opts.Batch)
+		auth.GasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Tip, opts.Batch)
 	} else if opts.GasPrice != nil {
 		auth.GasPrice = SuggestMeanGasPrice(opts.GasPrice, opts.Batch)
 	} else {

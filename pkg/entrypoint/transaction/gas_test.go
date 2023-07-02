@@ -52,8 +52,9 @@ func TestSuggestMeanGasFeeCapNormalLoad(t *testing.T) {
 	batch := []*userop.UserOperation{op1, op2}
 
 	bf := big.NewInt(1)
+	tip := big.NewInt(0)
 	expected := big.NewInt(0).Mul(bf, common.Big2)
-	mf := SuggestMeanGasFeeCap(bf, batch)
+	mf := SuggestMeanGasFeeCap(bf, tip, batch)
 	if mf.Cmp(expected) != 0 {
 		t.Fatalf("got %d, want %d", mf.Int64(), expected.Int64())
 	}
@@ -70,8 +71,9 @@ func TestSuggestMeanGasFeeCapHighLoad(t *testing.T) {
 	batch := []*userop.UserOperation{op1, op2}
 
 	bf := big.NewInt(1)
+	tip := big.NewInt(0)
 	expected := big.NewInt(7)
-	mf := SuggestMeanGasFeeCap(bf, batch)
+	mf := SuggestMeanGasFeeCap(bf, tip, batch)
 	if mf.Cmp(expected) != 0 {
 		t.Fatalf("got %d, want %d", mf.Int64(), expected.Int64())
 	}
