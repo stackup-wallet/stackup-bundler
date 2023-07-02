@@ -1,4 +1,4 @@
-// Package gas implements helper functions for calculating gas parameters based on Ethereum protocol values.
+// Package gas implements helper functions for calculating EIP-4337 gas parameters.
 package gas
 
 import (
@@ -7,14 +7,16 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/stackup-wallet/stackup-bundler/internal/utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 // Overhead provides helper methods for calculating gas limits based on pre-defined parameters.
 type Overhead struct {
-	fixed               float64
-	perUserOp           float64
-	perUserOpWord       float64
+	intrinsicFixed      float64
+	batchFixed          float64
+	perUserOpFixed      float64
+	perUserOpMultiplier float64
 	zeroByte            float64
 	nonZeroByte         float64
 	minBundleSize       float64
@@ -32,9 +34,10 @@ type Overhead struct {
 // NewDefaultOverhead returns an instance of Overhead using parameters defined by the Ethereum protocol.
 func NewDefaultOverhead() *Overhead {
 	return &Overhead{
-		fixed:               21000,
-		perUserOp:           18300,
-		perUserOpWord:       4,
+		intrinsicFixed:      21000,
+		batchFixed:          816,
+		perUserOpFixed:      22874,
+		perUserOpMultiplier: 25,
 		zeroByte:            4,
 		nonZeroByte:         16,
 		minBundleSize:       1,
@@ -64,6 +67,34 @@ func (ov *Overhead) SetPreVerificationGasBufferFactor(factor int64) {
 	ov.pvgBufferFactor = factor
 }
 
+// CalcCallDataCost calculates the additional gas cost required to serialize the userOp when making the
+// transaction to submit the entire batch.
+func (ov *Overhead) CalcCallDataCost(op *userop.UserOperation) float64 {
+	cost := float64(0)
+	for _, b := range op.Pack() {
+		if b == byte(0) {
+			cost += ov.zeroByte
+		} else {
+			cost += ov.nonZeroByte
+		}
+	}
+
+	return cost
+}
+
+// CalcPerUserOpCost calculates the gas overhead from processing a UserOperation's validation and execution
+// phase. This overhead is not constant and is correlated to the number of 32 byte words in the UserOperation.
+// It can be summarized in the equation perUserOpMultiplier * lenInWord + perUserOpFixed.
+//
+// Note: The constant values have been derived empirically by plotting the relationship between per userOp
+// overhead vs length in words with a sample size of 30.
+func (ov *Overhead) CalcPerUserOpCost(op *userop.UserOperation) float64 {
+	opLen := math.Floor(float64(len(op.Pack())+31) / 32)
+	cost := (ov.perUserOpMultiplier * opLen) + ov.perUserOpFixed
+
+	return cost
+}
+
 // CalcPreVerificationGas returns an expected gas cost for processing a UserOperation from a batch.
 func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, error) {
 	// Sanitize fields to reduce as much variability due to length and zero bytes
@@ -80,18 +111,12 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, 
 		return nil, err
 	}
 
-	// Calculate static value from pre-defined parameters
-	packed := tmp.Pack()
-	lengthInWord := float64(len(packed)+31) / 32
-	callDataCost := float64(0)
-	for _, b := range packed {
-		if b == byte(0) {
-			callDataCost += ov.zeroByte
-		} else {
-			callDataCost += ov.nonZeroByte
-		}
-	}
-	pvg := callDataCost + (ov.fixed / ov.minBundleSize) + ov.perUserOp + (ov.perUserOpWord * lengthInWord)
+	// Calculate the additional gas for adding this userOp to a batch.
+	batchOv := ((ov.intrinsicFixed + ov.batchFixed) / ov.minBundleSize) + ov.CalcCallDataCost(tmp)
+
+	// The total PVG is the sum of the batch overhead and the overhead for this userOp's validation and
+	// execution.
+	pvg := batchOv + ov.CalcPerUserOpCost(tmp)
 	static := big.NewInt(int64(math.Round(pvg)))
 
 	// Use value from CalcPreVerificationGasFunc if set, otherwise return the static value.
@@ -111,13 +136,15 @@ func (ov *Overhead) CalcPreVerificationGasWithBuffer(op *userop.UserOperation) (
 	if err != nil {
 		return nil, err
 	}
-	return addBuffer(pvg, ov.pvgBufferFactor), nil
+	return utils.AddBuffer(pvg, ov.pvgBufferFactor), nil
 }
 
 // NonZeroValueCall returns an expected gas cost of using the CALL opcode in the context of EIP-4337.
 // See https://github.com/wolflo/evm-opcodes/blob/main/gas.md#aa-1-call.
 func (ov *Overhead) NonZeroValueCall() *big.Int {
 	return big.NewInt(
-		int64(ov.fixed + ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend),
+		int64(
+			ov.intrinsicFixed + ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend,
+		),
 	)
 }

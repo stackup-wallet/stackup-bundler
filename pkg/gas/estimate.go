@@ -163,7 +163,7 @@ func EstimateGas(
 
 	// Return verificationGasLimit and callGasLimit.
 	tg := big.NewInt(0).Div(sim.Paid, op.MaxFeePerGas)
-	cgl := big.NewInt(0).Add(big.NewInt(0).Sub(tg, sim.PreOpGas), big.NewInt(int64(ov.fixed)))
+	cgl := big.NewInt(0).Add(big.NewInt(0).Sub(tg, sim.PreOpGas), big.NewInt(int64(ov.intrinsicFixed)))
 	min := ov.NonZeroValueCall()
 	if cgl.Cmp(min) >= 1 {
 		return sim.PreOpGas.Uint64(), cgl.Uint64(), nil

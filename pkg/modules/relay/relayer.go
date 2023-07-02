@@ -44,6 +44,7 @@ type Relayer struct {
 	logger           logr.Logger
 	bannedThreshold  int
 	bannedTimeWindow time.Duration
+	waitTimeout      time.Duration
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
@@ -64,6 +65,7 @@ func New(
 		logger:           l.WithName("relayer"),
 		bannedThreshold:  DefaultBanThreshold,
 		bannedTimeWindow: DefaultBanTimeWindow,
+		waitTimeout:      DefaultWaitTimeout,
 	}
 }
 
@@ -78,6 +80,15 @@ func (r *Relayer) SetBannedThreshold(limit int) {
 // 24 hours.
 func (r *Relayer) SetBannedTimeWindow(limit time.Duration) {
 	r.bannedTimeWindow = limit
+}
+
+// SetWaitTimeout sets the total time to wait for a transaction to be included. When a timeout is reached, the
+// BatchHandler will throw an error if the transaction has not been included or has been included but with a
+// failed status.
+//
+// The default value is 30 seconds. Setting the value to 0 will skip waiting for a transaction to be included.
+func (r *Relayer) SetWaitTimeout(timeout time.Duration) {
+	r.waitTimeout = timeout
 }
 
 // FilterByClientID is a custom Gin middleware used to prevent requests from banned clients from adding their
@@ -192,6 +203,18 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 		// TODO: Increment badger nextTxnTs to read latest data from MapUserOpHashToClientID.
 		time.Sleep(5 * time.Millisecond)
 
+		opts := transaction.Opts{
+			EOA:         r.eoa,
+			Eth:         r.eth,
+			ChainID:     ctx.ChainID,
+			EntryPoint:  ctx.EntryPoint,
+			Batch:       ctx.Batch,
+			Beneficiary: r.beneficiary,
+			BaseFee:     ctx.BaseFee,
+			GasPrice:    ctx.GasPrice,
+			GasLimit:    0,
+			WaitTimeout: r.waitTimeout,
+		}
 		var del []string
 		err := r.db.Update(func(txn *badger.Txn) error {
 			// Delete any userOpHash entries from dropped userOps.
@@ -203,17 +226,9 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			}
 
 			// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
-			var gas uint64
 			estRev := []string{}
 			for len(ctx.Batch) > 0 {
-				est, revert, err := transaction.EstimateHandleOpsGas(
-					r.eoa,
-					r.eth,
-					ctx.ChainID,
-					ctx.EntryPoint,
-					ctx.Batch,
-					r.beneficiary,
-				)
+				est, revert, err := transaction.EstimateHandleOpsGas(&opts)
 
 				if err != nil {
 					return err
@@ -226,41 +241,21 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 						return err
 					}
 				} else {
-					gas = est
+					opts.GasLimit = est
 					break
 				}
 			}
 			ctx.Data["relayer_est_revert_reasons"] = estRev
 
-			// Call handleOps() with gas estimate and drop all userOps that cause unexpected reverts.
-			txnRev := []string{}
-			for len(ctx.Batch) > 0 {
-				t, revert, err := transaction.HandleOps(
-					r.eoa,
-					r.eth,
-					ctx.ChainID,
-					ctx.EntryPoint,
-					ctx.Batch,
-					r.beneficiary,
-					gas,
-				)
-
-				if err != nil {
+			// Call handleOps() with gas estimate. Any userOps that cause a revert at this stage will be
+			// caught and dropped in the next iteration.
+			if len(ctx.Batch) > 0 {
+				if txn, err := transaction.HandleOps(&opts); err != nil {
 					return err
-				} else if revert != nil {
-					ctx.MarkOpIndexForRemoval(revert.OpIndex)
-					txnRev = append(txnRev, revert.Reason)
-
-					hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
-					if err := removeUserOpHashEntries(txn, hashes...); err != nil {
-						return err
-					}
 				} else {
-					ctx.Data["txn_hash"] = t.Hash().String()
-					break
+					ctx.Data["txn_hash"] = txn.Hash().String()
 				}
 			}
-			ctx.Data["relayer_txn_revert_reasons"] = txnRev
 
 			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
 			del = append([]string{}, hashes...)
