@@ -13,8 +13,8 @@ import (
 // TestFilterUnderpricedDynamic verifies that FilterUnderpriced will remove all UserOperations from a batch
 // where the effective gas price is less than the expected bundler transaction's gas price.
 func TestFilterUnderpricedDynamic(t *testing.T) {
-	bf := big.NewInt(5)
-	tip := big.NewInt(0)
+	bf := big.NewInt(4)
+	tip := big.NewInt(1)
 
 	op1 := testutils.MockValidInitUserOp()
 	op1.MaxFeePerGas = big.NewInt(4)
