@@ -18,6 +18,7 @@ type BatchHandlerCtx struct {
 	EntryPoint     common.Address
 	ChainID        *big.Int
 	BaseFee        *big.Int
+	Tip            *big.Int
 	GasPrice       *big.Int
 	Data           map[string]any
 }
@@ -28,6 +29,7 @@ func NewBatchHandlerContext(
 	entryPoint common.Address,
 	chainID *big.Int,
 	baseFee *big.Int,
+	tip *big.Int,
 	gasPrice *big.Int,
 ) *BatchHandlerCtx {
 	var copy []*userop.UserOperation
@@ -39,6 +41,7 @@ func NewBatchHandlerContext(
 		EntryPoint:     entryPoint,
 		ChainID:        chainID,
 		BaseFee:        baseFee,
+		Tip:            tip,
 		GasPrice:       gasPrice,
 		Data:           make(map[string]any),
 	}
