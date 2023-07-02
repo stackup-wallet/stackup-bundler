@@ -112,16 +112,16 @@ func CalcOptimismPVGWithEthClient(
 		if err != nil {
 			return nil, err
 		}
-		tx, err := transaction.CreateRawHandleOps(
-			dummy,
-			eth,
-			chainID,
-			entryPoint,
-			[]*userop.UserOperation{op},
-			dummy.Address,
-			math.MaxUint64,
-			head.BaseFee,
-		)
+		tx, err := transaction.CreateRawHandleOps(&transaction.Opts{
+			EOA:         dummy,
+			Eth:         eth,
+			ChainID:     chainID,
+			EntryPoint:  entryPoint,
+			Batch:       []*userop.UserOperation{op},
+			Beneficiary: dummy.Address,
+			BaseFee:     head.BaseFee,
+			GasLimit:    math.MaxUint64,
+		})
 		if err != nil {
 			return nil, err
 		}

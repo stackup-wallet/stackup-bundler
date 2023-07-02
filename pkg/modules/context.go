@@ -17,6 +17,9 @@ type BatchHandlerCtx struct {
 	PendingRemoval []*userop.UserOperation
 	EntryPoint     common.Address
 	ChainID        *big.Int
+	BaseFee        *big.Int
+	Tip            *big.Int
+	GasPrice       *big.Int
 	Data           map[string]any
 }
 
@@ -25,6 +28,9 @@ func NewBatchHandlerContext(
 	batch []*userop.UserOperation,
 	entryPoint common.Address,
 	chainID *big.Int,
+	baseFee *big.Int,
+	tip *big.Int,
+	gasPrice *big.Int,
 ) *BatchHandlerCtx {
 	var copy []*userop.UserOperation
 	copy = append(copy, batch...)
@@ -34,6 +40,9 @@ func NewBatchHandlerContext(
 		PendingRemoval: []*userop.UserOperation{},
 		EntryPoint:     entryPoint,
 		ChainID:        chainID,
+		BaseFee:        baseFee,
+		Tip:            tip,
+		GasPrice:       gasPrice,
 		Data:           make(map[string]any),
 	}
 }
