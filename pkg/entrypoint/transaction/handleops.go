@@ -114,6 +114,10 @@ func HandleOps(opts *Opts) (txn *types.Transaction, err error) {
 		if tip, err := SuggestMeanGasTipCap(opts.Eth, opts.Batch); err != nil {
 			return nil, err
 		} else {
+			// Note: If gas price was to spike, we can run into an edge case where the suggested gas tip from
+			// the underlying node is greater than either of the suggested gas fee caps. This is fine since
+			// the eth client will throw an error and the userOp will not be submitted until either the gas
+			// tip comes back down or the userOp gets replaced with 10% higher fees.
 			auth.GasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
 			auth.GasTipCap = tip
 		}
