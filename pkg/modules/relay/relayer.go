@@ -211,6 +211,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			Batch:       ctx.Batch,
 			Beneficiary: r.beneficiary,
 			BaseFee:     ctx.BaseFee,
+			Tip:         ctx.Tip,
 			GasPrice:    ctx.GasPrice,
 			GasLimit:    0,
 			WaitTimeout: r.waitTimeout,

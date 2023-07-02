@@ -28,6 +28,7 @@ type Bundler struct {
 	stop                 func()
 	maxBatch             int
 	gbf                  gasprice.GetBaseFeeFunc
+	ggt                  gasprice.GetGasTipFunc
 	ggp                  gasprice.GetLegacyGasPriceFunc
 }
 
@@ -45,6 +46,7 @@ func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []comm
 		stop:                 func() {},
 		maxBatch:             0,
 		gbf:                  gasprice.NoopGetBaseFeeFunc(),
+		ggt:                  gasprice.NoopGetGasTipFunc(),
 		ggp:                  gasprice.NoopGetLegacyGasPriceFunc(),
 	}
 }
@@ -57,6 +59,11 @@ func (i *Bundler) SetMaxBatch(max int) {
 // SetGetBaseFeeFunc defines the function used to retrieve an estimate for basefee during each bundler run.
 func (i *Bundler) SetGetBaseFeeFunc(gbf gasprice.GetBaseFeeFunc) {
 	i.gbf = gbf
+}
+
+// SetGetGasTipFunc defines the function used to retrieve an estimate for gas tip during each bundler run.
+func (i *Bundler) SetGetGasTipFunc(ggt gasprice.GetGasTipFunc) {
+	i.ggt = ggt
 }
 
 // SetGetLegacyGasPriceFunc defines the function used to retrieve an estimate for gas price during each
@@ -91,6 +98,16 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 		return nil, err
 	}
 
+	// Get suggested gas tip
+	var gt *big.Int
+	if bf != nil {
+		gt, err = i.ggt()
+		if err != nil {
+			l.Error(err, "bundler run error")
+			return nil, err
+		}
+	}
+
 	// Get suggested gas price (for networks that don't support EIP-1559)
 	gp, err := i.ggp()
 	if err != nil {
@@ -111,7 +128,7 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 	batch = adjustBatchSize(i.maxBatch, batch)
 
 	// Create context and execute modules.
-	ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID, bf, gp)
+	ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID, bf, gt, gp)
 	if err := i.batchHandler(ctx); err != nil {
 		l.Error(err, "bundler run error")
 		return nil, err

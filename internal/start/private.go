@@ -111,6 +111,7 @@ func PrivateMode() {
 	// Init Bundler
 	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
 	b.SetGetBaseFeeFunc(gasprice.GetBaseFeeWithEthClient(eth))
+	b.SetGetGasTipFunc(gasprice.GetGasTipWithEthClient(eth))
 	b.SetGetLegacyGasPriceFunc(gasprice.GetLegacyGasPriceWithEthClient(eth))
 	b.UseLogger(logr)
 	b.UseModules(

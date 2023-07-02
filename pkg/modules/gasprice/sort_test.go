@@ -10,9 +10,12 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// TestSortByGasPriceBaseFee verifies that SortByGasPrice sorts the UserOperations in a batch by highest
+// TestSortByGasPriceBaseDynamic verifies that SortByGasPrice sorts the UserOperations in a batch by highest
 // effective Gas Price first.
-func TestSortByGasPriceBaseFee(t *testing.T) {
+func TestSortByGasPriceBaseDynamic(t *testing.T) {
+	bf := big.NewInt(3)
+	tip := big.NewInt(0)
+
 	op1 := testutils.MockValidInitUserOp()
 	op1.MaxFeePerGas = big.NewInt(4)
 	op1.MaxPriorityFeePerGas = big.NewInt(3)
@@ -31,7 +34,8 @@ func TestSortByGasPriceBaseFee(t *testing.T) {
 		[]*userop.UserOperation{op1, op2, op3},
 		testutils.ValidAddress1,
 		testutils.ChainID,
-		big.NewInt(3),
+		bf,
+		tip,
 		big.NewInt(6),
 	)
 	if err := gasprice.SortByGasPrice()(ctx); err != nil {
@@ -68,6 +72,7 @@ func TestSortByGasPriceLegacy(t *testing.T) {
 		[]*userop.UserOperation{op1, op2, op3},
 		testutils.ValidAddress1,
 		testutils.ChainID,
+		nil,
 		nil,
 		big.NewInt(4),
 	)

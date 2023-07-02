@@ -35,6 +35,7 @@ type Opts struct {
 
 	// Options for the EOA transaction
 	BaseFee     *big.Int
+	Tip         *big.Int
 	GasPrice    *big.Int
 	GasLimit    uint64
 	WaitTimeout time.Duration
@@ -110,21 +111,13 @@ func HandleOps(opts *Opts) (txn *types.Transaction, err error) {
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
 
-	if opts.BaseFee != nil {
-		if tip, err := SuggestMeanGasTipCap(opts.Eth, opts.Batch); err != nil {
-			return nil, err
-		} else {
-			// Note: If gas price was to spike, we can run into an edge case where the suggested gas tip from
-			// the underlying node is greater than either of the suggested gas fee caps. This is fine since
-			// the eth client will throw an error and the userOp will not be submitted until either the gas
-			// tip comes back down or the userOp gets replaced with 10% higher fees.
-			auth.GasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
-			auth.GasTipCap = tip
-		}
+	if opts.BaseFee != nil && opts.Tip != nil {
+		auth.GasFeeCap = SuggestMeanGasFeeCap(opts.BaseFee, opts.Batch)
+		auth.GasTipCap = SuggestMeanGasTipCap(opts.Tip, opts.Batch)
 	} else if opts.GasPrice != nil {
 		auth.GasPrice = SuggestMeanGasPrice(opts.GasPrice, opts.Batch)
 	} else {
-		return nil, errors.New("transaction: opts.BaseFee and opts.GasPrice cannot both be nil")
+		return nil, errors.New("transaction: either the dynamic or legacy gas fees must be set")
 	}
 
 	txn, err = ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
