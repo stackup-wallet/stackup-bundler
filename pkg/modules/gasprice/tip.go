@@ -12,14 +12,14 @@ import (
 type GetGasTipFunc = func() (*big.Int, error)
 
 // NoopGetGasTipFunc returns nil gas tip and nil error.
-func NoopGetGasTipFunc() GetLegacyGasPriceFunc {
+func NoopGetGasTipFunc() GetGasTipFunc {
 	return func() (*big.Int, error) {
 		return nil, nil
 	}
 }
 
 // GetGasTipWithEthClient returns a GetGasTipFunc using an eth client.
-func GetGasTipWithEthClient(eth *ethclient.Client) GetLegacyGasPriceFunc {
+func GetGasTipWithEthClient(eth *ethclient.Client) GetGasTipFunc {
 	return func() (*big.Int, error) {
 		gt, err := eth.SuggestGasTipCap(context.Background())
 		if err != nil {
