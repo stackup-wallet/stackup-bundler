@@ -14,7 +14,6 @@ import (
 // Overhead provides helper methods for calculating gas limits based on pre-defined parameters.
 type Overhead struct {
 	intrinsicFixed      float64
-	batchFixed          float64
 	perUserOpFixed      float64
 	perUserOpMultiplier float64
 	zeroByte            float64
@@ -35,7 +34,6 @@ type Overhead struct {
 func NewDefaultOverhead() *Overhead {
 	return &Overhead{
 		intrinsicFixed:      21000,
-		batchFixed:          816,
 		perUserOpFixed:      22874,
 		perUserOpMultiplier: 25,
 		zeroByte:            4,
@@ -112,7 +110,7 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, 
 	}
 
 	// Calculate the additional gas for adding this userOp to a batch.
-	batchOv := ((ov.intrinsicFixed + ov.batchFixed) / ov.minBundleSize) + ov.CalcCallDataCost(tmp)
+	batchOv := (ov.intrinsicFixed / ov.minBundleSize) + ov.CalcCallDataCost(tmp)
 
 	// The total PVG is the sum of the batch overhead and the overhead for this userOp's validation and
 	// execution.
