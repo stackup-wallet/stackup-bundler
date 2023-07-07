@@ -41,6 +41,23 @@ func newStorageSlotsByEntity(stakes EntityStakes, keccak []string) storageSlotsB
 	return storageSlotsByEntity
 }
 
+type storageSlotsValidator struct {
+	// Global parameters
+	Op         *userop.UserOperation
+	EntryPoint common.Address
+
+	// Parameters of specific entities required for all validation
+	SenderSlots     storageSlots
+	FactoryIsStaked bool
+
+	// Parameters of the entity under validation
+	EntityName     string
+	EntityAddr     common.Address
+	EntityAccess   tracer.AccessMap
+	EntitySlots    storageSlots
+	EntityIsStaked bool
+}
+
 func isAssociatedWith(slots storageSlots, slot string) bool {
 	slotN, _ := big.NewInt(0).SetString(fmt.Sprintf("0x%s", slot), 0)
 	for _, k := range slots.ToSlice() {
@@ -53,26 +70,18 @@ func isAssociatedWith(slots storageSlots, slot string) bool {
 	return false
 }
 
-func validateStorageSlotsForEntity(
-	entityName string,
-	op *userop.UserOperation,
-	entryPoint common.Address,
-	slotsByEntity storageSlotsByEntity,
-	entityAccess tracer.AccessMap,
-	entityAddr common.Address,
-	entityIsStaked bool,
-) error {
-	senderSlots, senderSlotOk := slotsByEntity[op.Sender]
-	if !senderSlotOk {
+func (v *storageSlotsValidator) Process() error {
+	senderSlots := v.SenderSlots
+	if senderSlots == nil {
 		senderSlots = mapset.NewSet[string]()
 	}
-	storageSlots, entitySlotOk := slotsByEntity[entityAddr]
-	if !entitySlotOk {
-		storageSlots = mapset.NewSet[string]()
+	entitySlots := v.EntitySlots
+	if entitySlots == nil {
+		entitySlots = mapset.NewSet[string]()
 	}
 
-	for addr, access := range entityAccess {
-		if addr == op.Sender || addr == entryPoint {
+	for addr, access := range v.EntityAccess {
+		if addr == v.Op.Sender || addr == v.EntryPoint {
 			continue
 		}
 
@@ -84,24 +93,24 @@ func validateStorageSlotsForEntity(
 		for key, slotCount := range accessTypes {
 			for slot := range slotCount {
 				if isAssociatedWith(senderSlots, slot) {
-					if len(op.InitCode) > 0 {
+					if len(v.Op.InitCode) > 0 && !v.FactoryIsStaked {
 						mustStakeSlot = slot
 					} else {
 						continue
 					}
-				} else if isAssociatedWith(storageSlots, slot) || addr == entityAddr {
+				} else if isAssociatedWith(entitySlots, slot) || addr == v.EntityAddr {
 					mustStakeSlot = slot
 				} else {
-					return fmt.Errorf("%s has forbidden %s to %s slot %s", entityName, key, addr2KnownEntity(op, addr), slot)
+					return fmt.Errorf("%s has forbidden %s to %s slot %s", v.EntityName, key, addr2KnownEntity(v.Op, addr), slot)
 				}
 			}
 		}
 
-		if mustStakeSlot != "" && !entityIsStaked {
+		if mustStakeSlot != "" && !v.EntityIsStaked {
 			return fmt.Errorf(
 				"unstaked %s accessed %s slot %s",
-				entityName,
-				addr2KnownEntity(op, addr),
+				v.EntityName,
+				addr2KnownEntity(v.Op, addr),
 				mustStakeSlot,
 			)
 		}

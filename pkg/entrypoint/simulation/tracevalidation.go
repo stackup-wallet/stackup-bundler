@@ -89,15 +89,18 @@ func TraceSimulateValidation(
 
 	slotsByEntity := newStorageSlotsByEntity(stakes, res.Keccak)
 	for title, entity := range knownEntity {
-		if err := validateStorageSlotsForEntity(
-			title,
-			op,
-			entryPoint,
-			slotsByEntity,
-			entity.Info.Access,
-			entity.Address,
-			entity.IsStaked,
-		); err != nil {
+		v := &storageSlotsValidator{
+			Op:              op,
+			EntryPoint:      entryPoint,
+			SenderSlots:     slotsByEntity[op.Sender],
+			FactoryIsStaked: knownEntity["factory"].IsStaked,
+			EntityName:      title,
+			EntityAddr:      entity.Address,
+			EntityAccess:    entity.Info.Access,
+			EntitySlots:     slotsByEntity[entity.Address],
+			EntityIsStaked:  entity.IsStaked,
+		}
+		if err := v.Process(); err != nil {
 			return nil, err
 		}
 	}
