@@ -125,7 +125,7 @@ func EstimateGas(
 		return 0, 0, err
 	}
 
-	// Calculate final values for verificationGasLimit and callGasLimit
+	// Calculate final values for verificationGasLimit and callGasLimit.
 	vgl := simOp.VerificationGasLimit
 	cgl := big.NewInt(0).
 		Add(big.NewInt(0).Sub(ev.ActualGasUsed, sim.PreOpGas), big.NewInt(int64(ov.intrinsicFixed)))
