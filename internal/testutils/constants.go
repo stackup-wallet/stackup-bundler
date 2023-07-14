@@ -13,6 +13,7 @@ var (
 	DefaultUnstakeDelaySec  = uint32(86400)
 	ValidAddress1           = common.HexToAddress("0x7357b8a705328FC283dF72D7Ac546895B596DC12")
 	ValidAddress2           = common.HexToAddress("0x7357c9504B8686c008CCcD6ea47f1c21B7475dE3")
+	ValidAddress3           = common.HexToAddress("0x7357C8D931e8cde8ea1b777Cf8578f4A7071f100")
 	ChainID                 = big.NewInt(1)
 	MaxOpsForUnstakedSender = 1
 	StakedDepositInfo       = &entrypoint.IStakeManagerDepositInfo{

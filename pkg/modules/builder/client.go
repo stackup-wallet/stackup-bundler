@@ -50,23 +50,26 @@ func New(
 func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
-		var gas uint64
+		opts := transaction.Opts{
+			EOA:         b.eoa,
+			Eth:         b.eth,
+			ChainID:     ctx.ChainID,
+			EntryPoint:  ctx.EntryPoint,
+			Batch:       ctx.Batch,
+			Beneficiary: b.beneficiary,
+			BaseFee:     ctx.BaseFee,
+			GasPrice:    ctx.GasPrice,
+			GasLimit:    0,
+		}
 		for len(ctx.Batch) > 0 {
-			est, revert, err := transaction.EstimateHandleOpsGas(
-				b.eoa,
-				b.eth,
-				ctx.ChainID,
-				ctx.EntryPoint,
-				ctx.Batch,
-				b.beneficiary,
-			)
+			est, revert, err := transaction.EstimateHandleOpsGas(&opts)
 
 			if err != nil {
 				return err
 			} else if revert != nil {
 				ctx.MarkOpIndexForRemoval(revert.OpIndex)
 			} else {
-				gas = est
+				opts.GasLimit = est
 				break
 			}
 		}
@@ -78,28 +81,16 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 		}
 		blkNum := big.NewInt(0).SetUint64(bn)
 		NxtBlkNum := big.NewInt(0).Add(blkNum, big.NewInt(1))
-		blk, err := b.eth.HeaderByNumber(context.Background(), blkNum)
-		if err != nil {
-			return err
-		}
-		mbf := blk.BaseFee
+		mbf := ctx.BaseFee
 		for i := 0; i < b.blocksInTheFuture; i++ {
 			a := big.NewInt(0).Mul(mbf, big.NewInt(1125))
 			b := big.NewInt(0).Div(a, big.NewInt(1000))
 			mbf = big.NewInt(0).Add(b, big.NewInt(1))
 		}
+		opts.BaseFee = mbf
 
 		// Call CreateRawHandleOps() with gas estimate and max base fee.
-		rawTx, err := transaction.CreateRawHandleOps(
-			b.eoa,
-			b.eth,
-			ctx.ChainID,
-			ctx.EntryPoint,
-			ctx.Batch,
-			b.beneficiary,
-			gas,
-			mbf,
-		)
+		rawTx, err := transaction.CreateRawHandleOps(&opts)
 		if err != nil {
 			return err
 		}
