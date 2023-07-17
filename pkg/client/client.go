@@ -181,9 +181,12 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 
 	l.Info("eth_estimateUserOperationGas ok")
 	return &gas.GasEstimates{
-		PreVerificationGas: pvg,
-		VerificationGas:    big.NewInt(int64(vg)),
-		CallGasLimit:       big.NewInt(int64(cg)),
+		PreVerificationGas:   pvg,
+		VerificationGasLimit: big.NewInt(int64(vg)),
+		CallGasLimit:         big.NewInt(int64(cg)),
+
+		// TODO: Deprecate in v0.7
+		VerificationGas: big.NewInt(int64(vg)),
 	}, nil
 }
 
