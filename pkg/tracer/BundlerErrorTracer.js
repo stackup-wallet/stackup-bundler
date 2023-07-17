@@ -27,13 +27,13 @@ var tracer = {
 
   _setUserOperationEvent: function (opcode, log) {
     var count = parseInt(opcode.substring(3));
-    var ofs2 = parseInt(log.stack.peek(0).toString());
-    var len2 = parseInt(log.stack.peek(1).toString());
+    var ofs = parseInt(log.stack.peek(0).toString());
+    var len = parseInt(log.stack.peek(1).toString());
     var topics = [];
     for (var i = 0; i < count; i++) {
       topics.push("0x" + log.stack.peek(2 + i).toString(16));
     }
-    var data = toHex(log.memory.slice(ofs2, ofs2 + len2));
+    var data = toHex(log.memory.slice(ofs, ofs + len));
     this.userOperationEvent = {
       topics: topics,
       data: data,
