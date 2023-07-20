@@ -20,6 +20,26 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+type TraceInput struct {
+	Rpc        *ethRpc.Client
+	EntryPoint common.Address
+	Op         *userop.UserOperation
+	ChainID    *big.Int
+
+	// Tracer for debug_traceCall
+	CustomTracer string
+
+	// Optional params for simulateHandleOps
+	Target common.Address
+	Data   []byte
+}
+
+type TraceOutput struct {
+	Trace  *tracer.BundlerErrorReturn
+	Result *reverts.ExecutionResultRevert
+	Event  *entrypoint.EntrypointUserOperationEvent
+}
+
 func parseUserOperationEvent(
 	entryPoint common.Address,
 	ep *entrypoint.Entrypoint,
@@ -50,82 +70,79 @@ func parseUserOperationEvent(
 	return ev, nil
 }
 
-func TraceSimulateHandleOp(
-	rpc *ethRpc.Client,
-	entryPoint common.Address,
-	op *userop.UserOperation,
-	chainID *big.Int,
-	customTracer string,
-	target common.Address,
-	data []byte,
-) (*reverts.ExecutionResultRevert, *entrypoint.EntrypointUserOperationEvent, error) {
-	ep, err := entrypoint.NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
+func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
+	ep, err := entrypoint.NewEntrypoint(in.EntryPoint, ethclient.NewClient(in.Rpc))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	auth, err := bind.NewKeyedTransactorWithChainID(utils.DummyPk, chainID)
+	auth, err := bind.NewKeyedTransactorWithChainID(utils.DummyPk, in.ChainID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
-	tx, err := ep.SimulateHandleOp(auth, entrypoint.UserOperation(*op), target, data)
+	tx, err := ep.SimulateHandleOp(auth, entrypoint.UserOperation(*in.Op), in.Target, in.Data)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+	out := &TraceOutput{}
 
 	var res tracer.BundlerErrorReturn
 	req := utils.TraceCallReq{
 		From: common.HexToAddress("0x"),
-		To:   entryPoint,
+		To:   in.EntryPoint,
 		Data: tx.Data(),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer: customTracer,
+		Tracer: in.CustomTracer,
 	}
-	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
-		return nil, nil, err
+	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
+		return nil, err
 	}
 	outErr, err := errors.ParseHexToRpcDataError(res.Output)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if res.ValidationOOG {
-		return nil, nil, errors.NewRPCError(errors.EXECUTION_REVERTED, "validation OOG", nil)
+		return nil, errors.NewRPCError(errors.EXECUTION_REVERTED, "validation OOG", nil)
 	}
+	out.Trace = &res
 
 	sim, simErr := reverts.NewExecutionResult(outErr)
 	if simErr != nil {
 		fo, foErr := reverts.NewFailedOp(outErr)
 		if foErr != nil {
-			return nil, nil, fmt.Errorf("%s, %s", simErr, foErr)
+			return nil, fmt.Errorf("%s, %s", simErr, foErr)
 		}
-		return nil, nil, errors.NewRPCError(errors.REJECTED_BY_EP_OR_ACCOUNT, fo.Reason, fo)
+		return nil, errors.NewRPCError(errors.REJECTED_BY_EP_OR_ACCOUNT, fo.Reason, fo)
 	}
+	out.Result = sim
 
 	if len(res.Reverts) != 0 {
 		data, err := hexutil.Decode(res.Reverts[len(res.Reverts)-1])
 		if err != nil {
-			return sim, nil, err
+			return out, err
 		}
 
 		if len(data) == 0 {
 			if res.ExecutionOOG {
-				return sim, nil, errors.NewRPCError(errors.EXECUTION_REVERTED, "execution OOG", nil)
+				return out, errors.NewRPCError(errors.EXECUTION_REVERTED, "execution OOG", nil)
 			}
-			return sim, nil, errors.NewRPCError(errors.EXECUTION_REVERTED, "execution reverted", nil)
+			return out, errors.NewRPCError(errors.EXECUTION_REVERTED, "execution reverted", nil)
 		}
 
 		reason, err := errors.DecodeRevert(data)
 		if err != nil {
-			return sim, nil, err
+			return out, err
 		}
-		return sim, nil, errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
+		return out, errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
 	}
 
-	ev, err := parseUserOperationEvent(entryPoint, ep, res.UserOperationEvent)
+	ev, err := parseUserOperationEvent(in.EntryPoint, ep, res.UserOperationEvent)
 	if err != nil {
-		return nil, nil, err
+		return out, err
 	}
-	return sim, ev, nil
+	out.Event = ev
+
+	return out, nil
 }

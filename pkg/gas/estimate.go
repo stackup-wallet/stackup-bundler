@@ -66,15 +66,13 @@ func EstimateGas(
 		if err != nil {
 			return 0, 0, err
 		}
-		sim, _, err := execution.TraceSimulateHandleOp(
-			rpc,
-			from,
-			simOp,
-			chainID,
-			tracer,
-			common.Address{},
-			[]byte{},
-		)
+		out, err := execution.TraceSimulateHandleOp(&execution.TraceInput{
+			Rpc:          rpc,
+			EntryPoint:   from,
+			Op:           simOp,
+			ChainID:      chainID,
+			CustomTracer: tracer,
+		})
 		simErr = err
 		if err != nil {
 			if isPrefundNotPaid(err) {
@@ -95,7 +93,7 @@ func EstimateGas(
 
 		// Optimal VGL found.
 		data["verificationGasLimit"] = hexutil.EncodeBig(
-			big.NewInt(0).Sub(sim.PreOpGas, op.PreVerificationGas),
+			big.NewInt(0).Sub(out.Result.PreOpGas, op.PreVerificationGas),
 		)
 		break
 	}
@@ -112,27 +110,22 @@ func EstimateGas(
 	if err != nil {
 		return 0, 0, err
 	}
-	sim, ev, err := execution.TraceSimulateHandleOp(
-		rpc,
-		from,
-		simOp,
-		chainID,
-		tracer,
-		common.Address{},
-		[]byte{},
-	)
+	out, err := execution.TraceSimulateHandleOp(&execution.TraceInput{
+		Rpc:          rpc,
+		EntryPoint:   from,
+		Op:           simOp,
+		ChainID:      chainID,
+		CustomTracer: tracer,
+	})
 	if err != nil {
 		return 0, 0, err
 	}
 
 	// Calculate final values for verificationGasLimit and callGasLimit.
 	vgl := simOp.VerificationGasLimit
-	cgl := big.NewInt(0).
-		Add(big.NewInt(0).Sub(ev.ActualGasUsed, sim.PreOpGas), big.NewInt(int64(ov.intrinsicFixed)))
-	min := ov.NonZeroValueCall()
-	if min.Cmp(cgl) >= 1 {
-		cgl = min
-	}
+	cg := big.NewInt(0).Sub(out.Event.ActualGasUsed, out.Result.PreOpGas)
+	cgb := big.NewInt(int64(out.Trace.ExecutionGasBuffer))
+	cgl := big.NewInt(0).Add(cg, cgb)
 
 	// Run a final simulation to check wether or not value transfers are still okay when factoring in the
 	// expected gas cost.
@@ -144,17 +137,15 @@ func EstimateGas(
 	if err != nil {
 		return 0, 0, err
 	}
-	_, _, err = execution.TraceSimulateHandleOp(
-		rpc,
-		from,
-		simOp,
-		chainID,
-		tracer,
-		common.Address{},
-		[]byte{},
-	)
+	_, err = execution.TraceSimulateHandleOp(&execution.TraceInput{
+		Rpc:          rpc,
+		EntryPoint:   from,
+		Op:           simOp,
+		ChainID:      chainID,
+		CustomTracer: tracer,
+	})
 	if err != nil {
 		return 0, 0, err
 	}
-	return vgl.Uint64(), cgl.Uint64(), nil
+	return simOp.VerificationGasLimit.Uint64(), simOp.CallGasLimit.Uint64(), nil
 }
