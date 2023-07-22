@@ -1,0 +1,47 @@
+import { ethers } from "ethers";
+
+export const fundIfRequired = async (
+  provider: ethers.providers.JsonRpcProvider,
+  token: ethers.Contract,
+  bundler: string,
+  account: string
+) => {
+  const signer = provider.getSigner(0);
+  const [bundlerBalance, accountBalance, accountTokenBalance] =
+    await Promise.all([
+      provider.getBalance(bundler),
+      provider.getBalance(account),
+      token.balanceOf(account) as ethers.BigNumber,
+    ]);
+
+  if (bundlerBalance.eq(0)) {
+    const response = await signer.sendTransaction({
+      to: bundler,
+      value: ethers.constants.WeiPerEther,
+    });
+    await response.wait();
+    console.log("Funded Bundler with 1 ETH...");
+  }
+
+  if (accountBalance.eq(0)) {
+    const response = await signer.sendTransaction({
+      to: account,
+      value: ethers.constants.WeiPerEther,
+    });
+    await response.wait();
+    console.log("Funded Account with 1 ETH...");
+  }
+
+  if (accountTokenBalance.eq(0)) {
+    const response = await signer.sendTransaction({
+      to: token.address,
+      value: 0,
+      data: token.interface.encodeFunctionData("mint", [
+        account,
+        ethers.utils.parseUnits("10", 6),
+      ]),
+    });
+    await response.wait();
+    console.log("Minted 10 Test Tokens for Account...");
+  }
+};
