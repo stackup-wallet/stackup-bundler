@@ -62,7 +62,7 @@ var tracer = {
       }
 
       if (this._depth > 2) {
-        this.executionGasBuffer += Math.ceil(frame.getGasUsed() / 63);
+        this.executionGasBuffer += 2300 + Math.ceil(frame.getGasUsed() / 63);
       }
     }
   },

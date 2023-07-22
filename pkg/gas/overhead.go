@@ -20,9 +20,8 @@ type Overhead struct {
 	nonZeroByte         float64
 	minBundleSize       float64
 	warmStorageRead     float64
-	nonZeroValueCall    float64
+	callWithValue       float64
 	callOpcode          float64
-	nonZeroValueStipend float64
 	sanitizedPVG        *big.Int
 	sanitizedVGL        *big.Int
 	sanitizedCGL        *big.Int
@@ -39,10 +38,9 @@ func NewDefaultOverhead() *Overhead {
 		zeroByte:            4,
 		nonZeroByte:         16,
 		minBundleSize:       1,
-		warmStorageRead:     100,
-		nonZeroValueCall:    9000,
 		callOpcode:          700,
-		nonZeroValueStipend: 2300,
+		callWithValue:       9000,
+		warmStorageRead:     100,
 		sanitizedPVG:        big.NewInt(100000),
 		sanitizedVGL:        big.NewInt(1000000),
 		sanitizedCGL:        big.NewInt(1000000),
@@ -137,12 +135,12 @@ func (ov *Overhead) CalcPreVerificationGasWithBuffer(op *userop.UserOperation) (
 	return utils.AddBuffer(pvg, ov.pvgBufferFactor), nil
 }
 
-// NonZeroValueCall returns an expected gas cost of using the CALL opcode in the context of EIP-4337.
+// NonZeroValueCall returns an expected gas cost of using the CALL opcode with non-zero value.
 // See https://github.com/wolflo/evm-opcodes/blob/main/gas.md#aa-1-call.
 func (ov *Overhead) NonZeroValueCall() *big.Int {
 	return big.NewInt(
 		int64(
-			ov.intrinsicFixed + ov.warmStorageRead + ov.nonZeroValueCall + ov.callOpcode + ov.nonZeroValueStipend,
+			ov.callOpcode + ov.callWithValue + ov.warmStorageRead,
 		),
 	)
 }
