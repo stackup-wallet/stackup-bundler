@@ -126,6 +126,9 @@ func EstimateGas(
 	cg := big.NewInt(0).Sub(out.Event.ActualGasUsed, out.Result.PreOpGas)
 	cgb := big.NewInt(int64(out.Trace.ExecutionGasBuffer))
 	cgl := big.NewInt(0).Add(cg, cgb)
+	if cgl.Cmp(ov.NonZeroValueCall()) < 0 {
+		cgl = ov.NonZeroValueCall()
+	}
 
 	// Run a final simulation to check wether or not value transfers are still okay when factoring in the
 	// expected gas cost.

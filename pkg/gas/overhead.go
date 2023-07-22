@@ -22,6 +22,7 @@ type Overhead struct {
 	warmStorageRead     float64
 	callWithValue       float64
 	callOpcode          float64
+	nonZeroValueStipend float64
 	sanitizedPVG        *big.Int
 	sanitizedVGL        *big.Int
 	sanitizedCGL        *big.Int
@@ -41,6 +42,7 @@ func NewDefaultOverhead() *Overhead {
 		callOpcode:          700,
 		callWithValue:       9000,
 		warmStorageRead:     100,
+		nonZeroValueStipend: 2300,
 		sanitizedPVG:        big.NewInt(100000),
 		sanitizedVGL:        big.NewInt(1000000),
 		sanitizedCGL:        big.NewInt(1000000),
@@ -140,7 +142,7 @@ func (ov *Overhead) CalcPreVerificationGasWithBuffer(op *userop.UserOperation) (
 func (ov *Overhead) NonZeroValueCall() *big.Int {
 	return big.NewInt(
 		int64(
-			ov.callOpcode + ov.callWithValue + ov.warmStorageRead,
+			ov.callOpcode + ov.callWithValue + ov.warmStorageRead + ov.nonZeroValueStipend,
 		),
 	)
 }
