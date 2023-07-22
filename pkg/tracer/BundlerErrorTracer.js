@@ -2,7 +2,9 @@ var tracer = {
   reverts: [],
   validationOOG: false,
   executionOOG: false,
+  executionGasBuffer: 0,
 
+  _depth: 0,
   _marker: 0,
   _validationMarker: 1,
   _executionMarker: 3,
@@ -46,6 +48,7 @@ var tracer = {
       reverts: this.reverts,
       validationOOG: this.validationOOG,
       executionOOG: this.executionOOG,
+      executionGasBuffer: this.executionGasBuffer,
       userOperationEvent: this.userOperationEvent,
       output: toHex(ctx.output),
     };
@@ -53,18 +56,24 @@ var tracer = {
 
   enter: function enter(frame) {},
   exit: function exit(frame) {
-    if (frame.getError() !== undefined && this._isExecution()) {
-      this.reverts.push(toHex(frame.getOutput()));
+    if (this._isExecution()) {
+      if (frame.getError() !== undefined) {
+        this.reverts.push(toHex(frame.getOutput()));
+      }
+
+      if (this._depth > 2) {
+        this.executionGasBuffer += 2300 + Math.ceil(frame.getGasUsed() / 63);
+      }
     }
   },
 
   step: function step(log, db) {
     var opcode = log.op.toString();
-    var depth = log.getDepth();
-    if (depth === 1 && opcode === "NUMBER") this._marker++;
+    this._depth = log.getDepth();
+    if (this._depth === 1 && opcode === "NUMBER") this._marker++;
 
     if (
-      depth <= 2 &&
+      this._depth <= 2 &&
       opcode.startsWith("LOG") &&
       this._isUserOperationEvent(log)
     )

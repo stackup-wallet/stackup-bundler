@@ -59,6 +59,7 @@ type BundlerErrorReturn struct {
 	Reverts            []string `json:"reverts"`
 	ValidationOOG      bool     `json:"validationOOG"`
 	ExecutionOOG       bool     `json:"executionOOG"`
+	ExecutionGasBuffer float64  `json:"executionGasBuffer"`
 	UserOperationEvent *LogInfo `json:"userOperationEvent,omitempty"`
 	Output             string   `json:"output"`
 }
