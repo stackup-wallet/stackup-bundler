@@ -59,6 +59,7 @@ jobs:
         with:
           repository: stackup-wallet/contracts
           path: ./contracts
+          submodules: true
 
       - name: Install Geth
         run: |
