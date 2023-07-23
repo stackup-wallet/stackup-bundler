@@ -26,9 +26,6 @@ type TraceInput struct {
 	Op         *userop.UserOperation
 	ChainID    *big.Int
 
-	// Tracer for debug_traceCall
-	CustomTracer string
-
 	// Optional params for simulateHandleOps
 	Target common.Address
 	Data   []byte
@@ -94,7 +91,7 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 		Data: tx.Data(),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer: in.CustomTracer,
+		Tracer: tracer.Loaded.BundlerErrorTracer,
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err

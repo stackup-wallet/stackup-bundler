@@ -80,8 +80,8 @@ func SearcherMode() {
 		rpc,
 		ov,
 		conf.MaxVerificationGas,
+		conf.MaxBatchGasLimit,
 		conf.MaxOpsForUnstakedSender,
-		conf.BundlerCollectorTracer,
 	)
 	// TODO: Create separate go-routine for tracking transactions sent to the block builder.
 	builder := builder.New(eoa, eth, fb, beneficiary, conf.BlocksInTheFuture)
@@ -90,7 +90,7 @@ func SearcherMode() {
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
-	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.BundlerErrorTracer))
+	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain))
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(

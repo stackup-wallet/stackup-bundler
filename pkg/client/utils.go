@@ -48,10 +48,15 @@ func GetGasEstimateWithEthClient(
 	rpc *rpc.Client,
 	ov *gas.Overhead,
 	chain *big.Int,
-	tracer string,
 ) GetGasEstimateFunc {
 	return func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error) {
-		return gas.EstimateGas(rpc, ep, op, ov, chain, tracer)
+		return gas.EstimateGas(&gas.EstimateInput{
+			Rpc:        rpc,
+			EntryPoint: ep,
+			Op:         op,
+			Ov:         ov,
+			ChainID:    chain,
+		})
 	}
 }
 

@@ -5,6 +5,7 @@ var tracer = {
   executionGasBuffer: 0,
 
   _depth: 0,
+  _executionGasStack: [],
   _marker: 0,
   _validationMarker: 1,
   _executionMarker: 3,
@@ -62,7 +63,9 @@ var tracer = {
       }
 
       if (this._depth > 2) {
-        this.executionGasBuffer += 2300 + Math.ceil(frame.getGasUsed() / 63);
+        this.executionGasBuffer = Math.ceil(
+          frame.getGasUsed() + this.executionGasBuffer / 63
+        );
       }
     }
   },
