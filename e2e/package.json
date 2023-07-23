@@ -16,7 +16,7 @@
     "userop": "^0.3.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.2",
+    "@types/jest": "^29.5.3",
     "@types/node": "^18.11.9",
     "@types/prettier": "^2.7.1",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
