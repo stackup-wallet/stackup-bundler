@@ -51,7 +51,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: stackup-wallet/account-abstraction
-          ref: develop
+          # TODO: Remove this with userop.js v0.4 (updated to latest SimpleAccount).
+          ref: ecb25e2d02ba929529936b793c0efa4242f96d03
           path: ./account-abstraction
 
       - name: Checkout contracts
@@ -101,6 +102,7 @@ jobs:
           cd ./account-abstraction && \
           yarn deploy --network localhost && \
           cd ../contracts && \
+          cp .env.example .env && \
           yarn deploy:AllTest --network localhost
 
       - name: Run Stackup Bundler
