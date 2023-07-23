@@ -88,7 +88,7 @@ jobs:
           cd ./e2e && \
           yarn install --frozen-lockfile && \
           cd ../account-abstraction && \
-          yarn install --frozen-lockfile \
+          yarn install --frozen-lockfile && \
           cd ../contracts && \
           yarn install --frozen-lockfile
 
