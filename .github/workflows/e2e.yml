@@ -29,3 +29,77 @@ jobs:
 
       - name: Code format
         run: yarn run prettier
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: "actions/setup-node@v3"
+        with:
+          node-version: 18.15
+
+      - name: Use Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+          cache: true
+
+      - name: Checkout account-abstraction
+        uses: actions/checkout@v3
+        with:
+          repository: hazim-j/account-abstraction
+          ref: develop
+          path: ./account-abstraction
+
+      - name: Install Geth
+        run: |
+          sudo add-apt-repository -y ppa:ethereum/ethereum && \
+          sudo apt-get update && \
+          sudo apt-get install ethereum
+
+      - name: Run Geth
+        run: |
+          geth \
+          --verbosity 1 \
+          --http.vhosts '*,localhost,host.docker.internal' \
+          --http \
+          --http.api eth,net,web3,debug \
+          --http.corsdomain '*' \
+          --http.addr "0.0.0.0" \
+          --nodiscover --maxpeers 0 --mine \
+          --networkid 1337 \
+          --dev \
+          --allow-insecure-unlock \
+          --rpc.allow-unprotected-txs \
+          --dev.gaslimit 20000000 &
+
+      - name: Install all dependencies
+        run: |
+          go mod download && \
+          cd ./e2e && \
+          yarn install --frozen-lockfile && \
+          cd ../account-abstraction && \
+          yarn install --frozen-lockfile
+
+      - name: Build bundler binary
+        run: go build -o ./tmp/stackup-bundler main.go
+
+      - name: Deploy ERC-4337 contracts
+        working-directory: ./account-abstraction
+        run: yarn deploy --network localhost
+
+      - name: Run Stackup Bundler
+        run: ./tmp/stackup-bundler start --mode private &
+        env:
+          ERC4337_BUNDLER_ETH_CLIENT_URL: http://localhost:8545/
+          ERC4337_BUNDLER_PORT: 3000
+          ERC4337_BUNDLER_DEBUG_MODE: true
+          # This key is for testing purposes only. Do not use for anything else.
+          ERC4337_BUNDLER_PRIVATE_KEY: c6cbc5ffad570fdad0544d1b5358a36edeb98d163b6567912ac4754e144d4edb
+
+      - name: Run test
+        working-directory: ./e2e
+        run: yarn test
