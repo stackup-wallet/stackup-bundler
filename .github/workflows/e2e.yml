@@ -99,7 +99,7 @@ jobs:
       - name: Deploy contracts
         run: |
           cd ../account-abstraction && \
-          yarn deploy --network localhost \
+          yarn deploy --network localhost && \
           cd ../contracts && \
           yarn yarn deploy:AllTest --network localhost
 
