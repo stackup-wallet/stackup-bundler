@@ -1,8 +1,8 @@
 {
-  "name": "automated-qa",
+  "name": "e2e",
   "version": "1.0.0",
   "description": "A repeatable set of E2E tests for automating QA checks on the bundler",
-  "repository": "git@github.com:stackup-wallet/automated-qa.git",
+  "repository": "git@github.com:stackup-wallet/stackup-bundler.git",
   "private": true,
   "scripts": {
     "lint": "eslint . && tsc --noEmit",

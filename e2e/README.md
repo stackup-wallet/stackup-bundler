@@ -15,9 +15,9 @@ The steps in the following section assumes that all these tools have been instal
 
 ## Setting the environment
 
-To reduce the impact of external factors, we'll run the E2E test using an isolated local instance of both Geth and the bundler.
+To reduce the impact of external factors, we'll run the E2E test using an isolated local instance of both geth and the bundler.
 
-First, we'll need to run a local instance of Geth with the following command:
+First, we'll need to run a local instance of geth with the following command:
 
 ```bash
 geth \
