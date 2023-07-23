@@ -54,6 +54,12 @@ jobs:
           ref: develop
           path: ./account-abstraction
 
+      - name: Checkout contracts
+        uses: actions/checkout@v3
+        with:
+          repository: stackup-wallet/contracts
+          path: ./contracts
+
       - name: Install Geth
         run: |
           sudo add-apt-repository -y ppa:ethereum/ethereum && \
@@ -82,14 +88,19 @@ jobs:
           cd ./e2e && \
           yarn install --frozen-lockfile && \
           cd ../account-abstraction && \
+          yarn install --frozen-lockfile \
+          cd ../contracts && \
           yarn install --frozen-lockfile
 
       - name: Build bundler binary
         run: go build -o ./tmp/stackup-bundler main.go
 
-      - name: Deploy ERC-4337 contracts
-        working-directory: ./account-abstraction
-        run: yarn deploy --network localhost
+      - name: Deploy contracts
+        run: |
+          cd ../account-abstraction && \
+          yarn deploy --network localhost \
+          cd ../contracts && \
+          yarn yarn deploy:AllTest --network localhost
 
       - name: Run Stackup Bundler
         run: ./tmp/stackup-bundler start --mode private &
