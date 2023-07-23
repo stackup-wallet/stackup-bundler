@@ -50,7 +50,7 @@ jobs:
       - name: Checkout account-abstraction
         uses: actions/checkout@v3
         with:
-          repository: hazim-j/account-abstraction
+          repository: stackup-wallet/account-abstraction
           ref: develop
           path: ./account-abstraction
 
@@ -101,7 +101,7 @@ jobs:
           cd ./account-abstraction && \
           yarn deploy --network localhost && \
           cd ../contracts && \
-          yarn yarn deploy:AllTest --network localhost
+          yarn deploy:AllTest --network localhost
 
       - name: Run Stackup Bundler
         run: ./tmp/stackup-bundler start --mode private &
