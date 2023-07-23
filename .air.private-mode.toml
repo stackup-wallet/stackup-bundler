@@ -7,7 +7,7 @@ tmp_dir = "tmp"
   bin = ";ERC4337_BUNDLER_GIN_MODE=debug ./tmp/stackup-bundler start --mode private"
   cmd = "go build -o ./tmp/stackup-bundler main.go"
   delay = 1000
-  exclude_dir = ["assets", "tmp", "vendor", "testdata"]
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "e2e"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false

@@ -1,0 +1,118 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./e2e
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: "actions/setup-node@v3"
+        with:
+          node-version: 18.15
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn run lint
+
+      - name: Code format
+        run: yarn run prettier
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: "actions/setup-node@v3"
+        with:
+          node-version: 18.15
+
+      - name: Use Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+          cache: true
+
+      - name: Checkout account-abstraction
+        uses: actions/checkout@v3
+        with:
+          repository: stackup-wallet/account-abstraction
+          # TODO: Remove this with userop.js v0.4 (updated to latest SimpleAccount).
+          ref: ecb25e2d02ba929529936b793c0efa4242f96d03
+          path: ./account-abstraction
+
+      - name: Checkout contracts
+        uses: actions/checkout@v3
+        with:
+          repository: stackup-wallet/contracts
+          path: ./contracts
+          submodules: true
+
+      - name: Install Geth
+        run: |
+          sudo add-apt-repository -y ppa:ethereum/ethereum && \
+          sudo apt-get update && \
+          sudo apt-get install ethereum
+
+      - name: Run Geth
+        run: |
+          geth \
+          --verbosity 1 \
+          --http.vhosts '*,localhost,host.docker.internal' \
+          --http \
+          --http.api eth,net,web3,debug \
+          --http.corsdomain '*' \
+          --http.addr "0.0.0.0" \
+          --nodiscover --maxpeers 0 --mine \
+          --networkid 1337 \
+          --dev \
+          --allow-insecure-unlock \
+          --rpc.allow-unprotected-txs \
+          --dev.gaslimit 20000000 &
+
+      - name: Install all dependencies
+        run: |
+          go mod download && \
+          cd ./e2e && \
+          yarn install --frozen-lockfile && \
+          cd ../account-abstraction && \
+          yarn install --frozen-lockfile && \
+          cd ../contracts && \
+          yarn install --frozen-lockfile
+
+      - name: Build bundler binary
+        run: go build -o ./tmp/stackup-bundler main.go
+
+      - name: Deploy contracts
+        run: |
+          cd ./account-abstraction && \
+          yarn deploy --network localhost && \
+          cd ../contracts && \
+          cp .env.example .env && \
+          yarn deploy:AllTest --network localhost
+
+      - name: Run Stackup Bundler
+        run: ./tmp/stackup-bundler start --mode private &
+        env:
+          ERC4337_BUNDLER_ETH_CLIENT_URL: http://localhost:8545/
+          ERC4337_BUNDLER_DEBUG_MODE: true
+          # This key is for testing purposes only. Do not use for anything else.
+          ERC4337_BUNDLER_PRIVATE_KEY: c6cbc5ffad570fdad0544d1b5358a36edeb98d163b6567912ac4754e144d4edb
+
+      - name: Run test
+        working-directory: ./e2e
+        run: yarn test

@@ -1,7 +1,9 @@
 ![](https://i.imgur.com/t0P3vWU.png)
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/stackup-wallet/stackup-bundler)
-![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/stackup-wallet/stackup-bundler/compliance.yml?branch=main)
+![Compliance status](https://github.com/stackup-wallet/stackup-bundler/actions/workflows/compliance.yml/badge.svg?branch=main)
+![E2E status](https://github.com/stackup-wallet/stackup-bundler/actions/workflows/e2e.yml/badge.svg?branch=main)
+![core status](https://github.com/stackup-wallet/stackup-bundler/actions/workflows/core.yml/badge.svg?branch=main)
 
 # Getting started
 
