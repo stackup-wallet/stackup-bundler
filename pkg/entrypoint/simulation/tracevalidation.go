@@ -26,7 +26,6 @@ func TraceSimulateValidation(
 	entryPoint common.Address,
 	op *userop.UserOperation,
 	chainID *big.Int,
-	customTracer string,
 	stakes EntityStakes,
 ) ([]common.Address, error) {
 	ep, err := entrypoint.NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
@@ -51,7 +50,7 @@ func TraceSimulateValidation(
 		Data: tx.Data(),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer: customTracer,
+		Tracer: tracer.Loaded.BundlerCollectorTracer,
 	}
 	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err

@@ -30,8 +30,8 @@ type Standalone struct {
 	eth                     *ethclient.Client
 	ov                      *gas.Overhead
 	maxVerificationGas      *big.Int
+	maxBatchGasLimit        *big.Int
 	maxOpsForUnstakedSender int
-	tracer                  string
 }
 
 // New returns a Standalone instance with methods that can be used in Client and Bundler modules to perform
@@ -41,11 +41,11 @@ func New(
 	rpc *rpc.Client,
 	ov *gas.Overhead,
 	maxVerificationGas *big.Int,
+	maxBatchGasLimit *big.Int,
 	maxOpsForUnstakedSender int,
-	tracer string,
 ) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{db, rpc, eth, ov, maxVerificationGas, maxOpsForUnstakedSender, tracer}
+	return &Standalone{db, rpc, eth, ov, maxVerificationGas, maxBatchGasLimit, maxOpsForUnstakedSender}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -68,6 +68,7 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp, s.ov) })
 		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gbf) })
 		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps, s.maxOpsForUnstakedSender, gs) })
+		g.Go(func() error { return ValidateGasAvailable(ctx.UserOp, s.maxBatchGasLimit) })
 
 		if err := g.Wait(); err != nil {
 			return errors.NewRPCError(errors.INVALID_FIELDS, err.Error(), err.Error())
@@ -110,7 +111,6 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 				ctx.EntryPoint,
 				ctx.UserOp,
 				ctx.ChainID,
-				s.tracer,
 				simulation.EntityStakes{
 					ctx.UserOp.GetFactory():   ctx.GetDepositInfo(ctx.UserOp.GetFactory()),
 					ctx.UserOp.Sender:         ctx.GetDepositInfo(ctx.UserOp.Sender),

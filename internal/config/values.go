@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
-	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 )
 
 type Values struct {
@@ -21,6 +20,7 @@ type Values struct {
 	DataDirectory           string
 	SupportedEntryPoints    []common.Address
 	MaxVerificationGas      *big.Int
+	MaxBatchGasLimit        *big.Int
 	MaxOpsForUnstakedSender int
 	Beneficiary             string
 
@@ -33,10 +33,8 @@ type Values struct {
 	BlocksInTheFuture int
 
 	// Undocumented variables.
-	DebugMode              bool
-	GinMode                string
-	BundlerCollectorTracer string
-	BundlerErrorTracer     string
+	DebugMode bool
+	GinMode   string
 }
 
 func envArrayToAddressSlice(s string) []common.Address {
@@ -61,6 +59,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 1500000)
+	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 25000000)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
@@ -87,6 +86,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_supported_entry_points")
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
+	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
 	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
 	_ = viper.BindEnv("erc4337_bundler_relayer_banned_threshold")
 	_ = viper.BindEnv("erc4337_bundler_relayer_banned_time_window")
@@ -119,12 +119,6 @@ func GetValues() *Values {
 		}
 	}
 
-	// Load js tracers from embedded file
-	trc, err := tracer.NewTracers()
-	if err != nil {
-		panic(err)
-	}
-
 	// Return Values
 	privateKey := viper.GetString("erc4337_bundler_private_key")
 	ethClientUrl := viper.GetString("erc4337_bundler_eth_client_url")
@@ -133,6 +127,7 @@ func GetValues() *Values {
 	supportedEntryPoints := envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points"))
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
+	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
 	maxOpsForUnstakedSender := viper.GetInt("erc4337_bundler_max_ops_for_unstaked_sender")
 	relayerBannedThreshold := viper.GetInt("erc4337_bundler_relayer_banned_threshold")
 	relayerBannedTimeWindow := viper.GetInt("erc4337_bundler_relayer_banned_time_window") * int(time.Second)
@@ -148,6 +143,7 @@ func GetValues() *Values {
 		SupportedEntryPoints:    supportedEntryPoints,
 		Beneficiary:             beneficiary,
 		MaxVerificationGas:      maxVerificationGas,
+		MaxBatchGasLimit:        maxBatchGasLimit,
 		MaxOpsForUnstakedSender: maxOpsForUnstakedSender,
 		RelayerBannedThreshold:  relayerBannedThreshold,
 		RelayerBannedTimeWindow: time.Duration(relayerBannedTimeWindow),
@@ -155,7 +151,5 @@ func GetValues() *Values {
 		BlocksInTheFuture:       blocksInTheFuture,
 		DebugMode:               debugMode,
 		GinMode:                 ginMode,
-		BundlerCollectorTracer:  trc.BundlerCollectorTracer,
-		BundlerErrorTracer:      trc.BundlerErrorTracer,
 	}
 }

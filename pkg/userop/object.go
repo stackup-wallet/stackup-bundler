@@ -72,20 +72,25 @@ func (op *UserOperation) GetFactory() common.Address {
 	return common.BytesToAddress(op.InitCode[:common.AddressLength])
 }
 
-// GetMaxPrefund returns the max amount of wei required to pay for gas fees by either the sender or
-// paymaster.
-func (op *UserOperation) GetMaxPrefund() *big.Int {
+// GetMaxGasAvailable returns the max amount of gas that can be consumed by this UserOperation.
+func (op *UserOperation) GetMaxGasAvailable() *big.Int {
+	// TODO: Multiplier logic might change in v0.7
 	mul := big.NewInt(1)
 	paymaster := op.GetPaymaster()
 	if paymaster != common.HexToAddress("0x") {
 		mul = big.NewInt(3)
 	}
 
-	requiredGas := big.NewInt(0).Add(
+	return big.NewInt(0).Add(
 		big.NewInt(0).Mul(op.VerificationGasLimit, mul),
 		big.NewInt(0).Add(op.PreVerificationGas, op.CallGasLimit),
 	)
-	return big.NewInt(0).Mul(requiredGas, op.MaxFeePerGas)
+}
+
+// GetMaxPrefund returns the max amount of wei required to pay for gas fees by either the sender or
+// paymaster.
+func (op *UserOperation) GetMaxPrefund() *big.Int {
+	return big.NewInt(0).Mul(op.GetMaxGasAvailable(), op.MaxFeePerGas)
 }
 
 // GetDynamicGasPrice returns the effective gas price paid by the UserOperation given a basefee. If basefee is

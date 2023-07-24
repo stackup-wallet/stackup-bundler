@@ -2,6 +2,7 @@ import { ethers } from "ethers";
 import { Presets, Client } from "userop";
 import { fundIfRequired } from "../src/helpers";
 import { erc20ABI, testGasABI } from "../src/abi";
+import { errorCodes } from "../src/errors";
 import config from "../config";
 
 describe("Without Paymaster", () => {
@@ -19,8 +20,8 @@ describe("Without Paymaster", () => {
     client = await Client.init(config.nodeUrl, {
       overrideBundlerRpc: config.bundlerUrl,
     });
-    client.waitTimeoutMs = 5000;
-    client.waitIntervalMs = 500;
+    client.waitTimeoutMs = 2000;
+    client.waitIntervalMs = 100;
     acc = await Presets.Builder.SimpleAccount.init(signer, config.nodeUrl, {
       overrideBundlerRpc: config.bundlerUrl,
     });
@@ -103,6 +104,21 @@ describe("Without Paymaster", () => {
     const event = await response.wait();
 
     expect(event?.args.success).toBe(true);
+  });
+
+  test("Sender cannot exceed the max batch gas limit", async () => {
+    expect.assertions(1);
+    try {
+      await client.sendUserOperation(
+        acc.execute(
+          config.testGas,
+          0,
+          testGas.interface.encodeFunctionData("recursiveCall", [32, 32])
+        )
+      );
+    } catch (error: any) {
+      expect(error?.error.code).toBe(errorCodes.invalidFields);
+    }
   });
 
   describe("With increasing call stack size", () => {

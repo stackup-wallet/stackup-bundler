@@ -64,7 +64,8 @@ func PrivateMode() {
 		ov.SetCalcPreVerificationGasFunc(gas.CalcArbitrumPVGWithEthClient(rpc, conf.SupportedEntryPoints[0]))
 		ov.SetPreVerificationGasBufferFactor(16)
 	}
-	if chain.Cmp(config.OptimismChainID) == 0 || chain.Cmp(config.OptimismGoerliChainID) == 0 || chain.Cmp(config.BaseGoerliChainID) == 0 {
+	if chain.Cmp(config.OptimismChainID) == 0 || chain.Cmp(config.OptimismGoerliChainID) == 0 ||
+		chain.Cmp(config.BaseGoerliChainID) == 0 {
 		ov.SetCalcPreVerificationGasFunc(
 			gas.CalcOptimismPVGWithEthClient(rpc, chain, conf.SupportedEntryPoints[0]),
 		)
@@ -81,8 +82,8 @@ func PrivateMode() {
 		rpc,
 		ov,
 		conf.MaxVerificationGas,
+		conf.MaxBatchGasLimit,
 		conf.MaxOpsForUnstakedSender,
-		conf.BundlerCollectorTracer,
 	)
 
 	relayer := relay.New(db, eoa, eth, chain, beneficiary, logr)
@@ -98,7 +99,7 @@ func PrivateMode() {
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
-	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.BundlerErrorTracer))
+	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain))
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
@@ -118,6 +119,7 @@ func PrivateMode() {
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
 		batch.SortByNonce(),
+		batch.MaintainGasLimit(conf.MaxBatchGasLimit),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
 		relayer.SendUserOperation(),
