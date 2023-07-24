@@ -111,6 +111,7 @@ func SearcherMode() {
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
 		batch.SortByNonce(),
+		batch.MaintainGasLimit(conf.MaxBatchGasLimit),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
 		builder.SendUserOperation(),
