@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 
 	badger "github.com/dgraph-io/badger/v3"
@@ -58,6 +59,11 @@ func PrivateMode() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	head, err := eth.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	maxGasLimit := big.NewInt(int64(head.GasLimit))
 
 	ov := gas.NewDefaultOverhead()
 	if chain.Cmp(config.ArbitrumOneChainID) == 0 || chain.Cmp(config.ArbitrumGoerliChainID) == 0 {
@@ -82,7 +88,7 @@ func PrivateMode() {
 		rpc,
 		ov,
 		conf.MaxVerificationGas,
-		conf.MaxBatchGasLimit,
+		maxGasLimit,
 		conf.MaxOpsForUnstakedSender,
 	)
 
@@ -99,7 +105,7 @@ func PrivateMode() {
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
-	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain))
+	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain, maxGasLimit))
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
@@ -119,7 +125,7 @@ func PrivateMode() {
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
 		batch.SortByNonce(),
-		batch.MaintainGasLimit(conf.MaxBatchGasLimit),
+		batch.MaintainGasLimit(maxGasLimit),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
 		relayer.SendUserOperation(),

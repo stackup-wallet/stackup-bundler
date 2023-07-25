@@ -26,10 +26,10 @@ export const fundIfRequired = async (
   if (accountBalance.eq(0)) {
     const response = await signer.sendTransaction({
       to: account,
-      value: ethers.constants.WeiPerEther,
+      value: ethers.constants.WeiPerEther.mul(2),
     });
     await response.wait();
-    console.log("Funded Account with 1 ETH...");
+    console.log("Funded Account with 2 ETH...");
   }
 
   if (accountTokenBalance.eq(0)) {

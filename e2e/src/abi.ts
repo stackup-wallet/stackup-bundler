@@ -160,56 +160,25 @@ export const testGasABI = [
   {
     inputs: [],
     name: "offset",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "uint8",
-        name: "depth",
-        type: "uint8",
-      },
-      {
-        internalType: "uint8",
-        name: "count",
-        type: "uint8",
-      },
+      { internalType: "uint256", name: "depth", type: "uint256" },
+      { internalType: "uint256", name: "width", type: "uint256" },
+      { internalType: "uint256", name: "count", type: "uint256" },
     ],
     name: "recursiveCall",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "payable",
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     name: "store",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },

@@ -25,11 +25,12 @@ func isExecutionOOG(err error) bool {
 }
 
 type EstimateInput struct {
-	Rpc        *rpc.Client
-	EntryPoint common.Address
-	Op         *userop.UserOperation
-	Ov         *Overhead
-	ChainID    *big.Int
+	Rpc         *rpc.Client
+	EntryPoint  common.Address
+	Op          *userop.UserOperation
+	Ov          *Overhead
+	ChainID     *big.Int
+	MaxGasLimit *big.Int
 }
 
 // EstimateGas uses the simulateHandleOp method on the EntryPoint to derive an estimate for
@@ -56,8 +57,8 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	// Find the optimal verificationGasLimit with binary search. Setting gas price to 0 and maxing out the gas
 	// limit here would result in certain code paths not being executed which results in an inaccurate gas
 	// estimate.
-	l := 0
-	r := MaxGasLimit
+	l := int64(0)
+	r := in.MaxGasLimit.Int64()
 	var simErr error
 	for l <= r {
 		m := (l + r) / 2
@@ -105,7 +106,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	// into the same restrictions here as we do with verificationGasLimit.
 	data["maxFeePerGas"] = hexutil.EncodeBig(big.NewInt(0))
 	data["maxPriorityFeePerGas"] = hexutil.EncodeBig(big.NewInt(0))
-	data["callGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(MaxGasLimit)))
+	data["callGasLimit"] = hexutil.EncodeBig(in.MaxGasLimit)
 	simOp, err := userop.New(data)
 	if err != nil {
 		return 0, 0, err
@@ -122,9 +123,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 
 	// Calculate final values for verificationGasLimit and callGasLimit.
 	vgl := simOp.VerificationGasLimit
-	cg := big.NewInt(0).Sub(out.Event.ActualGasUsed, out.Result.PreOpGas)
-	cgb := big.NewInt(int64(out.Trace.ExecutionGasBuffer))
-	cgl := big.NewInt(0).Add(cg, cgb)
+	cgl := big.NewInt(int64(out.Trace.ExecutionGasLimit))
 	if cgl.Cmp(in.Ov.NonZeroValueCall()) < 0 {
 		cgl = in.Ov.NonZeroValueCall()
 	}

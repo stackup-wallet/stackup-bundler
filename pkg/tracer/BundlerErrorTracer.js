@@ -2,9 +2,11 @@ var tracer = {
   reverts: [],
   validationOOG: false,
   executionOOG: false,
-  executionGasBuffer: 0,
+  executionGasLimit: 0,
 
   _depth: 0,
+  _executionGasStack: [],
+  _defaultGasItem: { used: 0, required: 0 },
   _marker: 0,
   _validationMarker: 1,
   _executionMarker: 3,
@@ -48,13 +50,19 @@ var tracer = {
       reverts: this.reverts,
       validationOOG: this.validationOOG,
       executionOOG: this.executionOOG,
-      executionGasBuffer: this.executionGasBuffer,
+      executionGasLimit: this.executionGasLimit,
       userOperationEvent: this.userOperationEvent,
       output: toHex(ctx.output),
     };
   },
 
-  enter: function enter(frame) {},
+  enter: function enter(frame) {
+    if (this._isExecution()) {
+      var next = this._depth + 1;
+      if (this._executionGasStack[next] === undefined)
+        this._executionGasStack[next] = Object.assign({}, this._defaultGasItem);
+    }
+  },
   exit: function exit(frame) {
     if (this._isExecution()) {
       if (frame.getError() !== undefined) {
@@ -62,9 +70,17 @@ var tracer = {
       }
 
       if (this._depth > 2) {
-        this.executionGasBuffer = Math.ceil(
-          frame.getGasUsed() + this.executionGasBuffer / 63
-        );
+        var prev = Object.assign({}, this._defaultGasItem);
+        if (this._executionGasStack[this._depth + 1] !== undefined)
+          prev = this._executionGasStack[this._depth + 1];
+
+        var used = frame.getGasUsed();
+        var required = used - prev.used + prev.required;
+        this._executionGasStack[this._depth].used += used;
+        this._executionGasStack[this._depth].required +=
+          required + Math.ceil(required / 63);
+
+        this.executionGasLimit = this._executionGasStack[this._depth].required;
       }
     }
   },
