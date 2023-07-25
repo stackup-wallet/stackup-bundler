@@ -69,7 +69,7 @@ var tracer = {
         this.reverts.push(toHex(frame.getOutput()));
       }
 
-      if (this._depth > 2) {
+      if (this._depth >= 2) {
         var prev = Object.assign({}, this._defaultGasItem);
         if (this._executionGasStack[this._depth + 1] !== undefined)
           prev = this._executionGasStack[this._depth + 1];
