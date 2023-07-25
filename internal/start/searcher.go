@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/big"
 	"net/http"
 
 	badger "github.com/dgraph-io/badger/v3"
@@ -68,11 +67,6 @@ func SearcherMode() {
 			chain.Uint64(),
 		)
 	}
-	head, err := eth.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	maxGasLimit := big.NewInt(int64(head.GasLimit))
 
 	ov := gas.NewDefaultOverhead()
 
@@ -86,7 +80,7 @@ func SearcherMode() {
 		rpc,
 		ov,
 		conf.MaxVerificationGas,
-		maxGasLimit,
+		conf.MaxBatchGasLimit,
 		conf.MaxOpsForUnstakedSender,
 	)
 	// TODO: Create separate go-routine for tracking transactions sent to the block builder.
@@ -96,7 +90,7 @@ func SearcherMode() {
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
-	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain, maxGasLimit))
+	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit))
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
@@ -117,7 +111,7 @@ func SearcherMode() {
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
 		batch.SortByNonce(),
-		batch.MaintainGasLimit(maxGasLimit),
+		batch.MaintainGasLimit(conf.MaxBatchGasLimit),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
 		builder.SendUserOperation(),

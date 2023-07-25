@@ -20,6 +20,7 @@ type Values struct {
 	DataDirectory           string
 	SupportedEntryPoints    []common.Address
 	MaxVerificationGas      *big.Int
+	MaxBatchGasLimit        *big.Int
 	MaxOpsForUnstakedSender int
 	Beneficiary             string
 
@@ -58,6 +59,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 1500000)
+	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 25000000)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
@@ -84,6 +86,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_supported_entry_points")
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
+	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
 	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
 	_ = viper.BindEnv("erc4337_bundler_relayer_banned_threshold")
 	_ = viper.BindEnv("erc4337_bundler_relayer_banned_time_window")
@@ -124,6 +127,7 @@ func GetValues() *Values {
 	supportedEntryPoints := envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points"))
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
+	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
 	maxOpsForUnstakedSender := viper.GetInt("erc4337_bundler_max_ops_for_unstaked_sender")
 	relayerBannedThreshold := viper.GetInt("erc4337_bundler_relayer_banned_threshold")
 	relayerBannedTimeWindow := viper.GetInt("erc4337_bundler_relayer_banned_time_window") * int(time.Second)
@@ -139,6 +143,7 @@ func GetValues() *Values {
 		SupportedEntryPoints:    supportedEntryPoints,
 		Beneficiary:             beneficiary,
 		MaxVerificationGas:      maxVerificationGas,
+		MaxBatchGasLimit:        maxBatchGasLimit,
 		MaxOpsForUnstakedSender: maxOpsForUnstakedSender,
 		RelayerBannedThreshold:  relayerBannedThreshold,
 		RelayerBannedTimeWindow: time.Duration(relayerBannedTimeWindow),
