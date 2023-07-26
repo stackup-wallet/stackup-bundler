@@ -90,7 +90,7 @@ func SearcherMode() {
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
-	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain))
+	c.SetGetGasEstimateFunc(client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit))
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(

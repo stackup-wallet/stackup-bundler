@@ -113,16 +113,16 @@ describe("Without Paymaster", () => {
         acc.execute(
           config.testGas,
           0,
-          testGas.interface.encodeFunctionData("recursiveCall", [32, 32])
+          testGas.interface.encodeFunctionData("recursiveCall", [32, 0, 32])
         )
       );
     } catch (error: any) {
-      expect(error?.error.code).toBe(errorCodes.invalidFields);
+      expect(error?.error.code).toBe(errorCodes.executionReverted);
     }
   });
 
   describe("With increasing call stack size", () => {
-    describe("With zero value calls", () => {
+    describe("With zero value", () => {
       [0, 2, 4, 8, 16].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
           const response = await client.sendUserOperation(
@@ -131,6 +131,7 @@ describe("Without Paymaster", () => {
               0,
               testGas.interface.encodeFunctionData("recursiveCall", [
                 depth,
+                0,
                 depth,
               ])
             )
@@ -142,7 +143,7 @@ describe("Without Paymaster", () => {
       });
     });
 
-    describe("With non-zero value calls", () => {
+    describe("With non-zero value", () => {
       [0, 2, 4, 8, 16].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
           const response = await client.sendUserOperation(
@@ -151,6 +152,29 @@ describe("Without Paymaster", () => {
               ethers.utils.parseEther("0.001"),
               testGas.interface.encodeFunctionData("recursiveCall", [
                 depth,
+                0,
+                depth,
+              ])
+            )
+          );
+          const event = await response.wait();
+
+          expect(event?.args.success).toBe(true);
+        });
+      });
+    });
+
+    describe("With multiple stacks per depth", () => {
+      [0, 1, 2, 3].forEach((depth) => {
+        test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
+          const width = depth;
+          const response = await client.sendUserOperation(
+            acc.execute(
+              config.testGas,
+              0,
+              testGas.interface.encodeFunctionData("recursiveCall", [
+                depth,
+                width,
                 depth,
               ])
             )
