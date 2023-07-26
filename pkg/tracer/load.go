@@ -10,7 +10,7 @@ import (
 )
 
 //go:embed *BundlerCollectorTracer.js
-//go:embed *BundlerErrorTracer.js
+//go:embed *BundlerExecutionTracer.js
 var files embed.FS
 var (
 	commentRegex    = regexp.MustCompile("(?m)^.*//.*$[\r\n]+")
@@ -31,7 +31,7 @@ func parse(code string) string {
 
 type Tracers struct {
 	BundlerCollectorTracer string
-	BundlerErrorTracer     string
+	BundlerExecutionTracer string
 }
 
 // NewBundlerTracers reads the *Tracer.js files and returns a collection of strings that can be passed to a
@@ -64,7 +64,7 @@ func NewTracers() (*Tracers, error) {
 	}
 
 	var et string
-	err = fs.WalkDir(files, "BundlerErrorTracer.js", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(files, "BundlerExecutionTracer.js", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -87,6 +87,6 @@ func NewTracers() (*Tracers, error) {
 
 	return &Tracers{
 		BundlerCollectorTracer: bct,
-		BundlerErrorTracer:     et,
+		BundlerExecutionTracer: et,
 	}, nil
 }
