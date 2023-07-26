@@ -32,7 +32,7 @@ type TraceInput struct {
 }
 
 type TraceOutput struct {
-	Trace  *tracer.BundlerErrorReturn
+	Trace  *tracer.BundlerExecutionReturn
 	Result *reverts.ExecutionResultRevert
 	Event  *entrypoint.EntrypointUserOperationEvent
 }
@@ -84,7 +84,7 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 	}
 	out := &TraceOutput{}
 
-	var res tracer.BundlerErrorReturn
+	var res tracer.BundlerExecutionReturn
 	req := utils.TraceCallReq{
 		From: common.HexToAddress("0x"),
 		To:   in.EntryPoint,
