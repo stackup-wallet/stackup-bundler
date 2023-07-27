@@ -71,9 +71,9 @@ var tracer = {
 
       if (this._depth >= 2) {
         // Get the gas values for the the frames below the current depth.
-        var prev = Object.assign({}, this._defaultGasItem);
+        var nested = Object.assign({}, this._defaultGasItem);
         if (this._executionGasStack[this._depth + 1] !== undefined)
-          prev = this._executionGasStack[this._depth + 1];
+          nested = this._executionGasStack[this._depth + 1];
 
         // Keep track of the largest frame at the current depth.
         var curr = frame.getGasUsed();
@@ -92,8 +92,8 @@ var tracer = {
         // 3. The final value is minimum gas needed to be passed to this depth.
         this._executionGasStack[this._depth].required =
           this._executionGasStack[this._depth].used -
-          prev.used +
-          prev.required +
+          nested.used +
+          nested.required +
           Math.ceil(this._executionGasStack[this._depth].largestFrame / 63);
 
         this.executionGasLimit = this._executionGasStack[this._depth].required;
