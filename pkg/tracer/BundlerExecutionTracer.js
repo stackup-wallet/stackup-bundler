@@ -6,7 +6,7 @@ var tracer = {
 
   _depth: 0,
   _executionGasStack: [],
-  _defaultGasItem: { used: 0, required: 0 },
+  _defaultGasItem: { largestFrame: 0, used: 0, required: 0 },
   _marker: 0,
   _validationMarker: 1,
   _executionMarker: 3,
@@ -70,15 +70,31 @@ var tracer = {
       }
 
       if (this._depth >= 2) {
+        // Get the gas values for the the frames below the current depth.
         var prev = Object.assign({}, this._defaultGasItem);
         if (this._executionGasStack[this._depth + 1] !== undefined)
           prev = this._executionGasStack[this._depth + 1];
 
-        var used = frame.getGasUsed();
-        var required = used - prev.used + prev.required;
-        this._executionGasStack[this._depth].used += used;
-        this._executionGasStack[this._depth].required +=
-          required + Math.ceil(required / 63);
+        // Keep track of the largest frame at the current depth.
+        var curr = frame.getGasUsed();
+        this._executionGasStack[this._depth].largestFrame = Math.max(
+          this._executionGasStack[this._depth].largestFrame,
+          curr
+        );
+
+        // Keep track of the total gas used by all frames at the current depth.
+        // This does not account for the gas required due to the 63/64 rule.
+        this._executionGasStack[this._depth].used += curr;
+
+        // Calculate the gas required at the current depth:
+        // 1. Replace gas used with gas required from nested frames.
+        // 2. Add 63/64 buffer to the result based on the largest frame.
+        // 3. The final value is minimum gas needed to be passed to this depth.
+        this._executionGasStack[this._depth].required =
+          this._executionGasStack[this._depth].used -
+          prev.used +
+          prev.required +
+          Math.ceil(this._executionGasStack[this._depth].largestFrame / 63);
 
         this.executionGasLimit = this._executionGasStack[this._depth].required;
       }
