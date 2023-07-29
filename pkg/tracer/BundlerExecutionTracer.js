@@ -99,7 +99,7 @@ var tracer = {
           used - nested.used + Math.ceil((nested.required * 64) / 63);
 
         // Keep track of the final gas limit.
-        this.executionGasLimit = this._executionGasStack[this._depth];
+        this.executionGasLimit = this._executionGasStack[this._depth].required;
       }
     }
   },
