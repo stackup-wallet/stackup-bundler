@@ -70,7 +70,7 @@ var tracer = {
       }
 
       if (this._depth >= 2) {
-        // Get the gas values for the frames below the current depth.
+        // Get the cumulative gas values for the nested frames.
         var nested = Object.assign({}, this._defaultGasItem);
         if (this._executionGasStack[this._depth + 1] !== undefined)
           nested = this._executionGasStack[this._depth + 1];
