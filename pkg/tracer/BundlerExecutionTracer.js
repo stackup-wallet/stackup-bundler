@@ -6,7 +6,7 @@ var tracer = {
 
   _depth: 0,
   _executionGasStack: [],
-  _defaultGasItem: { largestFrame: 0, used: 0, required: 0 },
+  _defaultGasItem: { used: 0, required: 0 },
   _marker: 0,
   _validationMarker: 1,
   _executionMarker: 3,
@@ -82,15 +82,9 @@ var tracer = {
           this._defaultGasItem
         );
 
-        // Keep track of the largest frame at this depth.
-        var used = frame.getGasUsed();
-        this._executionGasStack[this._depth].largestFrame = Math.max(
-          this._executionGasStack[this._depth].largestFrame,
-          used
-        );
-
         // Keep track of the total gas used by all frames at this depth.
         // This does not account for the gas required due to the 63/64 rule.
+        var used = frame.getGasUsed();
         this._executionGasStack[this._depth].used += used;
 
         // Keep track of the total gas required by all frames at this depth.
