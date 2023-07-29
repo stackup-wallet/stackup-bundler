@@ -89,7 +89,7 @@ var tracer = {
         // Calculate the gas required at the current depth:
         // 1. Replace gas used with gas required from nested frames.
         // 2. Add 63/64 buffer to the result based on the largest frame.
-        // 3. The final value is minimum gas needed to be passed to this depth.
+        // 3. The final value is the minimum gas needed to be passed to this frame.
         this._executionGasStack[this._depth].required =
           this._executionGasStack[this._depth].used -
           nested.used +
