@@ -71,9 +71,10 @@ var tracer = {
 
       if (this._depth >= 3) {
         // Get the final gas item for the nested frame.
-        var nested = Object.assign({}, this._defaultGasItem);
-        if (this._executionGasStack[this._depth + 1] !== undefined)
-          nested = this._executionGasStack[this._depth + 1];
+        var nested = Object.assign(
+          {},
+          this._executionGasStack[this._depth + 1] || this._defaultGasItem
+        );
 
         // Reset the nested gas item to prevent double counting on re-entry.
         this._executionGasStack[this._depth + 1] = Object.assign(
@@ -93,7 +94,7 @@ var tracer = {
         this._executionGasStack[this._depth].used += used;
 
         // Keep track of the total gas required by all frames at this depth.
-        // This accounts for additional gas needed to run nested frames.
+        // This accounts for additional gas needed due to the 63/64 rule.
         this._executionGasStack[this._depth].required +=
           used - nested.used + Math.ceil((nested.required * 64) / 63);
 
