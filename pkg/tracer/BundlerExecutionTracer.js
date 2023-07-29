@@ -69,34 +69,38 @@ var tracer = {
         this.reverts.push(toHex(frame.getOutput()));
       }
 
-      if (this._depth >= 2) {
-        // Get the cumulative gas values for the nested frames.
+      if (this._depth >= 3) {
+        // Get the final gas item for the nested frame.
         var nested = Object.assign({}, this._defaultGasItem);
         if (this._executionGasStack[this._depth + 1] !== undefined)
           nested = this._executionGasStack[this._depth + 1];
 
-        // Keep track of the largest frame at the current depth.
-        var curr = frame.getGasUsed();
-        this._executionGasStack[this._depth].largestFrame = Math.max(
-          this._executionGasStack[this._depth].largestFrame,
-          curr
+        // Reset the nested gas item to prevent double counting on re-entry.
+        this._executionGasStack[this._depth + 1] = Object.assign(
+          {},
+          this._defaultGasItem
         );
 
-        // Keep track of the total gas used by all frames at the current depth.
+        // Keep track of the largest frame at this depth.
+        var used = frame.getGasUsed();
+        this._executionGasStack[this._depth].largestFrame = Math.max(
+          this._executionGasStack[this._depth].largestFrame,
+          used
+        );
+
+        // Keep track of the total gas used by all frames at this depth.
         // This does not account for the gas required due to the 63/64 rule.
-        this._executionGasStack[this._depth].used += curr;
+        this._executionGasStack[this._depth].used += used;
 
-        // Calculate the gas required at the current depth:
-        // 1. Replace gas used with gas required from nested frames.
-        // 2. Add 63/64 buffer to the result based on the largest frame.
-        // 3. The final value is the minimum gas needed to be passed to this frame.
-        this._executionGasStack[this._depth].required =
-          this._executionGasStack[this._depth].used -
-          nested.used +
-          nested.required +
-          Math.ceil(this._executionGasStack[this._depth].largestFrame / 63);
+        // Keep track of the total gas required by all frames at this depth.
+        // This accounts for additional gas needed to run nested frames.
+        this._executionGasStack[this._depth].required +=
+          used - nested.used + Math.ceil((nested.required * 64) / 63);
 
-        this.executionGasLimit = this._executionGasStack[this._depth].required;
+        // Keep track of the final gas limit.
+        var gas = this._executionGasStack[this._depth];
+        this.executionGasLimit =
+          gas.required + Math.ceil(gas.largestFrame / 63);
       }
     }
   },
