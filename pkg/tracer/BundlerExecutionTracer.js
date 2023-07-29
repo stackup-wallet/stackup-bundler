@@ -69,7 +69,7 @@ var tracer = {
         this.reverts.push(toHex(frame.getOutput()));
       }
 
-      if (this._depth >= 3) {
+      if (this._depth >= 2) {
         // Get the final gas item for the nested frame.
         var nested = Object.assign(
           {},
@@ -99,9 +99,7 @@ var tracer = {
           used - nested.used + Math.ceil((nested.required * 64) / 63);
 
         // Keep track of the final gas limit.
-        var gas = this._executionGasStack[this._depth];
-        this.executionGasLimit =
-          gas.required + Math.ceil(gas.largestFrame / 63);
+        this.executionGasLimit = this._executionGasStack[this._depth];
       }
     }
   },
