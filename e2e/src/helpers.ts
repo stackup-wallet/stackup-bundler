@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { Constants } from "userop";
 
 export const fundIfRequired = async (
   provider: ethers.providers.JsonRpcProvider,
@@ -44,4 +45,16 @@ export const fundIfRequired = async (
     await response.wait();
     console.log("Minted 10 Test Tokens for Account...");
   }
+};
+
+export const getCallGasLimitBenchmark = async (
+  provider: ethers.providers.JsonRpcProvider,
+  sender: string,
+  callData: ethers.BytesLike
+) => {
+  return provider.estimateGas({
+    from: Constants.ERC4337.EntryPoint,
+    to: sender,
+    data: callData,
+  });
 };

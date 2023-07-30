@@ -1,9 +1,32 @@
 import { ethers } from "ethers";
-import { Presets, Client } from "userop";
-import { fundIfRequired } from "../src/helpers";
+import { Presets, Client, ISendUserOperationOpts } from "userop";
+import { fundIfRequired, getCallGasLimitBenchmark } from "../src/helpers";
 import { erc20ABI, testGasABI } from "../src/abi";
 import { errorCodes } from "../src/errors";
 import config from "../config";
+
+const opChecks = (
+  provider: ethers.providers.JsonRpcProvider
+): ISendUserOperationOpts => ({
+  onBuild: async (op) => {
+    const cgl = ethers.BigNumber.from(op.callGasLimit).toNumber();
+    const benchmark = await (
+      await getCallGasLimitBenchmark(provider, op.sender, op.callData)
+    ).toNumber();
+
+    expect(cgl).toBeLessThanOrEqual(benchmark);
+  },
+});
+
+// TODO: Figure out why CGL is not LTE to benchmark at certain depths/widths.
+// Until then we use this check to prevent regression.
+const opCheckDeep = (benchmark: number): ISendUserOperationOpts => ({
+  onBuild: async (op) => {
+    expect(
+      ethers.BigNumber.from(op.callGasLimit).toNumber()
+    ).toBeLessThanOrEqual(benchmark);
+  },
+});
 
 describe("Without Paymaster", () => {
   const provider = new ethers.providers.JsonRpcProvider(config.nodeUrl);
@@ -35,7 +58,8 @@ describe("Without Paymaster", () => {
 
   test("Sender can transfer 0 ETH", async () => {
     const response = await client.sendUserOperation(
-      acc.execute(acc.getSender(), 0, "0x")
+      acc.execute(acc.getSender(), 0, "0x"),
+      { ...opChecks(provider) }
     );
     const event = await response.wait();
 
@@ -45,7 +69,8 @@ describe("Without Paymaster", () => {
   test("Sender can transfer half ETH balance", async () => {
     const balance = await provider.getBalance(acc.getSender());
     const response = await client.sendUserOperation(
-      acc.execute(acc.getSender(), balance.div(2), "0x")
+      acc.execute(acc.getSender(), balance.div(2), "0x"),
+      { ...opChecks(provider) }
     );
     const event = await response.wait();
 
@@ -63,7 +88,8 @@ describe("Without Paymaster", () => {
         .add(ethers.BigNumber.from(op.verificationGasLimit).mul(3))
     );
     const response = await client.sendUserOperation(
-      acc.execute(acc.getSender(), balance.sub(maxFee), "0x")
+      acc.execute(acc.getSender(), balance.sub(maxFee), "0x"),
+      { ...opChecks(provider) }
     );
     const event = await response.wait();
 
@@ -80,7 +106,8 @@ describe("Without Paymaster", () => {
           acc.getSender(),
           balance,
         ])
-      )
+      ),
+      { ...opChecks(provider) }
     );
     const event = await response.wait();
 
@@ -100,7 +127,10 @@ describe("Without Paymaster", () => {
         ])
       );
     }
-    const response = await client.sendUserOperation(acc.executeBatch(to, data));
+    const response = await client.sendUserOperation(
+      acc.executeBatch(to, data),
+      { ...opChecks(provider) }
+    );
     const event = await response.wait();
 
     expect(event?.args.success).toBe(true);
@@ -114,7 +144,8 @@ describe("Without Paymaster", () => {
           config.testGas,
           0,
           testGas.interface.encodeFunctionData("recursiveCall", [32, 0, 32])
-        )
+        ),
+        { ...opChecks(provider) }
       );
     } catch (error: any) {
       expect(error?.error.code).toBe(errorCodes.executionReverted);
@@ -125,6 +156,10 @@ describe("Without Paymaster", () => {
     describe("With zero value", () => {
       [0, 2, 4, 8, 16].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
+          let opts = opChecks(provider);
+          if (depth === 8) opts = opCheckDeep(1195400);
+          if (depth === 16) opts = opCheckDeep(4364942);
+
           const response = await client.sendUserOperation(
             acc.execute(
               config.testGas,
@@ -134,7 +169,8 @@ describe("Without Paymaster", () => {
                 0,
                 depth,
               ])
-            )
+            ),
+            opts
           );
           const event = await response.wait();
 
@@ -146,6 +182,10 @@ describe("Without Paymaster", () => {
     describe("With non-zero value", () => {
       [0, 2, 4, 8, 16].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
+          let opts = opChecks(provider);
+          if (depth === 8) opts = opCheckDeep(1261728);
+          if (depth === 16) opts = opCheckDeep(4498665);
+
           const response = await client.sendUserOperation(
             acc.execute(
               config.testGas,
@@ -155,7 +195,8 @@ describe("Without Paymaster", () => {
                 0,
                 depth,
               ])
-            )
+            ),
+            opts
           );
           const event = await response.wait();
 
@@ -167,6 +208,10 @@ describe("Without Paymaster", () => {
     describe("With multiple stacks per depth", () => {
       [0, 1, 2, 3].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
+          let opts = opChecks(provider);
+          if (depth === 2) opts = opCheckDeep(865684);
+          if (depth === 3) opts = opCheckDeep(7925084);
+
           const width = depth;
           const response = await client.sendUserOperation(
             acc.execute(
@@ -177,7 +222,8 @@ describe("Without Paymaster", () => {
                 width,
                 depth,
               ])
-            )
+            ),
+            opts
           );
           const event = await response.wait();
 

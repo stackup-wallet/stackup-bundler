@@ -70,16 +70,29 @@ var tracer = {
       }
 
       if (this._depth >= 2) {
-        var prev = Object.assign({}, this._defaultGasItem);
-        if (this._executionGasStack[this._depth + 1] !== undefined)
-          prev = this._executionGasStack[this._depth + 1];
+        // Get the final gas item for the nested frame.
+        var nested = Object.assign(
+          {},
+          this._executionGasStack[this._depth + 1] || this._defaultGasItem
+        );
 
+        // Reset the nested gas item to prevent double counting on re-entry.
+        this._executionGasStack[this._depth + 1] = Object.assign(
+          {},
+          this._defaultGasItem
+        );
+
+        // Keep track of the total gas used by all frames at this depth.
+        // This does not account for the gas required due to the 63/64 rule.
         var used = frame.getGasUsed();
-        var required = used - prev.used + prev.required;
         this._executionGasStack[this._depth].used += used;
-        this._executionGasStack[this._depth].required +=
-          required + Math.ceil(required / 63);
 
+        // Keep track of the total gas required by all frames at this depth.
+        // This accounts for additional gas needed due to the 63/64 rule.
+        this._executionGasStack[this._depth].required +=
+          used - nested.used + Math.ceil((nested.required * 64) / 63);
+
+        // Keep track of the final gas limit.
         this.executionGasLimit = this._executionGasStack[this._depth].required;
       }
     }
