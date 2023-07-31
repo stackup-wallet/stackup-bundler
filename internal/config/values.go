@@ -32,9 +32,27 @@ type Values struct {
 	EthBuilderUrl     string
 	BlocksInTheFuture int
 
+	// Observability variables.
+	OTELServiceName      string
+	OTELCollectorHeaders map[string]string
+	OTELCollectorUrl     string
+	OTELInsecureMode     bool
+
 	// Undocumented variables.
 	DebugMode bool
 	GinMode   string
+}
+
+func envKeyValStringToMap(s string) map[string]string {
+	out := map[string]string{}
+	for _, pair := range strings.Split(s, "&") {
+		kv := strings.Split(pair, "=")
+		if len(kv) != 2 {
+			break
+		}
+		out[kv[0]] = kv[1]
+	}
+	return out
 }
 
 func envArrayToAddressSlice(s string) []common.Address {
@@ -62,6 +80,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 25000000)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
+	viper.SetDefault("erc4337_bundler_otel_insecure_mode", false)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
@@ -92,6 +111,10 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_relayer_banned_time_window")
 	_ = viper.BindEnv("erc4337_bundler_eth_builder_url")
 	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
+	_ = viper.BindEnv("erc4337_bundler_otel_service_name")
+	_ = viper.BindEnv("erc4337_bundler_otel_collector_headers")
+	_ = viper.BindEnv("erc4337_bundler_otel_collector_url")
+	_ = viper.BindEnv("erc4337_bundler_otel_insecure_mode")
 	_ = viper.BindEnv("erc4337_bundler_debug_mode")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
 
@@ -119,6 +142,12 @@ func GetValues() *Values {
 		}
 	}
 
+	// Validate O11Y variables
+	if viper.IsSet("erc4337_bundler_otel_service_name") &&
+		variableNotSetOrIsNil("erc4337_bundler_otel_collector_url") {
+		panic("Fatal config error: erc4337_bundler_otel_service_name is set without a collector URL")
+	}
+
 	// Return Values
 	privateKey := viper.GetString("erc4337_bundler_private_key")
 	ethClientUrl := viper.GetString("erc4337_bundler_eth_client_url")
@@ -133,6 +162,10 @@ func GetValues() *Values {
 	relayerBannedTimeWindow := viper.GetInt("erc4337_bundler_relayer_banned_time_window") * int(time.Second)
 	ethBuilderUrl := viper.GetString("erc4337_bundler_eth_builder_url")
 	blocksInTheFuture := viper.GetInt("erc4337_bundler_blocks_in_the_future")
+	otelServiceName := viper.GetString("erc4337_bundler_otel_service_name")
+	otelCollectorHeader := envKeyValStringToMap(viper.GetString("erc4337_bundler_otel_collector_headers"))
+	otelCollectorUrl := viper.GetString("erc4337_bundler_otel_collector_url")
+	otelInsecureMode := viper.GetBool("erc4337_bundler_otel_insecure_mode")
 	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
@@ -149,6 +182,10 @@ func GetValues() *Values {
 		RelayerBannedTimeWindow: time.Duration(relayerBannedTimeWindow),
 		EthBuilderUrl:           ethBuilderUrl,
 		BlocksInTheFuture:       blocksInTheFuture,
+		OTELServiceName:         otelServiceName,
+		OTELCollectorHeaders:    otelCollectorHeader,
+		OTELCollectorUrl:        otelCollectorUrl,
+		OTELInsecureMode:        otelInsecureMode,
 		DebugMode:               debugMode,
 		GinMode:                 ginMode,
 	}

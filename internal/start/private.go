@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
+	"github.com/stackup-wallet/stackup-bundler/internal/o11y"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
@@ -25,6 +26,8 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/otel"
 )
 
 func PrivateMode() {
@@ -57,6 +60,24 @@ func PrivateMode() {
 	chain, err := eth.ChainID(context.Background())
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if o11y.IsEnabled(conf.OTELServiceName) {
+		o11yOpts := &o11y.Opts{
+			ServiceName:     conf.OTELServiceName,
+			CollectorHeader: conf.OTELCollectorHeaders,
+			CollectorUrl:    conf.OTELCollectorUrl,
+			InsecureMode:    conf.OTELInsecureMode,
+
+			ChainID: chain,
+			Address: eoa.Address,
+		}
+
+		tracerCleanup := o11y.InitTracer(o11yOpts)
+		defer tracerCleanup(context.Background())
+
+		metricsCleanup := o11y.InitMetrics(o11yOpts)
+		defer metricsCleanup(context.Background())
 	}
 
 	ov := gas.NewDefaultOverhead()
@@ -115,6 +136,9 @@ func PrivateMode() {
 	b.SetGetGasTipFunc(gasprice.GetGasTipWithEthClient(eth))
 	b.SetGetLegacyGasPriceFunc(gasprice.GetLegacyGasPriceWithEthClient(eth))
 	b.UseLogger(logr)
+	if err := b.UserMeter(otel.GetMeterProvider().Meter("bundler")); err != nil {
+		log.Fatal(err)
+	}
 	b.UseModules(
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
@@ -145,6 +169,9 @@ func PrivateMode() {
 	if err := r.SetTrustedProxies(nil); err != nil {
 		log.Fatal(err)
 	}
+	if o11y.IsEnabled(conf.OTELServiceName) {
+		r.Use(otelgin.Middleware(conf.OTELServiceName))
+	}
 	r.Use(
 		cors.Default(),
 		logger.WithLogr(logr),
@@ -156,6 +183,7 @@ func PrivateMode() {
 	handlers := []gin.HandlerFunc{
 		relayer.FilterByClientID(),
 		jsonrpc.Controller(client.NewRpcAdapter(c, d)),
+		jsonrpc.WithOTELTracerAttributes(),
 		relayer.MapUserOpHashToClientID(),
 	}
 	r.POST("/", handlers...)

@@ -2,6 +2,7 @@
 package bundler
 
 import (
+	"context"
 	"math/big"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 )
 
 // Bundler controls the end to end process of creating a batch of UserOperations from the mempool and sending
@@ -23,6 +26,7 @@ type Bundler struct {
 	supportedEntryPoints []common.Address
 	batchHandler         modules.BatchHandlerFunc
 	logger               logr.Logger
+	meter                metric.Meter
 	isRunning            bool
 	done                 chan bool
 	stop                 func()
@@ -41,6 +45,7 @@ func New(mempool *mempool.Mempool, chainID *big.Int, supportedEntryPoints []comm
 		supportedEntryPoints: supportedEntryPoints,
 		batchHandler:         noop.BatchHandler,
 		logger:               logger.NewZeroLogr().WithName("bundler"),
+		meter:                otel.GetMeterProvider().Meter("bundler"),
 		isRunning:            false,
 		done:                 make(chan bool),
 		stop:                 func() {},
@@ -75,6 +80,28 @@ func (i *Bundler) SetGetLegacyGasPriceFunc(ggp gasprice.GetLegacyGasPriceFunc) {
 // UseLogger defines the logger object used by the Bundler instance based on the go-logr/logr interface.
 func (i *Bundler) UseLogger(logger logr.Logger) {
 	i.logger = logger.WithName("bundler")
+}
+
+// UserMeter defines an opentelemetry meter object used by the Bundler instance to capture metrics during each
+// run.
+func (i *Bundler) UserMeter(meter metric.Meter) error {
+	i.meter = meter
+	_, err := i.meter.Int64ObservableGauge(
+		"userop_mempool_size",
+		metric.WithInt64Callback(func(ctx context.Context, io metric.Int64Observer) error {
+			size := 0
+			for _, ep := range i.supportedEntryPoints {
+				batch, err := i.mempool.Dump(ep)
+				if err != nil {
+					return err
+				}
+				size += len(batch)
+			}
+			io.Observe(int64(size))
+			return nil
+		}),
+	)
+	return err
 }
 
 // UseModules defines the BatchHandlers to process batches after it has gone through the standard checks.
