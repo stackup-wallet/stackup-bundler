@@ -87,7 +87,7 @@ func (i *Bundler) UseLogger(logger logr.Logger) {
 func (i *Bundler) UserMeter(meter metric.Meter) error {
 	i.meter = meter
 	_, err := i.meter.Int64ObservableGauge(
-		"userop_mempool_size",
+		"bundler_mempool_size",
 		metric.WithInt64Callback(func(ctx context.Context, io metric.Int64Observer) error {
 			size := 0
 			for _, ep := range i.supportedEntryPoints {
