@@ -6,7 +6,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// WithOTELTracerAttributes adds custom opentelemetry attributes relating the the JSON-RPC method call to the
+// WithOTELTracerAttributes adds custom opentelemetry attributes relating to the JSON-RPC method call for the
 // current span.
 func WithOTELTracerAttributes() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
