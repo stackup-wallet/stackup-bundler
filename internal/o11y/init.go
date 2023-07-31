@@ -51,7 +51,7 @@ func IsEnabled(serviceName string) bool {
 	return len(serviceName) > 0
 }
 
-func InitTracer(opts *Opts) func(context.Context) error {
+func InitTracer(opts *Opts) func() {
 	secureOption := otlptracegrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, ""))
 	if opts.InsecureMode {
 		secureOption = otlptracegrpc.WithInsecure()
@@ -76,10 +76,12 @@ func InitTracer(opts *Opts) func(context.Context) error {
 			sdktrace.WithResource(initResources(opts)),
 		),
 	)
-	return exporter.Shutdown
+	return func() {
+		_ = exporter.Shutdown(context.Background())
+	}
 }
 
-func InitMetrics(opts *Opts) func(context.Context) error {
+func InitMetrics(opts *Opts) func() {
 	secureOption := otlpmetricgrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, ""))
 	if opts.InsecureMode {
 		secureOption = otlpmetricgrpc.WithInsecure()
@@ -103,5 +105,7 @@ func InitMetrics(opts *Opts) func(context.Context) error {
 			),
 		),
 	)
-	return exporter.Shutdown
+	return func() {
+		_ = exporter.Shutdown(context.Background())
+	}
 }

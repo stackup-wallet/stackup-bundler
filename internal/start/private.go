@@ -74,10 +74,10 @@ func PrivateMode() {
 		}
 
 		tracerCleanup := o11y.InitTracer(o11yOpts)
-		defer tracerCleanup(context.Background())
+		defer tracerCleanup()
 
 		metricsCleanup := o11y.InitMetrics(o11yOpts)
-		defer metricsCleanup(context.Background())
+		defer metricsCleanup()
 	}
 
 	ov := gas.NewDefaultOverhead()
