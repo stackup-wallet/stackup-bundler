@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc/credentials"
 
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
@@ -76,6 +77,8 @@ func InitTracer(opts *Opts) func() {
 			sdktrace.WithResource(initResources(opts)),
 		),
 	)
+	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+	otel.SetTextMapPropagator(propagator)
 	return func() {
 		_ = exporter.Shutdown(context.Background())
 	}
