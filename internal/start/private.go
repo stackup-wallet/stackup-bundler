@@ -86,7 +86,7 @@ func PrivateMode() {
 		ov.SetPreVerificationGasBufferFactor(16)
 	}
 	if chain.Cmp(config.OptimismChainID) == 0 || chain.Cmp(config.OptimismGoerliChainID) == 0 ||
-		chain.Cmp(config.BaseGoerliChainID) == 0 {
+		chain.Cmp(config.BaseChainID) == 0 || chain.Cmp(config.BaseGoerliChainID) == 0 {
 		ov.SetCalcPreVerificationGasFunc(
 			gas.CalcOptimismPVGWithEthClient(rpc, chain, conf.SupportedEntryPoints[0]),
 		)
