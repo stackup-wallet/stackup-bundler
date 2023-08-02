@@ -93,7 +93,8 @@ func (v *storageSlotsValidator) Process() error {
 		for key, slotCount := range accessTypes {
 			for slot := range slotCount {
 				if isAssociatedWith(senderSlots, slot) {
-					if len(v.Op.InitCode) > 0 && !v.FactoryIsStaked {
+					if (len(v.Op.InitCode) > 0 && !v.FactoryIsStaked) ||
+						(len(v.Op.InitCode) > 0 && v.FactoryIsStaked && v.EntityAddr != v.Op.Sender) {
 						mustStakeSlot = slot
 					} else {
 						continue
