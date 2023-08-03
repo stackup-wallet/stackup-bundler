@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "ethers": "^5.7.2",
-    "userop": "^0.3.0"
+    "userop": "^0.3.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.2",

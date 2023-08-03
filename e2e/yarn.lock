@@ -3264,10 +3264,10 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
-userop@^0.3.0:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/userop/-/userop-0.3.1.tgz#848a0e7a68211a13d7b7146d46b946b27f3d9137"
-  integrity sha512-d3D5ZrO8NQHwH514FwMZz+nHrl4ECrA0lxoBAx1plCfeebxsombnjIPWF7VvJvsFYuqncnBBZ9X+jDo+QB2aKA==
+userop@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/userop/-/userop-0.3.2.tgz#bc76f9839f1665648d991f49ea37c36e08c84bef"
+  integrity sha512-7WbjoH0Brv1nUcB1RbC+l4wmt8a+bu06R/4H5nJKVhnzIkXUYoaj/WG/S/iMvlBna3Dbiev4Qv/o807Xj1HIzA==
   dependencies:
     ethers "^5.7.2"
 
