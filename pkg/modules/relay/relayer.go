@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
@@ -45,6 +46,7 @@ type Relayer struct {
 	bannedThreshold  int
 	bannedTimeWindow time.Duration
 	waitTimeout      time.Duration
+	mu               *sync.Mutex
 }
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
@@ -66,6 +68,7 @@ func New(
 		bannedThreshold:  DefaultBanThreshold,
 		bannedTimeWindow: DefaultBanTimeWindow,
 		waitTimeout:      DefaultWaitTimeout,
+		mu:               &sync.Mutex{},
 	}
 }
 
@@ -185,6 +188,8 @@ func (r *Relayer) MapUserOpHashToClientID() gin.HandlerFunc {
 				return err
 			}
 
+			r.mu.Lock()
+			defer r.mu.Unlock()
 			return incrementOpsSeenByClientID(txn, cid, r.bannedTimeWindow)
 		})
 		if err != nil {
@@ -260,6 +265,8 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 
 			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
 			del = append([]string{}, hashes...)
+			r.mu.Lock()
+			defer r.mu.Unlock()
 			return incrementOpsIncludedByUserOpHashes(txn, r.bannedTimeWindow, hashes...)
 		})
 		if err != nil {

@@ -4,6 +4,7 @@ package paymaster
 
 import (
 	"errors"
+	"sync"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/dgraph-io/badger/v3"
@@ -15,12 +16,14 @@ import (
 // UserOperation.
 type Reputation struct {
 	db *badger.DB
+	mu *sync.Mutex
 }
 
 // New returns an instance of a Reputation object to track and appropriately process userOps by paymaster
 // status.
 func New(db *badger.DB) *Reputation {
-	return &Reputation{db}
+	mu := &sync.Mutex{}
+	return &Reputation{db, mu}
 }
 
 // CheckStatus returns a UserOpHandler that is used by the Client to determine if the userOp is allowed based
@@ -37,7 +40,9 @@ func (r *Reputation) CheckStatus() modules.UserOpHandlerFunc {
 				return nil
 			}
 
+			r.mu.Lock()
 			status, err := getStatus(txn, paymaster)
+			r.mu.Unlock()
 			if err != nil {
 				return err
 			}
@@ -62,6 +67,8 @@ func (r *Reputation) IncOpsSeen() modules.UserOpHandlerFunc {
 				return nil
 			}
 
+			r.mu.Lock()
+			defer r.mu.Unlock()
 			return incrementOpsSeenByPaymaster(txn, paymaster)
 		})
 	}
@@ -87,6 +94,8 @@ func (r *Reputation) IncOpsIncluded() modules.BatchHandlerFunc {
 				}
 			}
 
+			r.mu.Lock()
+			defer r.mu.Unlock()
 			return incrementOpsIncludedByPaymasters(txn, c, ps.ToSlice()...)
 		})
 	}
