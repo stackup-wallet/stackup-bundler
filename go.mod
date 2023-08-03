@@ -3,7 +3,7 @@ module github.com/stackup-wallet/stackup-bundler
 go 1.19
 
 require (
-	github.com/deckarep/golang-set/v2 v2.3.0
+	github.com/deckarep/golang-set/v2 v2.3.1
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/gin-contrib/cors v1.4.0
