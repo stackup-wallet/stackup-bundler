@@ -12,7 +12,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "ethers": "^5.7.2",
+    "ethers": "^6.7.0",
     "userop": "^0.3.0"
   },
   "devDependencies": {
