@@ -232,7 +232,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 				err := removeUserOpHashEntries(txn, hashes...)
 				r.mu.Unlock()
 				if err != nil {
-					return err
+					return fmt.Errorf("checkpoint 1: %w", err)
 				}
 			}
 
@@ -252,7 +252,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 					err := removeUserOpHashEntries(txn, hashes...)
 					r.mu.Unlock()
 					if err != nil {
-						return err
+						return fmt.Errorf("checkpoint 2: %w", err)
 					}
 				} else {
 					opts.GasLimit = est
