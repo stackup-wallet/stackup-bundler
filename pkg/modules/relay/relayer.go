@@ -278,7 +278,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			return incrementOpsIncludedByUserOpHashes(txn, r.bannedTimeWindow, hashes...)
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("relayer batchHandler error 1: %w", err)
 		}
 
 		// Delete remaining userOpHash entries from submitted userOps.
@@ -289,7 +289,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			return removeUserOpHashEntries(txn, del...)
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("relayer batchHandler error 2: %w", err)
 		}
 
 		return nil
