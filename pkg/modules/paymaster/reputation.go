@@ -40,9 +40,9 @@ func (r *Reputation) CheckStatus() modules.UserOpHandlerFunc {
 				return nil
 			}
 
-			r.mu.Lock()
+			// r.mu.Lock()
 			status, err := getStatus(txn, paymaster)
-			r.mu.Unlock()
+			// r.mu.Unlock()
 			if err != nil {
 				return err
 			}
@@ -67,8 +67,8 @@ func (r *Reputation) IncOpsSeen() modules.UserOpHandlerFunc {
 				return nil
 			}
 
-			r.mu.Lock()
-			defer r.mu.Unlock()
+			// r.mu.Lock()
+			// defer r.mu.Unlock()
 			return incrementOpsSeenByPaymaster(txn, paymaster)
 		})
 	}
@@ -94,8 +94,8 @@ func (r *Reputation) IncOpsIncluded() modules.BatchHandlerFunc {
 				}
 			}
 
-			r.mu.Lock()
-			defer r.mu.Unlock()
+			// r.mu.Lock()
+			// defer r.mu.Unlock()
 			return incrementOpsIncludedByPaymasters(txn, c, ps.ToSlice()...)
 		})
 	}

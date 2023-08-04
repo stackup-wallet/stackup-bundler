@@ -188,8 +188,8 @@ func (r *Relayer) MapUserOpHashToClientID() gin.HandlerFunc {
 				return err
 			}
 
-			r.mu.Lock()
-			defer r.mu.Unlock()
+			// r.mu.Lock()
+			// defer r.mu.Unlock()
 			return incrementOpsSeenByClientID(txn, cid, r.bannedTimeWindow)
 		})
 		if err != nil {
@@ -265,8 +265,8 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 
 			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
 			del = append([]string{}, hashes...)
-			r.mu.Lock()
-			defer r.mu.Unlock()
+			// r.mu.Lock()
+			// defer r.mu.Unlock()
 			return incrementOpsIncludedByUserOpHashes(txn, r.bannedTimeWindow, hashes...)
 		})
 		if err != nil {
