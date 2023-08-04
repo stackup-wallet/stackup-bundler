@@ -1,6 +1,7 @@
 package relay
 
 import (
+	"fmt"
 	"math/big"
 	"strconv"
 	"time"
@@ -87,7 +88,7 @@ func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, ttl time.Duration, user
 			return nil
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("checkpoint 3: %w", err)
 		}
 
 		var value []byte
@@ -96,13 +97,13 @@ func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, ttl time.Duration, user
 			return nil
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("checkpoint 4: %w", err)
 		}
 
 		cid := string(value)
 		opsSeen, opsIncluded, err := getOpsCountByClientID(txn, cid)
 		if err != nil {
-			return err
+			return fmt.Errorf("checkpoint 5: %w", err)
 		}
 
 		var opsCountValue string
@@ -115,7 +116,7 @@ func incrementOpsIncludedByUserOpHashes(txn *badger.Txn, ttl time.Duration, user
 
 		e := badger.NewEntry(getOpsCountKey(cid), []byte(opsCountValue)).WithTTL(ttl)
 		if err := txn.SetEntry(e); err != nil {
-			return err
+			return fmt.Errorf("checkpoint 6: %w", err)
 		}
 	}
 
