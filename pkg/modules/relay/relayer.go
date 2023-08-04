@@ -183,13 +183,15 @@ func (r *Relayer) MapUserOpHashToClientID() gin.HandlerFunc {
 			WithValues("userop_hash", hash).
 			WithValues("client_id", cid)
 		err = r.db.Update(func(txn *badger.Txn) error {
+			r.mu.Lock()
 			err := mapUserOpHashToClientID(txn, hash, cid)
+			r.mu.Unlock()
 			if err != nil {
 				return err
 			}
 
-			// r.mu.Lock()
-			// defer r.mu.Unlock()
+			r.mu.Lock()
+			defer r.mu.Unlock()
 			return incrementOpsSeenByClientID(txn, cid, r.bannedTimeWindow)
 		})
 		if err != nil {
@@ -226,7 +228,10 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			// Delete any userOpHash entries from dropped userOps.
 			if len(ctx.PendingRemoval) > 0 {
 				hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
-				if err := removeUserOpHashEntries(txn, hashes...); err != nil {
+				r.mu.Lock()
+				err := removeUserOpHashEntries(txn, hashes...)
+				r.mu.Unlock()
+				if err != nil {
 					return err
 				}
 			}
@@ -243,7 +248,10 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 					estRev = append(estRev, revert.Reason)
 
 					hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.PendingRemoval...)
-					if err := removeUserOpHashEntries(txn, hashes...); err != nil {
+					r.mu.Lock()
+					err := removeUserOpHashEntries(txn, hashes...)
+					r.mu.Unlock()
+					if err != nil {
 						return err
 					}
 				} else {
@@ -265,8 +273,8 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 
 			hashes := getUserOpHashesFromOps(ctx.EntryPoint, ctx.ChainID, ctx.Batch...)
 			del = append([]string{}, hashes...)
-			// r.mu.Lock()
-			// defer r.mu.Unlock()
+			r.mu.Lock()
+			defer r.mu.Unlock()
 			return incrementOpsIncludedByUserOpHashes(txn, r.bannedTimeWindow, hashes...)
 		})
 		if err != nil {
