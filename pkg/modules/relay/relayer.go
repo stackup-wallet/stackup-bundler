@@ -284,6 +284,8 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 		// Delete remaining userOpHash entries from submitted userOps.
 		// Perform update in new txn to avoid db conflicts.
 		err = r.db.Update(func(txn *badger.Txn) error {
+			r.mu.Lock()
+			defer r.mu.Unlock()
 			return removeUserOpHashEntries(txn, del...)
 		})
 		if err != nil {
