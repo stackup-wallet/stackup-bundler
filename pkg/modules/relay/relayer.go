@@ -64,8 +64,7 @@ func (r *Relayer) SetWaitTimeout(timeout time.Duration) {
 }
 
 // SendUserOperation returns a BatchHandler that is used by the Bundler to send batches in a regular EOA
-// transaction. It uses the mapping of userOpHash to client ID created by the Gin middleware in order to
-// mitigate DoS attacks.
+// transaction.
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		// TODO: Increment badger nextTxnTs to read latest data from MapUserOpHashToClientID.
