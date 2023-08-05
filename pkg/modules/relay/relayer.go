@@ -32,7 +32,7 @@ type Relayer struct {
 	waitTimeout time.Duration
 }
 
-// New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
+// New initializes a new EOA relayer for sending batches to the EntryPoint.
 func New(
 	eoa *signer.EOA,
 	eth *ethclient.Client,
