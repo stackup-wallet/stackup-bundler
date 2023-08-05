@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
@@ -23,10 +22,6 @@ type Values struct {
 	MaxBatchGasLimit        *big.Int
 	MaxOpsForUnstakedSender int
 	Beneficiary             string
-
-	// Private mode variables.
-	RelayerBannedThreshold  int
-	RelayerBannedTimeWindow time.Duration
 
 	// Searcher mode variables.
 	EthBuilderUrl     string
@@ -107,8 +102,6 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
 	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
-	_ = viper.BindEnv("erc4337_bundler_relayer_banned_threshold")
-	_ = viper.BindEnv("erc4337_bundler_relayer_banned_time_window")
 	_ = viper.BindEnv("erc4337_bundler_eth_builder_url")
 	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
 	_ = viper.BindEnv("erc4337_bundler_otel_service_name")
@@ -158,8 +151,6 @@ func GetValues() *Values {
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
 	maxOpsForUnstakedSender := viper.GetInt("erc4337_bundler_max_ops_for_unstaked_sender")
-	relayerBannedThreshold := viper.GetInt("erc4337_bundler_relayer_banned_threshold")
-	relayerBannedTimeWindow := viper.GetInt("erc4337_bundler_relayer_banned_time_window") * int(time.Second)
 	ethBuilderUrl := viper.GetString("erc4337_bundler_eth_builder_url")
 	blocksInTheFuture := viper.GetInt("erc4337_bundler_blocks_in_the_future")
 	otelServiceName := viper.GetString("erc4337_bundler_otel_service_name")
@@ -178,8 +169,6 @@ func GetValues() *Values {
 		MaxVerificationGas:      maxVerificationGas,
 		MaxBatchGasLimit:        maxBatchGasLimit,
 		MaxOpsForUnstakedSender: maxOpsForUnstakedSender,
-		RelayerBannedThreshold:  relayerBannedThreshold,
-		RelayerBannedTimeWindow: time.Duration(relayerBannedTimeWindow),
 		EthBuilderUrl:           ethBuilderUrl,
 		BlocksInTheFuture:       blocksInTheFuture,
 		OTELServiceName:         otelServiceName,
