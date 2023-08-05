@@ -15,7 +15,15 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
-// Relayer provides a module that can relay batches with a regular EOA.
+// Relayer provides a module that can relay batches with a regular EOA. Relaying batches to the EntryPoint
+// through a regular transaction comes with several important notes:
+//
+//   - The bundler will NOT be operating as a block builder.
+//   - This opens the bundler up to frontrunning.
+//
+// This module only works in the case of a private mempool and will not work in the P2P case where ops are
+// propagated through the network and it is impossible to prevent collisions from multiple bundlers trying to
+// relay the same ops.
 type Relayer struct {
 	db          *badger.DB
 	eoa         *signer.EOA
