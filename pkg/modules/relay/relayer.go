@@ -67,9 +67,6 @@ func (r *Relayer) SetWaitTimeout(timeout time.Duration) {
 // transaction.
 func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
-		// TODO: Increment badger nextTxnTs to read latest data from MapUserOpHashToClientID.
-		time.Sleep(5 * time.Millisecond)
-
 		opts := transaction.Opts{
 			EOA:         r.eoa,
 			Eth:         r.eth,
