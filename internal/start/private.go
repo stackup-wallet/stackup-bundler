@@ -107,7 +107,7 @@ func PrivateMode() {
 		conf.MaxOpsForUnstakedSender,
 	)
 
-	relayer := relay.New(db, eoa, eth, chain, beneficiary, logr)
+	relayer := relay.New(eoa, eth, chain, beneficiary, logr)
 
 	paymaster := paymaster.New(db)
 

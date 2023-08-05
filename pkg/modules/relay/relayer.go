@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-logr/logr"
@@ -25,7 +24,6 @@ import (
 // propagated through the network and it is impossible to prevent collisions from multiple bundlers trying to
 // relay the same ops.
 type Relayer struct {
-	db          *badger.DB
 	eoa         *signer.EOA
 	eth         *ethclient.Client
 	chainID     *big.Int
@@ -36,7 +34,6 @@ type Relayer struct {
 
 // New initializes a new EOA relayer for sending batches to the EntryPoint with IP throttling protection.
 func New(
-	db *badger.DB,
 	eoa *signer.EOA,
 	eth *ethclient.Client,
 	chainID *big.Int,
@@ -44,7 +41,6 @@ func New(
 	l logr.Logger,
 ) *Relayer {
 	return &Relayer{
-		db:          db,
 		eoa:         eoa,
 		eth:         eth,
 		chainID:     chainID,
