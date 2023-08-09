@@ -4,7 +4,6 @@ package checks
 
 import (
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
@@ -137,32 +136,24 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 func (s *Standalone) CodeHashes() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		gc := getCodeWithEthClient(s.eth)
-		g := new(errgroup.Group)
-		mu := &sync.Mutex{}
-		fn := func(i int, op *userop.UserOperation) func() error {
-			return func() error {
-				chs, err := getSavedCodeHashes(s.db, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))
-				if err != nil {
-					return err
-				}
 
-				changed, err := hasCodeHashChanges(chs, gc)
-				if err != nil {
-					return err
-				}
-				if changed {
-					mu.Lock()
-					ctx.MarkOpIndexForRemoval(i)
-					mu.Unlock()
-				}
-				return nil
+		end := len(ctx.Batch) - 1
+		for i := end; i >= 0; i-- {
+			op := ctx.Batch[i]
+			chs, err := getSavedCodeHashes(s.db, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))
+			if err != nil {
+				return err
+			}
+
+			changed, err := hasCodeHashChanges(chs, gc)
+			if err != nil {
+				return err
+			}
+			if changed {
+				ctx.MarkOpIndexForRemoval(i)
 			}
 		}
-
-		for i, op := range ctx.Batch {
-			g.Go(fn(i, op))
-		}
-		return g.Wait()
+		return nil
 	}
 }
 
