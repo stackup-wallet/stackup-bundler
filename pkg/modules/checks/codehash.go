@@ -3,7 +3,6 @@ package checks
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"golang.org/x/sync/errgroup"
 )
 
 type codeHash struct {
@@ -11,36 +10,19 @@ type codeHash struct {
 	Hash    common.Hash    `json:"hash"`
 }
 
-func getCodeHashAsync(addr common.Address, gc GetCodeFunc, c chan codeHash) func() error {
-	return func() error {
-		bytecode, err := gc(addr)
-		if err != nil {
-			c <- codeHash{}
-			return err
-		}
-
-		ch := codeHash{
-			Address: addr,
-			Hash:    crypto.Keccak256Hash(bytecode),
-		}
-		c <- ch
-		return nil
-	}
-}
-
 func getCodeHashes(ic []common.Address, gc GetCodeFunc) ([]codeHash, error) {
-	g := new(errgroup.Group)
-	c := make(chan codeHash)
 	ret := []codeHash{}
 
 	for _, addr := range ic {
-		g.Go(getCodeHashAsync(addr, gc, c))
-	}
-	for range ic {
-		ret = append(ret, <-c)
-	}
-	if err := g.Wait(); err != nil {
-		return ret, err
+		bytecode, err := gc(addr)
+		if err != nil {
+			return ret, err
+		}
+
+		ret = append(ret, codeHash{
+			Address: addr,
+			Hash:    crypto.Keccak256Hash(bytecode),
+		})
 	}
 
 	return ret, nil
