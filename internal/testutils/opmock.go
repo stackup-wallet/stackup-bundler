@@ -19,7 +19,7 @@ var (
 		"maxFeePerGas":         "0xa862145e",
 		"maxPriorityFeePerGas": "0xa8621440",
 		"paymasterAndData":     "0x",
-		"preVerificationGas":   "0xc869",
+		"preVerificationGas":   "0xc539",
 		"signature":            "0xa925dcc5e5131636e244d4405334c25f034ebdd85c0cb12e8cdb13c15249c2d466d0bade18e2cafd3513497f7f968dcbb63e519acd9b76dcae7acd61f11aa8421b",
 	}
 	MockByteCode = common.Hex2Bytes("6080604052")
