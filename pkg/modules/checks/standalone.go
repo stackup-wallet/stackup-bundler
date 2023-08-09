@@ -137,7 +137,9 @@ func (s *Standalone) CodeHashes() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		gc := getCodeWithEthClient(s.eth)
 
-		for i, op := range ctx.Batch {
+		end := len(ctx.Batch) - 1
+		for i := end; i >= 0; i-- {
+			op := ctx.Batch[i]
 			chs, err := getSavedCodeHashes(s.db, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))
 			if err != nil {
 				return err
