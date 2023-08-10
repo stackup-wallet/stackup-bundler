@@ -22,6 +22,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/batch"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/expire"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
@@ -107,6 +108,8 @@ func PrivateMode() {
 		conf.MaxOpsForUnstakedSender,
 	)
 
+	exp := expire.New(conf.MaxOpTTL)
+
 	relayer := relay.New(eoa, eth, chain, beneficiary, logr)
 
 	paymaster := paymaster.New(db)
@@ -134,6 +137,7 @@ func PrivateMode() {
 		log.Fatal(err)
 	}
 	b.UseModules(
+		exp.DropExpired(),
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
 		batch.SortByNonce(),

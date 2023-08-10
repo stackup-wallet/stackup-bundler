@@ -24,6 +24,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/batch"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/builder"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/expire"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
@@ -104,6 +105,9 @@ func SearcherMode() {
 		conf.MaxBatchGasLimit,
 		conf.MaxOpsForUnstakedSender,
 	)
+
+	exp := expire.New(conf.MaxOpTTL)
+
 	// TODO: Create separate go-routine for tracking transactions sent to the block builder.
 	builder := builder.New(eoa, eth, fb, beneficiary, conf.BlocksInTheFuture)
 	paymaster := paymaster.New(db)
@@ -132,6 +136,7 @@ func SearcherMode() {
 		log.Fatal(err)
 	}
 	b.UseModules(
+		exp.DropExpired(),
 		gasprice.SortByGasPrice(),
 		gasprice.FilterUnderpriced(),
 		batch.SortByNonce(),
