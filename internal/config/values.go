@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,7 @@ type Values struct {
 	SupportedEntryPoints    []common.Address
 	MaxVerificationGas      *big.Int
 	MaxBatchGasLimit        *big.Int
+	MaxOpTTL                time.Duration
 	MaxOpsForUnstakedSender int
 	Beneficiary             string
 
@@ -73,6 +75,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 3000000)
 	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 25000000)
+	viper.SetDefault("erc4337_bundler_max_op_ttl_seconds", 180)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
 	viper.SetDefault("erc4337_bundler_otel_insecure_mode", false)
@@ -101,6 +104,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
+	_ = viper.BindEnv("erc4337_bundler_max_op_ttl_seconds")
 	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
 	_ = viper.BindEnv("erc4337_bundler_eth_builder_url")
 	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
@@ -150,6 +154,7 @@ func GetValues() *Values {
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
+	maxOpTTL := time.Second * viper.GetDuration("erc4337_bundler_max_op_ttl_seconds")
 	maxOpsForUnstakedSender := viper.GetInt("erc4337_bundler_max_ops_for_unstaked_sender")
 	ethBuilderUrl := viper.GetString("erc4337_bundler_eth_builder_url")
 	blocksInTheFuture := viper.GetInt("erc4337_bundler_blocks_in_the_future")
@@ -168,6 +173,7 @@ func GetValues() *Values {
 		Beneficiary:             beneficiary,
 		MaxVerificationGas:      maxVerificationGas,
 		MaxBatchGasLimit:        maxBatchGasLimit,
+		MaxOpTTL:                maxOpTTL,
 		MaxOpsForUnstakedSender: maxOpsForUnstakedSender,
 		EthBuilderUrl:           ethBuilderUrl,
 		BlocksInTheFuture:       blocksInTheFuture,
