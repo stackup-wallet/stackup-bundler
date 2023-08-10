@@ -21,8 +21,8 @@ func New(ttl time.Duration) *ExpireHandler {
 	}
 }
 
-// DropExpired will drop UserOperations from the mempool if it has been around for longer than the TTL
-// duration.
+// DropExpired returns a BatchHandlerFunc that will drop UserOperations from the mempool if it has been around
+// for longer than the TTL duration.
 func (e *ExpireHandler) DropExpired() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		end := len(ctx.Batch) - 1
