@@ -18,8 +18,8 @@ func TestDropExpired(t *testing.T) {
 	op2 := testutils.MockValidInitUserOp()
 	op2.CallData = common.Hex2Bytes("0xdead")
 	exp.seenAt = map[common.Hash]time.Time{
-		op1.GetUserOpHash(testutils.ValidAddress1, common.Big1): time.Now().Add(time.Second * -15),
-		op2.GetUserOpHash(testutils.ValidAddress1, common.Big1): time.Now().Add(time.Second * -45),
+		op1.GetUserOpHash(testutils.ValidAddress1, common.Big1): time.Now().Add(time.Second * -45),
+		op2.GetUserOpHash(testutils.ValidAddress1, common.Big1): time.Now().Add(time.Second * -15),
 	}
 
 	ctx := modules.NewBatchHandlerContext(
@@ -36,9 +36,9 @@ func TestDropExpired(t *testing.T) {
 		t.Fatalf("got batch length %d, want 1", len(ctx.Batch))
 	} else if len(ctx.PendingRemoval) != 1 {
 		t.Fatalf("got pending removal length %d, want 1", len(ctx.Batch))
-	} else if !testutils.IsOpsEqual(ctx.Batch[0], op1) {
+	} else if !testutils.IsOpsEqual(ctx.Batch[0], op2) {
 		t.Fatal("incorrect batch: Dropped legit op")
-	} else if !testutils.IsOpsEqual(ctx.PendingRemoval[0], op2) {
+	} else if !testutils.IsOpsEqual(ctx.PendingRemoval[0], op1) {
 		t.Fatal("incorrect pending removal: Didn't drop bad op")
 	}
 
