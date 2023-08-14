@@ -159,7 +159,6 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		if isExecutionOOG(err) {
 			l := cgl.Int64()
 			r := l * 2
-			var simErr error
 			for r-l >= fallBackBinarySearchCutoff {
 				m := (l + r) / 2
 
@@ -174,7 +173,6 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					Op:         simOp,
 					ChainID:    in.ChainID,
 				})
-				simErr = err
 				if err != nil && (isExecutionOOG(err) || isExecutionReverted(err)) {
 					// CGL too low, go higher.
 					l = m + 1
@@ -187,9 +185,6 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					// Unexpected error.
 					return 0, 0, err
 				}
-			}
-			if simErr != nil && !(isExecutionOOG(err) || isExecutionReverted(err)) {
-				return 0, 0, simErr
 			}
 			return simOp.VerificationGasLimit.Uint64(), big.NewInt(r).Uint64(), nil
 		}
