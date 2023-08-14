@@ -159,10 +159,8 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		if isExecutionOOG(err) {
 			l := cgl.Int64()
 			r := l * 2
-			count := 0
 			var simErr error
 			for r-l >= fallBackBinarySearchCutoff {
-				count++
 				m := (l + r) / 2
 
 				data["callGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(m)))
