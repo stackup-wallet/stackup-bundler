@@ -211,8 +211,6 @@ describe("Without Paymaster", () => {
       const depth = 3;
       [15000, 20000, 25000, 30000, 35000].forEach((discount) => {
         test(`Sender can make contract interactions with ${discount} gas discount to recursive calls`, async () => {
-          let opts = opChecks(provider);
-
           const response = await client.sendUserOperation(
             acc.execute(
               config.testGas,
@@ -224,7 +222,7 @@ describe("Without Paymaster", () => {
                 depth,
               ])
             ),
-            opts
+            opChecks(provider)
           );
           const event = await response.wait();
 
