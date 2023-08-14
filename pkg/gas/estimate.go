@@ -158,7 +158,9 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		// static discount, e.g. sub(gas(), STATIC_DISCOUNT). This is not yet accounted for in the tracer.
 		if isExecutionOOG(err) {
 			l := cgl.Int64()
-			r := l * 2
+			r := (l * 150) / 100 // Set upper bound to +50%
+			ok := false
+			simErr := err
 			for r-l >= fallBackBinarySearchCutoff {
 				m := (l + r) / 2
 
@@ -173,18 +175,24 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					Op:         simOp,
 					ChainID:    in.ChainID,
 				})
+				simErr = err
 				if err != nil && (isExecutionOOG(err) || isExecutionReverted(err)) {
 					// CGL too low, go higher.
 					l = m + 1
 					continue
-				} else if err == nil || isPrefundNotPaid(err) {
+				} else if err == nil {
 					// CGL too high, go lower.
 					r = m - 1
+					// Shown that the upper bound is ok.
+					ok = true
 					continue
 				} else {
 					// Unexpected error.
 					return 0, 0, err
 				}
+			}
+			if !ok {
+				return 0, 0, simErr
 			}
 			return simOp.VerificationGasLimit.Uint64(), big.NewInt(r).Uint64(), nil
 		}
