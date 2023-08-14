@@ -143,7 +143,7 @@ describe("Without Paymaster", () => {
         acc.execute(
           config.testGas,
           0,
-          testGas.interface.encodeFunctionData("recursiveCall", [32, 0, 32])
+          testGas.interface.encodeFunctionData("recursiveCall", [32, 0, 0, 32])
         ),
         { ...opChecks(provider) }
       );
@@ -157,8 +157,8 @@ describe("Without Paymaster", () => {
       [0, 2, 4, 8, 16].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
           let opts = opChecks(provider);
-          if (depth === 8) opts = opCheckDeep(1195400);
-          if (depth === 16) opts = opCheckDeep(4364942);
+          if (depth === 8) opts = opCheckDeep(1195897);
+          if (depth === 16) opts = opCheckDeep(4365893);
 
           const response = await client.sendUserOperation(
             acc.execute(
@@ -166,6 +166,7 @@ describe("Without Paymaster", () => {
               0,
               testGas.interface.encodeFunctionData("recursiveCall", [
                 depth,
+                0,
                 0,
                 depth,
               ])
@@ -183,8 +184,8 @@ describe("Without Paymaster", () => {
       [0, 2, 4, 8, 16].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
           let opts = opChecks(provider);
-          if (depth === 8) opts = opCheckDeep(1261728);
-          if (depth === 16) opts = opCheckDeep(4498665);
+          if (depth === 8) opts = opCheckDeep(1262227);
+          if (depth === 16) opts = opCheckDeep(4499616);
 
           const response = await client.sendUserOperation(
             acc.execute(
@@ -193,6 +194,33 @@ describe("Without Paymaster", () => {
               testGas.interface.encodeFunctionData("recursiveCall", [
                 depth,
                 0,
+                0,
+                depth,
+              ])
+            ),
+            opts
+          );
+          const event = await response.wait();
+
+          expect(event?.args.success).toBe(true);
+        });
+      });
+    });
+
+    describe("With gas discount", () => {
+      const depth = 3;
+      [15000, 20000, 25000, 30000, 35000].forEach((discount) => {
+        test(`Sender can make contract interactions with ${discount} gas discount to recursive calls`, async () => {
+          let opts = opChecks(provider);
+
+          const response = await client.sendUserOperation(
+            acc.execute(
+              config.testGas,
+              0,
+              testGas.interface.encodeFunctionData("recursiveCall", [
+                depth,
+                0,
+                discount,
                 depth,
               ])
             ),
@@ -209,8 +237,8 @@ describe("Without Paymaster", () => {
       [0, 1, 2, 3].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
           let opts = opChecks(provider);
-          if (depth === 2) opts = opCheckDeep(865684);
-          if (depth === 3) opts = opCheckDeep(7925084);
+          if (depth === 2) opts = opCheckDeep(866332);
+          if (depth === 3) opts = opCheckDeep(7929055);
 
           const width = depth;
           const response = await client.sendUserOperation(
@@ -220,6 +248,7 @@ describe("Without Paymaster", () => {
               testGas.interface.encodeFunctionData("recursiveCall", [
                 depth,
                 width,
+                0,
                 depth,
               ])
             ),

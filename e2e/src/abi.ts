@@ -168,6 +168,7 @@ export const testGasABI = [
     inputs: [
       { internalType: "uint256", name: "depth", type: "uint256" },
       { internalType: "uint256", name: "width", type: "uint256" },
+      { internalType: "uint256", name: "discount", type: "uint256" },
       { internalType: "uint256", name: "count", type: "uint256" },
     ],
     name: "recursiveCall",

@@ -12,6 +12,10 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+var (
+	fallBackBinarySearchCutoff = int64(30000)
+)
+
 func isPrefundNotPaid(err error) bool {
 	return strings.HasPrefix(err.Error(), "AA21") || strings.HasPrefix(err.Error(), "AA31")
 }
@@ -22,6 +26,10 @@ func isValidationOOG(err error) bool {
 
 func isExecutionOOG(err error) bool {
 	return strings.Contains(err.Error(), "execution OOG")
+}
+
+func isExecutionReverted(err error) bool {
+	return strings.Contains(err.Error(), "execution reverted")
 }
 
 type EstimateInput struct {
@@ -145,6 +153,48 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		ChainID:    in.ChainID,
 	})
 	if err != nil {
+		// Execution is successful but one shot tracing has failed. Fallback to binary search with an
+		// efficient range. Hitting this point could mean a contract is passing manual gas limits with a
+		// static discount, e.g. sub(gas(), STATIC_DISCOUNT). This is not yet accounted for in the tracer.
+		if isExecutionOOG(err) {
+			l := cgl.Int64()
+			r := l * 2
+			count := 0
+			var simErr error
+			for r-l >= fallBackBinarySearchCutoff {
+				count++
+				m := (l + r) / 2
+
+				data["callGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(m)))
+				simOp, err := userop.New(data)
+				if err != nil {
+					return 0, 0, err
+				}
+				_, err = execution.TraceSimulateHandleOp(&execution.TraceInput{
+					Rpc:        in.Rpc,
+					EntryPoint: in.EntryPoint,
+					Op:         simOp,
+					ChainID:    in.ChainID,
+				})
+				simErr = err
+				if err != nil && (isExecutionOOG(err) || isExecutionReverted(err)) {
+					// CGL too low, go higher.
+					l = m + 1
+					continue
+				} else if err == nil || isPrefundNotPaid(err) {
+					// CGL too high, go lower.
+					r = m - 1
+					continue
+				} else {
+					// Unexpected error.
+					return 0, 0, err
+				}
+			}
+			if simErr != nil && !(isExecutionOOG(err) || isExecutionReverted(err)) {
+				return 0, 0, simErr
+			}
+			return simOp.VerificationGasLimit.Uint64(), big.NewInt(r).Uint64(), nil
+		}
 		return 0, 0, err
 	}
 	return simOp.VerificationGasLimit.Uint64(), simOp.CallGasLimit.Uint64(), nil
