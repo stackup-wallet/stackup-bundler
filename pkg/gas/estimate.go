@@ -156,9 +156,9 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		// Execution is successful but one shot tracing has failed. Fallback to binary search with an
 		// efficient range. Hitting this point could mean a contract is passing manual gas limits with a
 		// static discount, e.g. sub(gas(), STATIC_DISCOUNT). This is not yet accounted for in the tracer.
-		if isExecutionOOG(err) {
+		if isExecutionOOG(err) || isExecutionReverted(err) {
 			l := cgl.Int64()
-			r := (l * 150) / 100 // Set upper bound to +50%
+			r := in.MaxGasLimit.Int64()
 			f := int64(0)
 			simErr := err
 			for r-l >= fallBackBinarySearchCutoff {
@@ -180,6 +180,9 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					// CGL too low, go higher.
 					l = m + 1
 					continue
+				} else if err != nil && isPrefundNotPaid(err) {
+					// CGL too high, go lower.
+					r = m - 1
 				} else if err == nil {
 					// CGL too high, go lower.
 					r = m - 1
