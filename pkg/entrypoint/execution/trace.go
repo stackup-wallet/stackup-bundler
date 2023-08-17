@@ -128,9 +128,18 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 			return out, errors.NewRPCError(errors.EXECUTION_REVERTED, "execution reverted", nil)
 		}
 
-		reason, err := errors.DecodeRevert(data)
-		if err != nil {
-			return out, err
+		reason, revErr := errors.DecodeRevert(data)
+		if revErr != nil {
+			code, panErr := errors.DecodePanic(data)
+			if panErr != nil {
+				return nil, fmt.Errorf("%s, %s", revErr, panErr)
+			}
+
+			return out, errors.NewRPCError(
+				errors.EXECUTION_REVERTED,
+				fmt.Sprintf("panic encountered: %s", code),
+				code,
+			)
 		}
 		return out, errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
 	}

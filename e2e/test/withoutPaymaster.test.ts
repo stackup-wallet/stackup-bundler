@@ -207,28 +207,33 @@ describe("Without Paymaster", () => {
       });
     });
 
-    describe("With gas discount", () => {
-      const depth = 3;
-      [15000, 20000, 25000, 30000, 35000].forEach((discount) => {
-        test(`Sender can make contract interactions with ${discount} gas discount to recursive calls`, async () => {
-          const response = await client.sendUserOperation(
-            acc.execute(
-              config.testGas,
-              0,
-              testGas.interface.encodeFunctionData("recursiveCall", [
-                depth,
-                0,
-                discount,
-                depth,
-              ])
-            ),
-            opChecks(provider)
-          );
-          const event = await response.wait();
+    describe("With random gas discount", () => {
+      [1, 2, 3].forEach((depth) =>
+        describe(`At depth equal to ${depth}`, () => {
+          Array.from({ length: 5 }, () =>
+            Math.floor(Math.random() * 100000)
+          ).forEach((discount) => {
+            test(`Sender can make contract interactions with ${discount} gas discount to recursive calls`, async () => {
+              const response = await client.sendUserOperation(
+                acc.execute(
+                  config.testGas,
+                  0,
+                  testGas.interface.encodeFunctionData("recursiveCall", [
+                    depth,
+                    0,
+                    discount,
+                    depth,
+                  ])
+                ),
+                opChecks(provider)
+              );
+              const event = await response.wait();
 
-          expect(event?.args.success).toBe(true);
-        });
-      });
+              expect(event?.args.success).toBe(true);
+            });
+          });
+        })
+      );
     });
 
     describe("With multiple stacks per depth", () => {
