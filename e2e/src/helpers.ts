@@ -18,10 +18,10 @@ export const fundIfRequired = async (
   if (bundlerBalance.eq(0)) {
     const response = await signer.sendTransaction({
       to: bundler,
-      value: ethers.constants.WeiPerEther.mul(5),
+      value: ethers.constants.WeiPerEther,
     });
     await response.wait();
-    console.log("Funded Bundler with 5 ETH...");
+    console.log("Funded Bundler with 1 ETH...");
   }
 
   if (accountBalance.eq(0)) {
@@ -30,7 +30,7 @@ export const fundIfRequired = async (
       value: ethers.constants.WeiPerEther.mul(2),
     });
     await response.wait();
-    console.log("Funded Account with 5 ETH...");
+    console.log("Funded Account with 2 ETH...");
   }
 
   if (accountTokenBalance.eq(0)) {
