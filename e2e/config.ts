@@ -14,7 +14,7 @@ const config: IConfig = {
   bundlerUrl: "http://localhost:4337",
   testERC20Token: "0x3870419Ba2BBf0127060bCB37f69A1b1C090992B",
   // https://github.com/stackup-wallet/contracts/blob/main/contracts/test/TestGas.sol
-  testGas: "0xd98206114295d553625cFF946D8aEc3aa790db3A",
+  testGas: "0xdea3d7b717F3A6E634876092470efc281f9b3de7",
 };
 
 export default config;
