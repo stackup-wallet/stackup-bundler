@@ -145,6 +145,16 @@ func GetValues() *Values {
 		panic("Fatal config error: erc4337_bundler_otel_service_name is set without a collector URL")
 	}
 
+	// Prioritize the PORT environment variable for Heroku deployment
+	if herokuPort := os.Getenv("PORT"); herokuPort != "" {
+		portValue, err := strconv.Atoi(herokuPort) // Convert PORT value from string to integer
+		if err == nil {
+				viper.Set("erc4337_bundler_port", portValue)
+		} else {
+				fmt.Println("Warning: Could not convert PORT value to integer:", err)
+		}
+}
+
 	// Return Values
 	privateKey := viper.GetString("erc4337_bundler_private_key")
 	ethClientUrl := viper.GetString("erc4337_bundler_eth_client_url")
