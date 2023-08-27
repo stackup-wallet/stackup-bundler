@@ -12,14 +12,18 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-func SimulateHandleOp(
-	rpc *rpc.Client,
-	entryPoint common.Address,
-	op *userop.UserOperation,
-	target common.Address,
-	data []byte,
-) (*reverts.ExecutionResultRevert, error) {
-	ep, err := entrypoint.NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
+type SimulateInput struct {
+	Rpc        *rpc.Client
+	EntryPoint common.Address
+	Op         *userop.UserOperation
+
+	// Optional params for simulateHandleOps
+	Target common.Address
+	Data   []byte
+}
+
+func SimulateHandleOp(in *SimulateInput) (*reverts.ExecutionResultRevert, error) {
+	ep, err := entrypoint.NewEntrypoint(in.EntryPoint, ethclient.NewClient(in.Rpc))
 	if err != nil {
 		return nil, err
 	}
@@ -29,9 +33,9 @@ func SimulateHandleOp(
 		nil,
 		nil,
 		"simulateHandleOp",
-		entrypoint.UserOperation(*op),
-		target,
-		data,
+		entrypoint.UserOperation(*in.Op),
+		in.Target,
+		in.Data,
 	)
 
 	sim, simErr := reverts.NewExecutionResult(err)
