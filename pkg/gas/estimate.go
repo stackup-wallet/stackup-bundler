@@ -175,18 +175,18 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					ChainID:    in.ChainID,
 				})
 				simErr = err
-				if err != nil && (isExecutionOOG(err) || isExecutionReverted(err)) {
-					// CGL too low, go higher.
-					l = m + 1
-					continue
-				} else if err != nil && isPrefundNotPaid(err) {
-					// CGL too high, go lower.
-					r = m - 1
-				} else if err == nil {
+				if err == nil {
 					// CGL too high, go lower.
 					r = m - 1
 					// Set final.
 					f = m
+					continue
+				} else if isPrefundNotPaid(err) {
+					// CGL too high, go lower.
+					r = m - 1
+				} else if isExecutionOOG(err) || isExecutionReverted(err) {
+					// CGL too low, go higher.
+					l = m + 1
 					continue
 				} else {
 					// Unexpected error.
