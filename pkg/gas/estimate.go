@@ -24,6 +24,7 @@ func isValidationOOG(err error) bool {
 	return strings.HasPrefix(err.Error(), "AA13") ||
 		strings.HasPrefix(err.Error(), "AA40") ||
 		err.Error() == "AA23 reverted (or OOG)" ||
+		strings.Contains(err.Error(), "return data out of bounds") ||
 		strings.Contains(err.Error(), "validation OOG")
 }
 
@@ -36,12 +37,13 @@ func isExecutionReverted(err error) bool {
 }
 
 type EstimateInput struct {
-	Rpc         *rpc.Client
-	EntryPoint  common.Address
-	Op          *userop.UserOperation
-	Ov          *Overhead
-	ChainID     *big.Int
-	MaxGasLimit *big.Int
+	Rpc             *rpc.Client
+	EntryPoint      common.Address
+	Op              *userop.UserOperation
+	Ov              *Overhead
+	ChainID         *big.Int
+	MaxGasLimit     *big.Int
+	PaymasterBuffer int64
 }
 
 // EstimateGas uses the simulateHandleOp method on the EntryPoint to derive an estimate for
@@ -106,6 +108,12 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	}
 	if f == 0 {
 		return 0, 0, simErr
+	}
+	// TODO: Find a more reliable approach for the edge case where the gas required during a paymaster's
+	// postOp > gas required during verification. As a workaround we add a configurable percentage buffer if a
+	// paymaster is included.
+	if in.Op.GetPaymaster() != common.HexToAddress("0x") {
+		f = (f * (100 + in.PaymasterBuffer)) / 100
 	}
 	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(f)))
 
