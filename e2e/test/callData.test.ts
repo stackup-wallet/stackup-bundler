@@ -28,7 +28,7 @@ const opCheckDeep = (benchmark: number): ISendUserOperationOpts => ({
   },
 });
 
-describe("Without Paymaster", () => {
+describe("Through the callData value", () => {
   const provider = new ethers.providers.JsonRpcProvider(config.nodeUrl);
   const signer = new ethers.Wallet(config.signingKey);
   const testToken = new ethers.Contract(

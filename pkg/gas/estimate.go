@@ -23,6 +23,7 @@ func isPrefundNotPaid(err error) bool {
 func isValidationOOG(err error) bool {
 	return strings.HasPrefix(err.Error(), "AA13") ||
 		strings.HasPrefix(err.Error(), "AA40") ||
+		err.Error() == "AA23 reverted (or OOG)" ||
 		strings.Contains(err.Error(), "validation OOG")
 }
 
