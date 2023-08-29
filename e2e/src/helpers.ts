@@ -5,15 +5,21 @@ export const fundIfRequired = async (
   provider: ethers.providers.JsonRpcProvider,
   token: ethers.Contract,
   bundler: string,
-  account: string
+  account: string,
+  testAccount: string
 ) => {
   const signer = provider.getSigner(0);
-  const [bundlerBalance, accountBalance, accountTokenBalance] =
-    await Promise.all([
-      provider.getBalance(bundler),
-      provider.getBalance(account),
-      token.balanceOf(account) as ethers.BigNumber,
-    ]);
+  const [
+    bundlerBalance,
+    accountBalance,
+    testAccountBalance,
+    accountTokenBalance,
+  ] = await Promise.all([
+    provider.getBalance(bundler),
+    provider.getBalance(account),
+    provider.getBalance(testAccount),
+    token.balanceOf(account) as ethers.BigNumber,
+  ]);
 
   if (bundlerBalance.eq(0)) {
     const response = await signer.sendTransaction({
@@ -31,6 +37,15 @@ export const fundIfRequired = async (
     });
     await response.wait();
     console.log("Funded Account with 2 ETH...");
+  }
+
+  if (testAccountBalance.eq(0)) {
+    const response = await signer.sendTransaction({
+      to: testAccount,
+      value: ethers.constants.WeiPerEther.mul(2),
+    });
+    await response.wait();
+    console.log("Funded Test Account with 2 ETH...");
   }
 
   if (accountTokenBalance.eq(0)) {

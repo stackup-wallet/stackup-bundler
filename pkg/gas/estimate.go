@@ -21,7 +21,11 @@ func isPrefundNotPaid(err error) bool {
 }
 
 func isValidationOOG(err error) bool {
-	return strings.HasPrefix(err.Error(), "AA13") || strings.Contains(err.Error(), "validation OOG")
+	return strings.HasPrefix(err.Error(), "AA13") ||
+		strings.HasPrefix(err.Error(), "AA40") ||
+		err.Error() == "AA23 reverted (or OOG)" ||
+		strings.Contains(err.Error(), "return data out of bounds") ||
+		strings.Contains(err.Error(), "validation OOG")
 }
 
 func isExecutionOOG(err error) bool {
@@ -33,12 +37,13 @@ func isExecutionReverted(err error) bool {
 }
 
 type EstimateInput struct {
-	Rpc         *rpc.Client
-	EntryPoint  common.Address
-	Op          *userop.UserOperation
-	Ov          *Overhead
-	ChainID     *big.Int
-	MaxGasLimit *big.Int
+	Rpc             *rpc.Client
+	EntryPoint      common.Address
+	Op              *userop.UserOperation
+	Ov              *Overhead
+	ChainID         *big.Int
+	MaxGasLimit     *big.Int
+	PaymasterBuffer int64
 }
 
 // EstimateGas uses the simulateHandleOp method on the EntryPoint to derive an estimate for
@@ -67,8 +72,9 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	// estimate.
 	l := int64(0)
 	r := in.MaxGasLimit.Int64()
+	f := int64(0)
 	var simErr error
-	for l <= r {
+	for r-l >= fallBackBinarySearchCutoff {
 		m := (l + r) / 2
 
 		data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(m)))
@@ -76,39 +82,40 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		if err != nil {
 			return 0, 0, err
 		}
-		out, err := execution.TraceSimulateHandleOp(&execution.TraceInput{
+		_, err = execution.SimulateHandleOp(&execution.SimulateInput{
 			Rpc:        in.Rpc,
 			EntryPoint: in.EntryPoint,
 			Op:         simOp,
-			ChainID:    in.ChainID,
 		})
 		simErr = err
-		if err != nil {
-			if isPrefundNotPaid(err) {
-				// VGL too high, go lower.
-				r = m - 1
-				continue
-			}
-			if isValidationOOG(err) {
-				// VGL too low, go higher.
-				l = m + 1
-				continue
-			}
-			// CGL is set to 0 and execution will always be OOG. Ignore it.
-			if !isExecutionOOG(err) {
-				return 0, 0, err
-			}
+		if err == nil {
+			// VGL too high, go lower.
+			r = m - 1
+			// Set final.
+			f = m
+			continue
+		} else if isPrefundNotPaid(err) {
+			// VGL too high, go lower.
+			r = m - 1
+			continue
+		} else if isValidationOOG(err) {
+			// VGL too low, go higher.
+			l = m + 1
+			continue
+		} else {
+			return 0, 0, err
 		}
-
-		// Optimal VGL found.
-		data["verificationGasLimit"] = hexutil.EncodeBig(
-			big.NewInt(0).Sub(out.Result.PreOpGas, in.Op.PreVerificationGas),
-		)
-		break
 	}
-	if simErr != nil && !isExecutionOOG(simErr) {
+	if f == 0 {
 		return 0, 0, simErr
 	}
+	// TODO: Find a more reliable approach for the edge case where the gas required during a paymaster's
+	// postOp > gas required during verification. As a workaround we add a configurable percentage buffer if a
+	// paymaster is included.
+	if in.Op.GetPaymaster() != common.HexToAddress("0x") {
+		f = (f * (100 + in.PaymasterBuffer)) / 100
+	}
+	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(f)))
 
 	// Find the optimal callGasLimit by setting the gas price to 0 and maxing out the gas limit. We don't run
 	// into the same restrictions here as we do with verificationGasLimit.
@@ -176,18 +183,18 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					ChainID:    in.ChainID,
 				})
 				simErr = err
-				if err != nil && (isExecutionOOG(err) || isExecutionReverted(err)) {
-					// CGL too low, go higher.
-					l = m + 1
-					continue
-				} else if err != nil && isPrefundNotPaid(err) {
-					// CGL too high, go lower.
-					r = m - 1
-				} else if err == nil {
+				if err == nil {
 					// CGL too high, go lower.
 					r = m - 1
 					// Set final.
 					f = m
+					continue
+				} else if isPrefundNotPaid(err) {
+					// CGL too high, go lower.
+					r = m - 1
+				} else if isExecutionOOG(err) || isExecutionReverted(err) {
+					// CGL too low, go higher.
+					l = m + 1
 					continue
 				} else {
 					// Unexpected error.
