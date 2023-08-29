@@ -18,7 +18,7 @@ describe("During the verification phase", () => {
 
   describe("With increasing call stack size", () => {
     describe("With zero sibling stacks", () => {
-      [0, 2, 4, 8].forEach((depth) => {
+      [0, 2, 4, 6, 8, 10].forEach((depth) => {
         test(`Sender can run verification with ${depth} recursive calls`, async () => {
           const response = await client.sendUserOperation(
             acc.recursiveCall(depth, 0, 0)
