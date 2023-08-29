@@ -28,7 +28,7 @@ const opCheckDeep = (benchmark: number): ISendUserOperationOpts => ({
   },
 });
 
-describe("During the verification phase", () => {
+describe("During the execution phase", () => {
   const provider = new ethers.providers.JsonRpcProvider(config.nodeUrl);
   const signer = new ethers.Wallet(config.signingKey);
   const testToken = new ethers.Contract(
