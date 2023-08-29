@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { Presets, Client, ISendUserOperationOpts } from "userop";
-import { fundIfRequired, getCallGasLimitBenchmark } from "../src/helpers";
+import { getCallGasLimitBenchmark } from "../src/helpers";
 import { erc20ABI, testGasABI } from "../src/abi";
 import { errorCodes } from "../src/errors";
 import config from "../config";
@@ -28,7 +28,7 @@ const opCheckDeep = (benchmark: number): ISendUserOperationOpts => ({
   },
 });
 
-describe("Through the callData value", () => {
+describe("During the verification phase", () => {
   const provider = new ethers.providers.JsonRpcProvider(config.nodeUrl);
   const signer = new ethers.Wallet(config.signingKey);
   const testToken = new ethers.Contract(
@@ -48,12 +48,6 @@ describe("Through the callData value", () => {
     acc = await Presets.Builder.SimpleAccount.init(signer, config.nodeUrl, {
       overrideBundlerRpc: config.bundlerUrl,
     });
-    await fundIfRequired(
-      provider,
-      testToken,
-      await signer.getAddress(),
-      acc.getSender()
-    );
   });
 
   test("Sender can transfer 0 ETH", async () => {

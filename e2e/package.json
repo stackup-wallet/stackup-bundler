@@ -9,11 +9,11 @@
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check --ignore-path ./.eslintignore '**'",
     "prettier:fix": "prettier --write --ignore-path ./.eslintignore '**'",
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "dependencies": {
     "ethers": "^5.7.2",
-    "userop": "^0.3.0"
+    "userop": "^0.3.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.2",
