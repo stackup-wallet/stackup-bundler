@@ -157,6 +157,10 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 		WithValues("entrypoint", epAddr.String()).
 		WithValues("chain_id", i.chainID.String())
 
+	op["preVerificationGas"] = hexutil.EncodeBig(big.NewInt(0))
+	op["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(0))
+	op["callGasLimit"] = hexutil.EncodeBig(big.NewInt(0))
+
 	userOp, err := userop.New(op)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")

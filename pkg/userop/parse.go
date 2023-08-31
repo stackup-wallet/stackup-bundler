@@ -95,6 +95,17 @@ func New(data map[string]any) (*UserOperation, error) {
 		ErrorUnset: true,
 		MatchName:  exactFieldMatch,
 	}
+
+	if op.CallGasLimit == nil {
+		op.CallGasLimit = big.NewInt(0)
+	}
+	if op.VerificationGasLimit == nil {
+		op.VerificationGasLimit = big.NewInt(0)
+	}
+	if op.PreVerificationGas == nil {
+		op.PreVerificationGas = big.NewInt(0)
+	}
+
 	decoder, err := mapstructure.NewDecoder(config)
 	if err != nil {
 		return nil, err
