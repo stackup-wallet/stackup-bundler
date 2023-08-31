@@ -17,14 +17,16 @@ var (
 )
 
 func isPrefundNotPaid(err error) bool {
-	return strings.HasPrefix(err.Error(), "AA21") || strings.HasPrefix(err.Error(), "AA31")
+	return strings.Contains(err.Error(), "AA21 didn't pay prefund") ||
+		strings.Contains(err.Error(), "AA31 paymaster deposit too low")
 }
 
 func isValidationOOG(err error) bool {
-	return strings.HasPrefix(err.Error(), "AA13") ||
-		strings.HasPrefix(err.Error(), "AA40") ||
-		err.Error() == "AA23 reverted (or OOG)" ||
-		err.Error() == "AA33 reverted (or OOG)" ||
+	return strings.Contains(err.Error(), "AA40 over verificationGasLimit") ||
+		strings.Contains(err.Error(), "AA41 too little verificationGas") ||
+		strings.Contains(err.Error(), "AA13 initCode failed or OOG") ||
+		strings.Contains(err.Error(), "AA23 reverted (or OOG)") ||
+		strings.Contains(err.Error(), "AA33 reverted (or OOG)") ||
 		strings.Contains(err.Error(), "return data out of bounds") ||
 		strings.Contains(err.Error(), "validation OOG")
 }
