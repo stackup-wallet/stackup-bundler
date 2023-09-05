@@ -18,7 +18,7 @@ func DecodeRevert(data []byte) (string, error) {
 	abi := revertError()
 	revert, err := abi.Unpack(data)
 	if err != nil {
-		return "", fmt.Errorf("revert: %s", err)
+		return "", fmt.Errorf("revert: cannot unpack revert data: %s", err)
 	}
 
 	args, ok := revert.([]any)
