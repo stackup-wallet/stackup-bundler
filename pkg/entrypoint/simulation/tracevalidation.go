@@ -52,7 +52,8 @@ func TraceSimulateValidation(
 		MaxFeePerGas: hexutil.Big(*op.MaxFeePerGas),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer: tracer.Loaded.BundlerCollectorTracer,
+		Tracer:         tracer.Loaded.BundlerCollectorTracer,
+		StateOverrides: utils.DefaultOverride,
 	}
 	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err
