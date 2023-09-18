@@ -49,7 +49,8 @@ jobs:
 
       - name: Install Geth
         run: |
-          wget -P ./standalone-bundle https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.12.2-bed84606.tar.gz && \
+          wget https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.12.2-bed84606.tar.gz && \
+          mkdir standalone-bundle && \
           tar -xvf geth-linux-amd64-1.12.2-bed84606.tar.gz -C ./standalone-bundle
 
       - name: Run Geth
