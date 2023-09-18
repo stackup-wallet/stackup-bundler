@@ -49,7 +49,7 @@ func TraceSimulateValidation(
 		From:         common.HexToAddress("0x"),
 		To:           entryPoint,
 		Data:         tx.Data(),
-		MaxFeePerGas: (*hexutil.Big)(op.MaxFeePerGas),
+		MaxFeePerGas: hexutil.Big(*op.MaxFeePerGas),
 	}
 	opts := utils.TraceCallOpts{
 		Tracer: tracer.Loaded.BundlerCollectorTracer,

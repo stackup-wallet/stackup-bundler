@@ -94,10 +94,11 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 		From:         common.HexToAddress("0x"),
 		To:           in.EntryPoint,
 		Data:         tx.Data(),
-		MaxFeePerGas: (*hexutil.Big)(mf),
+		MaxFeePerGas: hexutil.Big(*mf),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer: tracer.Loaded.BundlerExecutionTracer,
+		Tracer:         tracer.Loaded.BundlerExecutionTracer,
+		StateOverrides: utils.DefaultOverride,
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err
