@@ -31,6 +31,6 @@ var (
 
 	// A default state override to ensure the zero address always has sufficient funds.
 	DefaultOverride = map[string]TracerStateOverrides{
-		common.HexToAddress("0x").Hex(): {Balance: hexutil.Big(*big.NewInt(math.MaxInt64))},
+		common.HexToAddress("0x").Hex(): {Balance: hexutil.Big(*big.NewInt(0).SetUint64(math.MaxUint64))},
 	}
 )
