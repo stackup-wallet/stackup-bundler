@@ -54,7 +54,7 @@ jobs:
 
       - name: Run Geth
         run: |
-          cd geth-linux-amd64-1.12.2-bed84606 &&
+          cd geth-linux-amd64-1.12.2-bed84606 && \
           ./geth \
           --verbosity 1 \
           --http.vhosts '*,localhost,host.docker.internal' \
