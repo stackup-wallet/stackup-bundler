@@ -131,10 +131,11 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		return 0, 0, err
 	}
 	out, err := execution.TraceSimulateHandleOp(&execution.TraceInput{
-		Rpc:        in.Rpc,
-		EntryPoint: in.EntryPoint,
-		Op:         simOp,
-		ChainID:    in.ChainID,
+		Rpc:          in.Rpc,
+		EntryPoint:   in.EntryPoint,
+		Op:           simOp,
+		ChainID:      in.ChainID,
+		TracerFeeCap: in.Op.MaxFeePerGas,
 	})
 	if err != nil {
 		return 0, 0, err

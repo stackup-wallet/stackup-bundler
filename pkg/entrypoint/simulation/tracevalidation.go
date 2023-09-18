@@ -10,6 +10,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
@@ -45,9 +46,10 @@ func TraceSimulateValidation(
 
 	var res tracer.BundlerCollectorReturn
 	req := utils.TraceCallReq{
-		From: common.HexToAddress("0x"),
-		To:   entryPoint,
-		Data: tx.Data(),
+		From:         common.HexToAddress("0x"),
+		To:           entryPoint,
+		Data:         tx.Data(),
+		MaxFeePerGas: (*hexutil.Big)(op.MaxFeePerGas),
 	}
 	opts := utils.TraceCallOpts{
 		Tracer: tracer.Loaded.BundlerCollectorTracer,

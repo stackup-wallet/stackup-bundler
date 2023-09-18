@@ -7,9 +7,10 @@ import (
 )
 
 type TraceCallReq struct {
-	From common.Address `json:"from"`
-	To   common.Address `json:"to"`
-	Data hexutil.Bytes  `json:"data"`
+	From         common.Address `json:"from"`
+	To           common.Address `json:"to"`
+	Data         hexutil.Bytes  `json:"data"`
+	MaxFeePerGas *hexutil.Big   `json:"maxFeePerGas"`
 }
 
 type TraceCallOpts struct {
