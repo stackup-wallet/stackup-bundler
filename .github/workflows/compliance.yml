@@ -49,13 +49,12 @@ jobs:
 
       - name: Install Geth
         run: |
-          sudo add-apt-repository -y ppa:ethereum/ethereum && \
-          sudo apt-get update && \
-          sudo apt-get install ethereum=1.12.2
+          wget https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.12.2-bed84606.tar.gz
+          tar -xvf geth-linux-amd64-1.12.2-bed84606.tar.gz -C ./standalone-bundle
 
       - name: Run Geth
         run: |
-          geth \
+          ./standalone-bundle/geth \
           --verbosity 1 \
           --http.vhosts '*,localhost,host.docker.internal' \
           --http \
