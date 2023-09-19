@@ -27,9 +27,9 @@ type TraceInput struct {
 	ChainID    *big.Int
 
 	// Optional params for simulateHandleOps
-	Target       common.Address
-	Data         []byte
-	TracerFeeCap *big.Int
+	Target      common.Address
+	Data        []byte
+	TraceFeeCap *big.Int
 }
 
 type TraceOutput struct {
@@ -80,8 +80,8 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
 	mf := in.Op.MaxFeePerGas
-	if in.TracerFeeCap != nil {
-		mf = in.TracerFeeCap
+	if in.TraceFeeCap != nil {
+		mf = in.TraceFeeCap
 	}
 	tx, err := ep.SimulateHandleOp(auth, entrypoint.UserOperation(*in.Op), in.Target, in.Data)
 	if err != nil {
