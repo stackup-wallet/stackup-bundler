@@ -16,13 +16,13 @@ type TraceCallReq struct {
 	MaxFeePerGas hexutil.Big    `json:"maxFeePerGas"`
 }
 
-type TracerStateOverrides struct {
+type TraceStateOverrides struct {
 	Balance hexutil.Big `json:"balance"`
 }
 
 type TraceCallOpts struct {
-	Tracer         string                          `json:"tracer"`
-	StateOverrides map[string]TracerStateOverrides `json:"stateOverrides"`
+	Tracer         string                         `json:"tracer"`
+	StateOverrides map[string]TraceStateOverrides `json:"stateOverrides"`
 }
 
 var (
@@ -30,7 +30,7 @@ var (
 	DummyPk, _ = crypto.GenerateKey()
 
 	// A default state override to ensure the zero address always has sufficient funds.
-	DefaultStateOverrides = map[string]TracerStateOverrides{
+	DefaultStateOverrides = map[string]TraceStateOverrides{
 		common.HexToAddress("0x").Hex(): {Balance: hexutil.Big(*big.NewInt(0).SetUint64(math.MaxUint64))},
 	}
 )
