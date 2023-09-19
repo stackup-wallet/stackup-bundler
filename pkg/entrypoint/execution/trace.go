@@ -27,8 +27,9 @@ type TraceInput struct {
 	ChainID    *big.Int
 
 	// Optional params for simulateHandleOps
-	Target common.Address
-	Data   []byte
+	Target      common.Address
+	Data        []byte
+	TraceFeeCap *big.Int
 }
 
 type TraceOutput struct {
@@ -78,6 +79,10 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 	}
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
+	mf := in.Op.MaxFeePerGas
+	if in.TraceFeeCap != nil {
+		mf = in.TraceFeeCap
+	}
 	tx, err := ep.SimulateHandleOp(auth, entrypoint.UserOperation(*in.Op), in.Target, in.Data)
 	if err != nil {
 		return nil, err
@@ -86,12 +91,14 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 
 	var res tracer.BundlerExecutionReturn
 	req := utils.TraceCallReq{
-		From: common.HexToAddress("0x"),
-		To:   in.EntryPoint,
-		Data: tx.Data(),
+		From:         common.HexToAddress("0x"),
+		To:           in.EntryPoint,
+		Data:         tx.Data(),
+		MaxFeePerGas: hexutil.Big(*mf),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer: tracer.Loaded.BundlerExecutionTracer,
+		Tracer:         tracer.Loaded.BundlerExecutionTracer,
+		StateOverrides: utils.DefaultStateOverrides,
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err
