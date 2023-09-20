@@ -118,6 +118,18 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 		WithValues("entrypoint", ep.String()).
 		WithValues("chain_id", i.chainID.String())
 
+	// Get all pending userOps from the mempool. This will be in FIFO order. Downstream modules should sort it
+	// based on more specific strategies.
+	batch, err := i.mempool.Dump(ep)
+	if err != nil {
+		l.Error(err, "bundler run error")
+		return nil, err
+	}
+	if len(batch) == 0 {
+		return nil, nil
+	}
+	batch = adjustBatchSize(i.maxBatch, batch)
+
 	// Get current block basefee
 	bf, err := i.gbf()
 	if err != nil {
@@ -141,18 +153,6 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 		l.Error(err, "bundler run error")
 		return nil, err
 	}
-
-	// Get all pending userOps from the mempool. This will be in FIFO order. Downstream modules should sort it
-	// based on more specific strategies.
-	batch, err := i.mempool.Dump(ep)
-	if err != nil {
-		l.Error(err, "bundler run error")
-		return nil, err
-	}
-	if len(batch) == 0 {
-		return nil, nil
-	}
-	batch = adjustBatchSize(i.maxBatch, batch)
 
 	// Create context and execute modules.
 	ctx := modules.NewBatchHandlerContext(batch, ep, i.chainID, bf, gt, gp)
