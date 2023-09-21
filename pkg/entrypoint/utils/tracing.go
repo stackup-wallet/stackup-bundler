@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -29,8 +28,10 @@ var (
 	// A dummy private key used to build *bind.TransactOpts for simulation.
 	DummyPk, _ = crypto.GenerateKey()
 
+	maxUint96, _ = big.NewInt(0).SetString("79228162514264337593543950335", 10)
+
 	// A default state override to ensure the zero address always has sufficient funds.
 	DefaultStateOverrides = map[string]TraceStateOverrides{
-		common.HexToAddress("0x").Hex(): {Balance: hexutil.Big(*big.NewInt(0).SetUint64(math.MaxUint64))},
+		common.HexToAddress("0x").Hex(): {Balance: hexutil.Big(*maxUint96)},
 	}
 )
