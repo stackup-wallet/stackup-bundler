@@ -3,6 +3,7 @@ package filter
 import (
 	"context"
 	"errors"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -78,6 +79,10 @@ func GetUserOperationReceipt(
 			TransactionIndex:  hexutil.EncodeBig(big.NewInt(0).SetUint64(uint64(receipt.TransactionIndex))),
 			EffectiveGasPrice: hexutil.EncodeBig(tx.GasPrice()),
 		}
+		logs, err := _filterLogs(it, receipt.Logs)
+		if err != nil {
+			return nil, err
+		}
 		return &UserOperationReceipt{
 			UserOpHash:    it.Event.UserOpHash,
 			Sender:        it.Event.Sender,
@@ -88,10 +93,35 @@ func GetUserOperationReceipt(
 			ActualGasUsed: hexutil.EncodeBig(it.Event.ActualGasUsed),
 			From:          from,
 			Receipt:       txnReceipt,
-			Logs:          []*types.Log{&it.Event.Raw},
+			Logs:          logs,
 		}, nil
 	}
 
 	//lint:ignore ST1005 This needs to match the bundler test spec.
 	return nil, errors.New("Missing/invalid userOpHash")
+}
+
+func _filterLogs(userOperationEvent *entrypoint.EntrypointUserOperationEventIterator, logs []*types.Log) ([]*types.Log, error) {
+	startIndex := -1
+	endIndex := -1
+	for index := range logs {
+		log := logs[index]
+		//event BeforeExecution()
+		if log.Topics[0] == common.HexToHash("0xbb47ee3e183a558b1a2ff0874b079f3fc5478b7454eacf2bfc5af2ff5878f972") {
+			startIndex = index
+			endIndex = index
+		} else if log.Topics[0] == userOperationEvent.Event.Raw.Topics[0] {
+			if log.Topics[1] == userOperationEvent.Event.Raw.Topics[1] {
+				endIndex = index
+			} else {
+				if endIndex == -1 {
+					startIndex = index
+				}
+			}
+		}
+	}
+	if endIndex == -1 {
+		return nil, errors.New("fatal: no UserOperationEvent in logs")
+	}
+	return logs[startIndex+1 : endIndex], nil
 }
