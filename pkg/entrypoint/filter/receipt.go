@@ -108,16 +108,12 @@ func _filterLogs(userOperationEvent *entrypoint.EntrypointUserOperationEventIter
 		log := logs[index]
 		//event BeforeExecution()
 		if log.Topics[0] == common.HexToHash("0xbb47ee3e183a558b1a2ff0874b079f3fc5478b7454eacf2bfc5af2ff5878f972") {
+			// all UserOp execution events start after the "BeforeExecution" event.
 			startIndex = index
+		} else if log.Topics[0] == userOperationEvent.Event.Raw.Topics[0] && log.Topics[1] == userOperationEvent.Event.Raw.Topics[1] {
+			// it's our userOpHash. save as end of logs array
 			endIndex = index
-		} else if log.Topics[0] == userOperationEvent.Event.Raw.Topics[0] {
-			if log.Topics[1] == userOperationEvent.Event.Raw.Topics[1] {
-				endIndex = index
-			} else {
-				if endIndex == -1 {
-					startIndex = index
-				}
-			}
+			break
 		}
 	}
 	if endIndex == -1 {
