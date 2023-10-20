@@ -15,7 +15,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-type HashLookupResult struct {
+type SenderLookupResult struct {
 	UserOperation   *userop.UserOperation `json:"userOperation"`
 	EntryPoint      string                `json:"entryPoint"`
 	BlockNumber     *big.Int              `json:"blockNumber"`
@@ -24,15 +24,15 @@ type HashLookupResult struct {
 	IsPending       bool                  `json:"isPending"`
 }
 
-// GetUserOperationByHash filters the EntryPoint contract for UserOperationEvents and returns the
-// corresponding UserOp from a given userOpHash.
-func GetUserOperationByHash(
+// GetUserOperationBySender filters the EntryPoint contract for UserOperationEvents and returns the
+// corresponding UserOp from a given sender.
+func GetUserOperationBySender(
 	eth *ethclient.Client,
-	userOpHash string,
+	sender,
 	entryPoint common.Address,
 	chainID *big.Int,
-) (*HashLookupResult, error) {
-	it, err := filterUserOperationEvent(eth, userOpHash, entryPoint)
+) (*SenderLookupResult, error) {
+	it, err := filterUserOperationSenderEvent(eth, sender, entryPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +90,8 @@ func GetUserOperationByHash(
 					return nil, err
 				}
 
-				if op.GetUserOpHash(entryPoint, chainID).String() == userOpHash {
-					return &HashLookupResult{
+				if op.Sender == sender {
+					return &SenderLookupResult{
 						UserOperation:   &op,
 						EntryPoint:      entryPoint.String(),
 						BlockNumber:     receipt.BlockNumber,
