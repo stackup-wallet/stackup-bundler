@@ -2,6 +2,7 @@ package filter
 
 import (
 	"context"
+	"github.com/spf13/viper"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -25,9 +26,10 @@ func filterUserOperationEvent(
 	}
 	toBlk := big.NewInt(0).SetUint64(bn)
 	startBlk := big.NewInt(0)
-	sub10kBlk := big.NewInt(0).Sub(toBlk, big.NewInt(10000))
-	if sub10kBlk.Cmp(startBlk) > 0 {
-		startBlk = sub10kBlk
+	getLogsStepSize := viper.GetInt64("erc4337_bundler_get_logs_step_size")
+	subStepSizeBlk := big.NewInt(0).Sub(toBlk, big.NewInt(getLogsStepSize))
+	if subStepSizeBlk.Cmp(startBlk) > 0 {
+		startBlk = subStepSizeBlk
 	}
 
 	return ep.FilterUserOperationEvent(

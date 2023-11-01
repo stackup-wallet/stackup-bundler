@@ -83,6 +83,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_otel_insecure_mode", false)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
+	viper.SetDefault("erc4337_bundler_get_logs_step_size", 1000)
 
 	// Read in from .env file if available
 	viper.SetConfigName(".env")
@@ -117,6 +118,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_otel_insecure_mode")
 	_ = viper.BindEnv("erc4337_bundler_debug_mode")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
+	_ = viper.BindEnv("erc4337_bundler_get_logs_step_size")
 
 	// Validate required variables
 	if variableNotSetOrIsNil("erc4337_bundler_eth_client_url") {
