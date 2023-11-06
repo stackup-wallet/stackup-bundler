@@ -9,10 +9,6 @@ import (
 	"github.com/puzpuzpuz/xsync/v3"
 )
 
-func invalidStorageAccessID(entity string, contract string, slot string) string {
-	return entity + contract + slot
-}
-
 // Directory maintains a collection of alternative mempool configurations. It allows a consumer to check if a
 // known alternative mempool exists that will allow specific exceptions that the canonical mempool cannot
 // accept.
@@ -23,6 +19,10 @@ type Directory struct {
 type AltMempoolConfig struct {
 	Id   string
 	Data map[string]any
+}
+
+func invalidStorageAccessID(entity string, contract string, slot string) string {
+	return entity + contract + slot
 }
 
 func fetchMempoolConfig(url string) (map[string]any, error) {
