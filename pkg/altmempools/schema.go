@@ -7,12 +7,12 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-//go:embed *AltMempoolSchema.json
+//go:embed *schema.json
 var files embed.FS
 
 func newJSONSchema() (*jsonschema.Schema, error) {
 	var s string
-	err := fs.WalkDir(files, "AltMempoolSchema.json", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(files, "schema.json", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -33,7 +33,7 @@ func newJSONSchema() (*jsonschema.Schema, error) {
 		return nil, err
 	}
 
-	sch, err := jsonschema.CompileString("AltMempoolSchema.json", s)
+	sch, err := jsonschema.CompileString("schema.json", s)
 	if err != nil {
 		return nil, err
 	}
