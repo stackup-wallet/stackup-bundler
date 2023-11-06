@@ -16,6 +16,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/internal/o11y"
+	"github.com/stackup-wallet/stackup-bundler/pkg/altmempools"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
@@ -97,10 +98,16 @@ func SearcherMode() {
 		log.Fatal(err)
 	}
 
+	alt, err := altmempools.NewFromIPFS(chain, conf.AltMempoolIPFSGateway, conf.AltMempoolIds)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	check := checks.New(
 		db,
 		rpc,
 		ov,
+		alt,
 		conf.MaxVerificationGas,
 		conf.MaxBatchGasLimit,
 		conf.MaxOpsForUnstakedSender,

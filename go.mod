@@ -14,7 +14,9 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/metachris/flashbotsrpc v0.5.0
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/puzpuzpuz/xsync/v3 v3.0.1
 	github.com/rs/zerolog v1.29.0
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	github.com/wangjia184/sortedset v0.0.0-20220209072355-af6d6d227aa7
