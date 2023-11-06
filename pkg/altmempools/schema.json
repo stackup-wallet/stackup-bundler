@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/stackup-wallet/stackup-bundler/main/pkg/altmempool/schema.json",
+  "$id": "https://raw.githubusercontent.com/stackup-wallet/stackup-bundler/main/pkg/altmempools/schema.json",
   "description": "JSON Schema for an ERC-4337 Alternative Mempool",
   "type": "object",
   "properties": {
