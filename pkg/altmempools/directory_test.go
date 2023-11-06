@@ -71,12 +71,10 @@ func TestDirectoryHasNoInvalidStorageAccessExceptions(t *testing.T) {
 }
 
 func TestDirectoryIncompatibleChain(t *testing.T) {
-	id := "1"
-	chain := big.NewInt(2)
 	alts := []*altmempools.Config{
-		{Id: id, Data: testutils.AltMempoolMock()},
+		{Id: "1", Data: testutils.AltMempoolMock()},
 	}
-	dir, err := altmempools.New(chain, alts)
+	dir, err := altmempools.New(big.NewInt(2), alts)
 	if err != nil {
 		t.Fatal("error initializing directory")
 	}
