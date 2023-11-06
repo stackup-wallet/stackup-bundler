@@ -1,9 +1,11 @@
 package testutils
 
+import "github.com/ethereum/go-ethereum/common/hexutil"
+
 func AltMempoolMock() map[string]any {
 	return map[string]any{
 		"description": "Mock Alt Mempool",
-		"chainIds":    []any{"0x1"},
+		"chainIds":    []any{hexutil.EncodeBig(ChainID)},
 		"allowlist": []any{
 			map[string]any{
 				"description": "Mock forbiddenOpcode rule",
