@@ -10,7 +10,7 @@ import (
 
 func TestDirectoryHasSingleInvalidStorageAccessException(t *testing.T) {
 	id := "1"
-	alts := []*altmempools.AltMempoolConfig{
+	alts := []*altmempools.Config{
 		{Id: id, Data: testutils.AltMempoolMock()},
 	}
 	dir, err := altmempools.New(testutils.ChainID, alts)
@@ -31,7 +31,7 @@ func TestDirectoryHasSingleInvalidStorageAccessException(t *testing.T) {
 func TestDirectoryHasManyInvalidStorageAccessExceptions(t *testing.T) {
 	id1 := "1"
 	id2 := "2"
-	alts := []*altmempools.AltMempoolConfig{
+	alts := []*altmempools.Config{
 		{Id: id1, Data: testutils.AltMempoolMock()},
 		{Id: id2, Data: testutils.AltMempoolMock()},
 	}
@@ -52,7 +52,7 @@ func TestDirectoryHasManyInvalidStorageAccessExceptions(t *testing.T) {
 
 func TestDirectoryHasNoInvalidStorageAccessExceptions(t *testing.T) {
 	id := "1"
-	alts := []*altmempools.AltMempoolConfig{
+	alts := []*altmempools.Config{
 		{Id: id, Data: testutils.AltMempoolMock()},
 	}
 	dir, err := altmempools.New(testutils.ChainID, alts)
@@ -73,7 +73,7 @@ func TestDirectoryHasNoInvalidStorageAccessExceptions(t *testing.T) {
 func TestDirectoryIncompatibleChain(t *testing.T) {
 	id := "1"
 	chain := big.NewInt(2)
-	alts := []*altmempools.AltMempoolConfig{
+	alts := []*altmempools.Config{
 		{Id: id, Data: testutils.AltMempoolMock()},
 	}
 	dir, err := altmempools.New(chain, alts)

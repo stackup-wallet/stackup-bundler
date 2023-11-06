@@ -16,7 +16,7 @@ type Directory struct {
 	invalidStorageAccess *xsync.MapOf[string, []string]
 }
 
-type AltMempoolConfig struct {
+type Config struct {
 	Id   string
 	Data map[string]any
 }
@@ -40,7 +40,7 @@ func fetchMempoolConfig(url string) (map[string]any, error) {
 }
 
 // New accepts an array of alternative mempool configs and returns a Directory.
-func New(chain *big.Int, altMempools []*AltMempoolConfig) (*Directory, error) {
+func New(chain *big.Int, altMempools []*Config) (*Directory, error) {
 	dir := &Directory{
 		invalidStorageAccess: xsync.NewMapOf[string, []string](),
 	}
@@ -87,13 +87,13 @@ func New(chain *big.Int, altMempools []*AltMempoolConfig) (*Directory, error) {
 // NewFromIPFS will pull alternative mempool configs from IPFS and returns a Directory. The mempool id is
 // equal to an IPFS CID.
 func NewFromIPFS(chain *big.Int, ipfsGateway string, ids []string) (*Directory, error) {
-	var alts []*AltMempoolConfig
+	var alts []*Config
 	for _, id := range ids {
 		data, err := fetchMempoolConfig(ipfsGateway + "/" + id)
 		if err != nil {
 			return nil, err
 		}
-		alts = append(alts, &AltMempoolConfig{id, data})
+		alts = append(alts, &Config{id, data})
 	}
 
 	return New(chain, alts)
