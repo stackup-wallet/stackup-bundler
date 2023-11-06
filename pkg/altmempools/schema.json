@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/stackup-wallet/stackup-bundler/main/pkg/altmempool/schema.json",
+  "description": "JSON Schema for an ERC-4337 Alternative Mempool",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "chainIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^0x[a-fA-F0-9]+"
+      }
+    },
+    "allowlist": {
+      "type": "array",
+      "additionalItems": false,
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string",
+            "enum": [
+              "forbiddenOpcode",
+              "forbiddenPrecompile",
+              "invalidStorageAccess",
+              "notStaked"
+            ]
+          },
+          "entity": { "$ref": "#/$defs/entity" },
+          "contract": { "$ref": "#/$defs/address" },
+          "opcode": { "$ref": "#/$defs/opcode" },
+          "precompile": { "$ref": "#/$defs/address" },
+          "slot": { "$ref": "#/$defs/slot" }
+        },
+        "required": ["description"],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "properties": {
+              "rule": { "const": "forbiddenOpcode" }
+            },
+            "required": ["rule", "entity", "contract", "opcode"]
+          },
+          {
+            "properties": {
+              "rule": { "const": "forbiddenPrecompile" }
+            },
+            "required": ["rule", "entity", "contract", "precompile"]
+          },
+          {
+            "properties": {
+              "rule": { "const": "invalidStorageAccess" }
+            },
+            "required": ["rule", "entity", "contract", "slot"]
+          },
+          {
+            "properties": {
+              "rule": { "const": "notStaked" }
+            },
+            "required": ["rule", "entity"]
+          }
+        ]
+      }
+    }
+  },
+  "required": ["description", "chainIds", "allowlist"],
+  "additionalProperties": false,
+  "$defs": {
+    "entity": {
+      "type": "string",
+      "pattern": "^\\\\*|account|paymaster|factory|aggregator|0x[a-fA-F0-9]{40}$"
+    },
+    "address": {
+      "type": "string",
+      "pattern": "^0x[a-fA-F0-9]{40}$"
+    },
+    "opcode": {
+      "type": "string"
+    },
+    "slot": {
+      "type": "string",
+      "pattern": "^0x[a-fA-F0-9]{2,64}$"
+    }
+  }
+}

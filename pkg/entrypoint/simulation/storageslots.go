@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stackup-wallet/stackup-bundler/pkg/altmempools"
 	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -43,8 +44,9 @@ func newStorageSlotsByEntity(stakes EntityStakes, keccak []string) storageSlotsB
 
 type storageSlotsValidator struct {
 	// Global parameters
-	Op         *userop.UserOperation
-	EntryPoint common.Address
+	Op          *userop.UserOperation
+	EntryPoint  common.Address
+	AltMempools *altmempools.Directory
 
 	// Parameters of specific entities required for all validation
 	SenderSlots     storageSlots
@@ -70,7 +72,7 @@ func isAssociatedWith(slots storageSlots, slot string) bool {
 	return false
 }
 
-func (v *storageSlotsValidator) Process() error {
+func (v *storageSlotsValidator) Process() ([]string, error) {
 	senderSlots := v.SenderSlots
 	if senderSlots == nil {
 		senderSlots = mapset.NewSet[string]()
@@ -80,6 +82,7 @@ func (v *storageSlotsValidator) Process() error {
 		entitySlots = mapset.NewSet[string]()
 	}
 
+	altMempoolIds := []string{}
 	for addr, access := range v.EntityAccess {
 		if addr == v.Op.Sender || addr == v.EntryPoint {
 			continue
@@ -101,14 +104,26 @@ func (v *storageSlotsValidator) Process() error {
 					}
 				} else if isAssociatedWith(entitySlots, slot) || addr == v.EntityAddr {
 					mustStakeSlot = slot
+				} else if ids := v.AltMempools.HasInvalidStorageAccessException(
+					v.EntityName,
+					addr2KnownEntity(v.Op, addr),
+					fmt.Sprintf("0x%s", slot),
+				); len(ids) > 0 {
+					altMempoolIds = append(altMempoolIds, ids...)
 				} else {
-					return fmt.Errorf("%s has forbidden %s to %s slot %s", v.EntityName, key, addr2KnownEntity(v.Op, addr), slot)
+					return altMempoolIds, fmt.Errorf(
+						"%s has forbidden %s to %s slot %s",
+						v.EntityName,
+						key,
+						addr2KnownEntity(v.Op, addr),
+						slot,
+					)
 				}
 			}
 		}
 
 		if mustStakeSlot != "" && !v.EntityIsStaked {
-			return fmt.Errorf(
+			return altMempoolIds, fmt.Errorf(
 				"unstaked %s accessed %s slot %s",
 				v.EntityName,
 				addr2KnownEntity(v.Op, addr),
@@ -117,5 +132,5 @@ func (v *storageSlotsValidator) Process() error {
 		}
 	}
 
-	return nil
+	return altMempoolIds, nil
 }
