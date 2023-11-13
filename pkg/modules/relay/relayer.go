@@ -3,6 +3,7 @@
 package relay
 
 import (
+	"errors"
 	"math/big"
 	"time"
 
@@ -93,16 +94,34 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 		}
 		ctx.Data["relayer_est_revert_reasons"] = estRev
 
-		// Call handleOps() with gas estimate. Any userOps that cause a revert at this stage will be
-		// caught and dropped in the next iteration.
-		if len(ctx.Batch) > 0 {
-			if txn, err := transaction.HandleOps(&opts); err != nil {
-				return err
-			} else {
-				ctx.Data["txn_hash"] = txn.Hash().String()
-			}
+		if len(ctx.Batch) == 0 {
+			return nil
 		}
 
+		// Accumulate the total gas limit of all user operations.
+		totalGasLimit := big.NewInt(0)
+		for _, op := range ctx.Batch {
+			totalGasLimit.Add(totalGasLimit, op.GetMaxGasAvailable())
+		}
+
+		// Estimated gas limit should be no less than the total gas limit, otherwise this transaction
+		// may be failed due to out of gas.
+		if opts.GasLimit <= totalGasLimit.Uint64() {
+			opts.GasLimit = totalGasLimit.Uint64()
+		} else {
+			// Also, bundler could lose money if estimated gas limit exceeds the sum of gas limits
+			// for all user operations.
+			return errors.New("estimated gas limit over all user ops limit")
+		}
+
+		// Call handleOps() with gas estimate. Any userOps that cause a revert at this stage will be
+		// caught and dropped in the next iteration.
+		txn, err := transaction.HandleOps(&opts)
+		if err != nil {
+			return err
+		}
+
+		ctx.Data["txn_hash"] = txn.Hash().String()
 		return nil
 	}
 }
