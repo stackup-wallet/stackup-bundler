@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-logr/logr"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
@@ -16,6 +17,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
+	"go.uber.org/multierr"
 )
 
 // Bundler controls the end to end process of creating a batch of UserOperations from the mempool and sending
@@ -196,20 +198,32 @@ func (i *Bundler) Run() error {
 		return nil
 	}
 
-	ticker := time.NewTicker(1 * time.Second)
+	// Construct an exponential backoff to avoid overwhelming the system if error
+	// happens during the ticking.
+	bo := backoff.NewExponentialBackOff()
+	{
+		bo.InitialInterval = 5 * time.Second
+		bo.Multiplier = 2
+		bo.MaxElapsedTime = 0
+		bo.Reset()
+	}
+
+	ticker := time.NewTicker(bo.InitialInterval)
 	go func(i *Bundler) {
 		for {
 			select {
 			case <-i.done:
 				return
 			case <-ticker.C:
-				for _, ep := range i.supportedEntryPoints {
-					_, err := i.Process(ep)
-					if err != nil {
-						// Already logged.
-						continue
-					}
+				if err := i.runOnce(); err != nil {
+					// Use exponential backoff.
+					ticker.Reset(bo.NextBackOff())
+					continue
 				}
+
+				// Reset back to normal ticking.
+				ticker.Reset(bo.InitialInterval)
+				bo.Reset()
 			}
 		}
 	}(i)
@@ -217,6 +231,20 @@ func (i *Bundler) Run() error {
 	i.isRunning = true
 	i.stop = ticker.Stop
 	return nil
+}
+
+func (i *Bundler) runOnce() error {
+	var tickErrs []error
+	for _, ep := range i.supportedEntryPoints {
+		_, err := i.Process(ep)
+		if err != nil {
+			// Already logged.
+			tickErrs = append(tickErrs, err)
+			continue
+		}
+	}
+
+	return multierr.Combine(tickErrs...)
 }
 
 // Stop signals the bundler to stop continuously processing batches from the mempool.
