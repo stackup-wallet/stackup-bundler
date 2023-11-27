@@ -30,4 +30,17 @@ describe("During the verification phase", () => {
       });
     });
   });
+
+  describe("With dependency on callGasLimit", () => {
+    [0, 1, 2, 3, 4, 5].forEach((times) => {
+      test(`Sender can run validation with non-simulated code that uses ${times} storage writes`, async () => {
+        const response = await client.sendUserOperation(
+          acc.forceValidationOOG(times)
+        );
+        const event = await response.wait();
+
+        expect(event?.args.success).toBe(true);
+      });
+    });
+  });
 });

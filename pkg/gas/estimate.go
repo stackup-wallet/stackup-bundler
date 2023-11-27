@@ -14,6 +14,8 @@ import (
 
 var (
 	fallBackBinarySearchCutoff = int64(30000)
+	maxRetries                 = int64(7)
+	baseVGLBuffer              = int64(25)
 )
 
 func isPrefundNotPaid(err error) bool {
@@ -41,13 +43,34 @@ func isExecutionReverted(err error) bool {
 }
 
 type EstimateInput struct {
-	Rpc             *rpc.Client
-	EntryPoint      common.Address
-	Op              *userop.UserOperation
-	Ov              *Overhead
-	ChainID         *big.Int
-	MaxGasLimit     *big.Int
-	PaymasterBuffer int64
+	Rpc         *rpc.Client
+	EntryPoint  common.Address
+	Op          *userop.UserOperation
+	Ov          *Overhead
+	ChainID     *big.Int
+	MaxGasLimit *big.Int
+
+	attempts int64
+	lastVGL  int64
+}
+
+// retryEstimateGas will recursively call estimateGas if execution has caused VGL to be under estimated. This
+// can occur for edge cases where a paymaster's postOp > gas required during verification or if verification
+// has a dependency on CGL. Reset the estimate with a higher buffer on VGL.
+func retryEstimateGas(err error, vgl int64, in *EstimateInput) (uint64, uint64, error) {
+	if isValidationOOG(err) && in.attempts < maxRetries {
+		return EstimateGas(&EstimateInput{
+			Rpc:         in.Rpc,
+			EntryPoint:  in.EntryPoint,
+			Op:          in.Op,
+			Ov:          in.Ov,
+			ChainID:     in.ChainID,
+			MaxGasLimit: in.MaxGasLimit,
+			attempts:    in.attempts + 1,
+			lastVGL:     vgl,
+		})
+	}
+	return 0, 0, err
 }
 
 // EstimateGas uses the simulateHandleOp method on the EntryPoint to derive an estimate for
@@ -76,9 +99,9 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	// estimate.
 	l := int64(0)
 	r := in.MaxGasLimit.Int64()
-	f := int64(0)
+	f := in.lastVGL
 	var simErr error
-	for r-l >= fallBackBinarySearchCutoff {
+	for in.lastVGL == 0 && r-l >= fallBackBinarySearchCutoff {
 		m := (l + r) / 2
 
 		data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(m)))
@@ -113,12 +136,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	if f == 0 {
 		return 0, 0, simErr
 	}
-	// TODO: Find a more reliable approach for the edge case where the gas required during a paymaster's
-	// postOp > gas required during verification. As a workaround we add a configurable percentage buffer if a
-	// paymaster is included.
-	if in.Op.GetPaymaster() != common.HexToAddress("0x") {
-		f = (f * (100 + in.PaymasterBuffer)) / 100
-	}
+	f = (f * (100 + baseVGLBuffer)) / 100
 	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(f)))
 
 	// Find the optimal callGasLimit by setting the gas price to 0 and maxing out the gas limit. We don't run
@@ -138,7 +156,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		TraceFeeCap: in.Op.MaxFeePerGas,
 	})
 	if err != nil {
-		return 0, 0, err
+		return retryEstimateGas(err, f, in)
 	}
 
 	// Calculate final values for verificationGasLimit and callGasLimit.
@@ -211,7 +229,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 			}
 			return simOp.VerificationGasLimit.Uint64(), big.NewInt(f).Uint64(), nil
 		}
-		return 0, 0, err
+		return retryEstimateGas(err, simOp.VerificationGasLimit.Int64(), in)
 	}
 	return simOp.VerificationGasLimit.Uint64(), simOp.CallGasLimit.Uint64(), nil
 }

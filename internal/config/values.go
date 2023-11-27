@@ -21,7 +21,6 @@ type Values struct {
 	SupportedEntryPoints    []common.Address
 	MaxVerificationGas      *big.Int
 	MaxBatchGasLimit        *big.Int
-	PMGasEstBuffer          int64
 	MaxOpTTL                time.Duration
 	MaxOpsForUnstakedSender int
 	Beneficiary             string
@@ -87,7 +86,6 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 3000000)
 	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 25000000)
-	viper.SetDefault("erc4337_bundler_paymaster_gas_estimate_buffer", 10)
 	viper.SetDefault("erc4337_bundler_max_op_ttl_seconds", 180)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
@@ -117,7 +115,6 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
-	_ = viper.BindEnv("erc4337_bundler_paymaster_gas_estimate_buffer")
 	_ = viper.BindEnv("erc4337_bundler_max_op_ttl_seconds")
 	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
 	_ = viper.BindEnv("erc4337_bundler_eth_builder_url")
@@ -176,7 +173,6 @@ func GetValues() *Values {
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
-	pmGasEstBuffer := int64(viper.GetInt("erc4337_bundler_paymaster_gas_estimate_buffer"))
 	maxOpTTL := time.Second * viper.GetDuration("erc4337_bundler_max_op_ttl_seconds")
 	maxOpsForUnstakedSender := viper.GetInt("erc4337_bundler_max_ops_for_unstaked_sender")
 	ethBuilderUrl := viper.GetString("erc4337_bundler_eth_builder_url")
@@ -198,7 +194,6 @@ func GetValues() *Values {
 		Beneficiary:             beneficiary,
 		MaxVerificationGas:      maxVerificationGas,
 		MaxBatchGasLimit:        maxBatchGasLimit,
-		PMGasEstBuffer:          pmGasEstBuffer,
 		MaxOpTTL:                maxOpTTL,
 		MaxOpsForUnstakedSender: maxOpsForUnstakedSender,
 		EthBuilderUrl:           ethBuilderUrl,

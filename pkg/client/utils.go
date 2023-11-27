@@ -49,17 +49,15 @@ func GetGasEstimateWithEthClient(
 	ov *gas.Overhead,
 	chain *big.Int,
 	maxGasLimit *big.Int,
-	paymasterBuffer int64,
 ) GetGasEstimateFunc {
 	return func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error) {
 		return gas.EstimateGas(&gas.EstimateInput{
-			Rpc:             rpc,
-			EntryPoint:      ep,
-			Op:              op,
-			Ov:              ov,
-			ChainID:         chain,
-			MaxGasLimit:     maxGasLimit,
-			PaymasterBuffer: paymasterBuffer,
+			Rpc:         rpc,
+			EntryPoint:  ep,
+			Op:          op,
+			Ov:          ov,
+			ChainID:     chain,
+			MaxGasLimit: maxGasLimit,
 		})
 	}
 }
