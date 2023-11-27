@@ -14,7 +14,7 @@ import (
 
 var (
 	fallBackBinarySearchCutoff = int64(30000)
-	maxRetries                 = int64(5)
+	maxRetries                 = int64(7)
 	baseVGLBuffer              = int64(25)
 )
 
@@ -136,7 +136,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	if f == 0 {
 		return 0, 0, simErr
 	}
-	f = (f * (100 + (baseVGLBuffer * in.attempts))) / 100
+	f = (f * (100 + baseVGLBuffer)) / 100
 	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(f)))
 
 	// Find the optimal callGasLimit by setting the gas price to 0 and maxing out the gas limit. We don't run
