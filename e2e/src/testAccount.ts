@@ -11,6 +11,7 @@ import { EntryPoint, EntryPoint__factory } from "userop/dist/typechain";
 import { testAccountABI } from "./abi";
 
 const RECURSIVE_CALL_MODE = "0x0001";
+const FORCE_VALIDATION_OOG_MODE = "0x0002";
 
 export class TestAccount extends UserOperationBuilder {
   private provider: ethers.providers.JsonRpcProvider;
@@ -63,5 +64,11 @@ export class TestAccount extends UserOperationBuilder {
         [depth, width, discount]
       )
     ).setSignature(RECURSIVE_CALL_MODE);
+  }
+
+  forceValidationOOG(wasteGasMultiplier: number) {
+    return this.setCallData(
+      ethers.utils.defaultAbiCoder.encode(["uint256"], [wasteGasMultiplier])
+    ).setSignature(FORCE_VALIDATION_OOG_MODE);
   }
 }
