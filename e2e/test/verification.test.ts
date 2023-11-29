@@ -49,15 +49,7 @@ describe("During the verification phase", () => {
     [0, 1, 2, 3, 4, 5].forEach((times) => {
       test(`Sender can run validation with non-simulated code that uses ${times} storage writes`, async () => {
         const response = await client.sendUserOperation(
-          acc.forcePostOpValidationOOG(times),
-          {
-            onBuild(op) {
-              console.log(
-                ethers.BigNumber.from(op.verificationGasLimit).toNumber()
-              );
-              console.log(op.paymasterAndData);
-            },
-          }
+          acc.forcePostOpValidationOOG(times)
         );
         const event = await response.wait();
 
