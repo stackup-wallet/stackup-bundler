@@ -1,7 +1,6 @@
 import { Client } from "userop";
 import { TestAccount } from "../src/testAccount";
 import config from "../config";
-import { ethers } from "ethers";
 
 describe("During the verification phase", () => {
   let client: Client;
