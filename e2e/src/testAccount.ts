@@ -9,6 +9,7 @@ import {
 } from "userop";
 import { EntryPoint, EntryPoint__factory } from "userop/dist/typechain";
 import { testAccountABI } from "./abi";
+import config from "../config";
 
 const RECURSIVE_CALL_MODE = "0x0001";
 const FORCE_VALIDATION_OOG_MODE = "0x0002";
@@ -70,5 +71,14 @@ export class TestAccount extends UserOperationBuilder {
     return this.setCallData(
       ethers.utils.defaultAbiCoder.encode(["uint256"], [wasteGasMultiplier])
     ).setSignature(FORCE_VALIDATION_OOG_MODE);
+  }
+
+  forcePostOpValidationOOG(wasteGasMultiplier: number) {
+    return this.setPaymasterAndData(
+      ethers.utils.hexConcat([
+        config.testPaymaster,
+        ethers.utils.defaultAbiCoder.encode(["uint256"], [wasteGasMultiplier]),
+      ])
+    );
   }
 }

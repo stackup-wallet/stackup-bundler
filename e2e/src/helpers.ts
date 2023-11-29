@@ -1,24 +1,32 @@
 import { ethers } from "ethers";
 import { Constants } from "userop";
+import { EntryPoint__factory } from "userop/dist/typechain";
 
 export const fundIfRequired = async (
   provider: ethers.providers.JsonRpcProvider,
   token: ethers.Contract,
   bundler: string,
   account: string,
-  testAccount: string
+  testAccount: string,
+  testPaymaster: ethers.Contract
 ) => {
   const signer = provider.getSigner(0);
+  const ep = EntryPoint__factory.connect(
+    Constants.ERC4337.EntryPoint,
+    provider
+  );
   const [
     bundlerBalance,
     accountBalance,
     testAccountBalance,
     accountTokenBalance,
+    testPaymasterDepositInfo,
   ] = await Promise.all([
     provider.getBalance(bundler),
     provider.getBalance(account),
     provider.getBalance(testAccount),
     token.balanceOf(account) as ethers.BigNumber,
+    ep.getDepositInfo(testPaymaster.address),
   ]);
 
   if (bundlerBalance.eq(0)) {
@@ -59,6 +67,30 @@ export const fundIfRequired = async (
     });
     await response.wait();
     console.log("Minted 10 Test Tokens for Account...");
+  }
+
+  if (testPaymasterDepositInfo.stake.eq(0)) {
+    const response = await signer.sendTransaction({
+      to: testPaymaster.address,
+      value: ethers.constants.WeiPerEther.mul(2),
+      data: testPaymaster.interface.encodeFunctionData("addStake", [
+        Constants.ERC4337.EntryPoint,
+      ]),
+    });
+    await response.wait();
+    console.log("Staked Test Paymaster with 2 ETH...");
+  }
+
+  if (testPaymasterDepositInfo.deposit.eq(0)) {
+    const response = await signer.sendTransaction({
+      to: testPaymaster.address,
+      value: ethers.constants.WeiPerEther.mul(2),
+      data: testPaymaster.interface.encodeFunctionData("deposit", [
+        Constants.ERC4337.EntryPoint,
+      ]),
+    });
+    await response.wait();
+    console.log("Funded Test Paymaster with 2 ETH...");
   }
 };
 

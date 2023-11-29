@@ -53,6 +53,7 @@ var tracer = {
       executionGasLimit: this.executionGasLimit,
       userOperationEvent: this.userOperationEvent,
       output: toHex(ctx.output),
+      error: ctx.error,
     };
   },
 
