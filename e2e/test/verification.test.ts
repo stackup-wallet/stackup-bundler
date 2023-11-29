@@ -31,7 +31,7 @@ describe("During the verification phase", () => {
     });
   });
 
-  describe("With dependency on callGasLimit", () => {
+  describe("With sender dependency on callGasLimit", () => {
     [0, 1, 2, 3, 4, 5].forEach((times) => {
       test(`Sender can run validation with non-simulated code that uses ${times} storage writes`, async () => {
         const response = await client.sendUserOperation(
@@ -44,9 +44,9 @@ describe("During the verification phase", () => {
     });
   });
 
-  describe("With increasing paymaster postOp gas used", () => {
+  describe("With paymaster dependency on callGasLimit", () => {
     [0, 1, 2, 3, 4, 5].forEach((times) => {
-      test(`Sender can run validation with non-simulated code that uses ${times} storage writes`, async () => {
+      test(`Paymaster can run postOp with non-simulated code that uses ${times} storage writes`, async () => {
         const response = await client.sendUserOperation(
           acc.forcePostOpValidationOOG(times)
         );
