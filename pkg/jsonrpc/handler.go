@@ -14,7 +14,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-func jsonrpcError(c *gin.Context, code int, message string, data any, id *float64) {
+func jsonrpcError(c *gin.Context, code int, message string, data any, id any) {
 	c.JSON(http.StatusOK, gin.H{
 		"jsonrpc": "2.0",
 		"error": gin.H{
@@ -25,6 +25,18 @@ func jsonrpcError(c *gin.Context, code int, message string, data any, id *float6
 		"id": id,
 	})
 	c.Abort()
+}
+
+// parseRequestId checks if JSON-RPC request contains an id that is either NULL, Number, or String.
+func parseRequestId(data map[string]any) (any, bool) {
+	id, ok := data["id"]
+	_, isFloat64 := id.(float64)
+	_, isStr := id.(string)
+
+	if ok && (id == nil || isFloat64 || isStr) {
+		return id, true
+	}
+	return nil, false
 }
 
 // Controller returns a custom Gin middleware that handles incoming JSON-RPC requests via HTTP. It maps the
@@ -58,7 +70,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 			return
 		}
 
-		id, ok := data["id"].(float64)
+		id, ok := parseRequestId(data)
 		if !ok {
 			jsonrpcError(c, -32600, "Invalid Request", "No or invalid 'id' in request", nil)
 			return
