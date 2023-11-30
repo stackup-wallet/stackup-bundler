@@ -27,7 +27,7 @@ func jsonrpcError(c *gin.Context, code int, message string, data any, id any) {
 	c.Abort()
 }
 
-// parseRequestId checks if JSON-RPC request contains an id that is either NULL, Number, or String.
+// parseRequestId checks if JSON-RPC request contains an id field that is either NULL, Number, or String.
 func parseRequestId(data map[string]any) (any, bool) {
 	id, ok := data["id"]
 	_, isFloat64 := id.(float64)
