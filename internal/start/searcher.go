@@ -140,6 +140,7 @@ func SearcherMode() {
 	b.SetGetBaseFeeFunc(gasprice.GetBaseFeeWithEthClient(eth))
 	b.SetGetGasTipFunc(gasprice.GetGasTipWithEthClient(eth))
 	b.SetGetLegacyGasPriceFunc(gasprice.GetLegacyGasPriceWithEthClient(eth))
+	b.SetMaxBatch(conf.MaxOpsForBundle)
 	b.UseLogger(logr)
 	if err := b.UserMeter(otel.GetMeterProvider().Meter("bundler")); err != nil {
 		log.Fatal(err)
