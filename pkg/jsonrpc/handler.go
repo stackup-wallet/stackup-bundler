@@ -58,14 +58,14 @@ func hasOptionalInput(numIn int, call *reflect.Value) bool {
 		call.Type().In(numIn-1).Kind() == reflect.Map
 }
 
-// hasValidParamLength validates the number of parameters in the request:
+// hasValidParamLength checks if the number of parameters in the request is correct:
 //  1. Ok if the number of params equals number of method inputs.
-//  2. Ok if optional argument is defined and number of params is one less the number of method inputs.
+//  2. Ok if optional input is defined and number of params is one less the number of method inputs.
 func hasValidParamLength(numParams, numIn int, hasOptional bool) bool {
 	return numParams == numIn || (hasOptional && numParams == numIn-1)
 }
 
-// isOptionalParamUndefined checks if the optional parameter has been left unset in the request.
+// isOptionalParamUndefined checks if the optional input has been left unset in the request.
 func isOptionalParamUndefined(numParams, numIn int, hasOptional bool) bool {
 	return hasOptional && numParams == numIn-1
 }
