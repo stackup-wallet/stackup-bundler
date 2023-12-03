@@ -7,6 +7,12 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 )
 
+// Named UserOperation type for jsonrpc package.
+type userOperation map[string]any
+
+// Named StateOverride type for jsonrpc package.
+type optional_stateOverride map[string]any
+
 // RpcAdapter is an adapter for routing JSON-RPC method calls to the correct client functions.
 type RpcAdapter struct {
 	client *Client
