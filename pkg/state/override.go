@@ -13,5 +13,6 @@ type OverrideAccount struct {
 	StateDiff *map[common.Hash]common.Hash `json:"stateDiff"`
 }
 
-// OverrideSet is a set of accounts with customized state that can be applied during gas estimations.
+// OverrideSet is a set of accounts with customized state that can be applied during eth_call or
+// debug_traceCall.
 type OverrideSet map[common.Address]OverrideAccount
