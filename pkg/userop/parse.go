@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/big"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -15,6 +16,9 @@ import (
 var (
 	validate = validator.New()
 	onlyOnce = sync.Once{}
+
+	replaceErrSubStrOld = "\n\n* ''"
+	replaceErrSubStrNew = " UserOperation"
 )
 
 func exactFieldMatch(mapKey, fieldName string) bool {
@@ -100,7 +104,7 @@ func New(data map[string]any) (*UserOperation, error) {
 		return nil, err
 	}
 	if err := decoder.Decode(data); err != nil {
-		return nil, err
+		return nil, errors.New(strings.Replace(err.Error(), replaceErrSubStrOld, replaceErrSubStrNew, 1))
 	}
 
 	// Validate struct

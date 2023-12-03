@@ -19,12 +19,16 @@ func NewRpcAdapter(client *Client, debug *Debug) *RpcAdapter {
 }
 
 // Eth_sendUserOperation routes method calls to *Client.SendUserOperation.
-func (r *RpcAdapter) Eth_sendUserOperation(op map[string]any, ep string) (string, error) {
+func (r *RpcAdapter) Eth_sendUserOperation(op userOperation, ep string) (string, error) {
 	return r.client.SendUserOperation(op, ep)
 }
 
 // Eth_estimateUserOperationGas routes method calls to *Client.EstimateUserOperationGas.
-func (r *RpcAdapter) Eth_estimateUserOperationGas(op map[string]any, ep string) (*gas.GasEstimates, error) {
+func (r *RpcAdapter) Eth_estimateUserOperationGas(
+	op userOperation,
+	ep string,
+	ov optional_stateOverride,
+) (*gas.GasEstimates, error) {
 	return r.client.EstimateUserOperationGas(op, ep)
 }
 
