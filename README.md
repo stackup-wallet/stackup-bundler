@@ -17,7 +17,7 @@ See the `Bundler` documentation at [docs.stackup.sh](https://docs.stackup.sh/doc
 
 ## Prerequisites
 
-- Go 1.19 or later
+- Go 1.20 or later
 - Access to a node with `debug` API enabled for custom tracing.
 
 ## Setup
