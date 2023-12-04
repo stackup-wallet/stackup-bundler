@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
 import { Client, Presets } from "userop";
+import { errorCodes } from "../src/errors";
 import { TestAccount } from "../src/testAccount";
 import config from "../config";
-import { errorCodes } from "../src/errors";
 
 describe("During the verification phase", () => {
   let client: Client;
