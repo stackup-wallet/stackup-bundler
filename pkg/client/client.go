@@ -14,6 +14,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/noop"
+	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -140,10 +141,14 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 }
 
 // EstimateUserOperationGas returns estimates for PreVerificationGas, VerificationGas, and CallGasLimit given
-// a UserOperation and EntryPoint address. The signature field and current gas values will not be validated
-// although there should be dummy values in place for the most reliable results (e.g. a signature with the
-// correct length).
-func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.GasEstimates, error) {
+// a UserOperation, EntryPoint address, and state OverrideSet. The signature field and current gas values will
+// not be validated although there should be dummy values in place for the most reliable results (e.g. a
+// signature with the correct length).
+func (i *Client) EstimateUserOperationGas(
+	op map[string]any,
+	ep string,
+	os map[string]any,
+) (*gas.GasEstimates, error) {
 	// Init logger
 	l := i.logger.WithName("eth_estimateUserOperationGas")
 
@@ -164,6 +169,12 @@ func (i *Client) EstimateUserOperationGas(op map[string]any, ep string) (*gas.Ga
 	}
 	hash := userOp.GetUserOpHash(epAddr, i.chainID)
 	l = l.WithValues("userop_hash", hash)
+
+	_, err = state.ParseOverrideData(os)
+	if err != nil {
+		l.Error(err, "eth_estimateUserOperationGas error")
+		return nil, err
+	}
 
 	// Estimate gas limits
 	vg, cg, err := i.getGasEstimate(epAddr, userOp)
