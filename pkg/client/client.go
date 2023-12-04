@@ -177,7 +177,7 @@ func (i *Client) EstimateUserOperationGas(
 	}
 
 	// Estimate gas limits
-	vg, cg, err := i.getGasEstimate(epAddr, userOp, state.WithZeroAddressOverride(sos))
+	vg, cg, err := i.getGasEstimate(epAddr, userOp, sos)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
