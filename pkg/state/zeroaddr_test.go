@@ -21,3 +21,12 @@ func TestWithZeroAddressOverride(t *testing.T) {
 		t.Fatalf("got %s, want %s", oa.Balance.ToInt().String(), maxUint96.String())
 	}
 }
+
+func TestWithZeroAddressOverrideNil(t *testing.T) {
+	os := WithZeroAddressOverride(nil)
+	if oa, ok := os[common.HexToAddress("0x")]; !ok {
+		t.Fatal("OverrideSet does not contain OverrideAccount")
+	} else if oa.Balance.ToInt().String() != maxUint96.String() {
+		t.Fatalf("got %s, want %s", oa.Balance.ToInt().String(), maxUint96.String())
+	}
+}

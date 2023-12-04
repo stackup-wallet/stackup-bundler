@@ -14,6 +14,10 @@ var (
 // WithZeroAddressOverride takes a set and appends an override for the zero address to have a balance equal to
 // max uint96.
 func WithZeroAddressOverride(os OverrideSet) OverrideSet {
+	if os == nil {
+		os = OverrideSet{}
+	}
+
 	bal := hexutil.Big(*maxUint96)
 	os[common.HexToAddress("0x")] = OverrideAccount{
 		Balance: &bal,
