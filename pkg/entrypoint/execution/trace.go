@@ -16,6 +16,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/reverts"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
+	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -24,6 +25,7 @@ type TraceInput struct {
 	Rpc        *ethRpc.Client
 	EntryPoint common.Address
 	Op         *userop.UserOperation
+	Sos        state.OverrideSet
 	ChainID    *big.Int
 
 	// Optional params for simulateHandleOps
@@ -98,7 +100,7 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 	}
 	opts := utils.TraceCallOpts{
 		Tracer:         tracer.Loaded.BundlerExecutionTracer,
-		StateOverrides: utils.DefaultStateOverrides,
+		StateOverrides: in.Sos,
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err
