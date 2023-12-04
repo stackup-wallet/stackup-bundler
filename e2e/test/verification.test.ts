@@ -1,5 +1,5 @@
-import { Client, Presets } from "userop";
 import { ethers } from "ethers";
+import { Client, Presets } from "userop";
 import { TestAccount } from "../src/testAccount";
 import config from "../config";
 import { errorCodes } from "../src/errors";
