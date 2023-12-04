@@ -140,10 +140,10 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 	return hash.String(), nil
 }
 
-// EstimateUserOperationGas returns estimates for PreVerificationGas, VerificationGas, and CallGasLimit given
-// a UserOperation, EntryPoint address, and state OverrideSet. The signature field and current gas values will
-// not be validated although there should be dummy values in place for the most reliable results (e.g. a
-// signature with the correct length).
+// EstimateUserOperationGas returns estimates for PreVerificationGas, VerificationGasLimit, and CallGasLimit
+// given a UserOperation, EntryPoint address, and state OverrideSet. The signature field and current gas
+// values will not be validated although there should be dummy values in place for the most reliable results
+// (e.g. a signature with the correct length).
 func (i *Client) EstimateUserOperationGas(
 	op map[string]any,
 	ep string,
