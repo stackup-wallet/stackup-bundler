@@ -3,9 +3,9 @@ package userop
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"reflect"
-	"strings"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -17,8 +17,7 @@ var (
 	validate = validator.New()
 	onlyOnce = sync.Once{}
 
-	replaceErrSubStrOld = "\n\n* ''"
-	replaceErrSubStrNew = " UserOperation"
+	ErrBadUserOperationData = errors.New("cannot decode UserOperation")
 )
 
 func exactFieldMatch(mapKey, fieldName string) bool {
@@ -104,7 +103,7 @@ func New(data map[string]any) (*UserOperation, error) {
 		return nil, err
 	}
 	if err := decoder.Decode(data); err != nil {
-		return nil, errors.New(strings.Replace(err.Error(), replaceErrSubStrOld, replaceErrSubStrNew, 1))
+		return nil, fmt.Errorf("%w: %w", ErrBadUserOperationData, err)
 	}
 
 	// Validate struct
