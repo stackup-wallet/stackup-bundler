@@ -20,8 +20,7 @@ type OverrideAccount struct {
 // debug_traceCall.
 type OverrideSet map[common.Address]OverrideAccount
 
-// ParseOverrideData decodes a map into an OverrideSet object and validates all the fields are correctly
-// typed.
+// ParseOverrideData decodes a map into an OverrideSet and validates all the fields are correctly typed.
 func ParseOverrideData(data map[string]any) (OverrideSet, error) {
 	os := OverrideSet{}
 	for key, value := range data {
