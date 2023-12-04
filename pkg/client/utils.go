@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/filter"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
+	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -33,10 +34,18 @@ func GetUserOpReceiptWithEthClient(eth *ethclient.Client) GetUserOpReceiptFunc {
 
 // GetGasEstimateFunc is a general interface for fetching an estimate for verificationGasLimit and
 // callGasLimit given a userOp and EntryPoint address.
-type GetGasEstimateFunc = func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error)
+type GetGasEstimateFunc = func(
+	ep common.Address,
+	op *userop.UserOperation,
+	sos state.OverrideSet,
+) (verificationGas uint64, callGas uint64, err error)
 
 func getGasEstimateNoop() GetGasEstimateFunc {
-	return func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error) {
+	return func(
+		ep common.Address,
+		op *userop.UserOperation,
+		sos state.OverrideSet,
+	) (verificationGas uint64, callGas uint64, err error) {
 		//lint:ignore ST1005 This needs to match the bundler test spec.
 		return 0, 0, errors.New("Missing/invalid userOpHash")
 	}
@@ -50,11 +59,16 @@ func GetGasEstimateWithEthClient(
 	chain *big.Int,
 	maxGasLimit *big.Int,
 ) GetGasEstimateFunc {
-	return func(ep common.Address, op *userop.UserOperation) (verificationGas uint64, callGas uint64, err error) {
+	return func(
+		ep common.Address,
+		op *userop.UserOperation,
+		sos state.OverrideSet,
+	) (verificationGas uint64, callGas uint64, err error) {
 		return gas.EstimateGas(&gas.EstimateInput{
 			Rpc:         rpc,
 			EntryPoint:  ep,
 			Op:          op,
+			Sos:         sos,
 			Ov:          ov,
 			ChainID:     chain,
 			MaxGasLimit: maxGasLimit,

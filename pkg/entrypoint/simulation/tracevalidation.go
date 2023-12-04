@@ -17,6 +17,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/methods"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/utils"
+	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -62,7 +63,7 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 	}
 	opts := utils.TraceCallOpts{
 		Tracer:         tracer.Loaded.BundlerCollectorTracer,
-		StateOverrides: utils.DefaultStateOverrides,
+		StateOverrides: state.WithZeroAddressOverride(state.OverrideSet{}),
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err

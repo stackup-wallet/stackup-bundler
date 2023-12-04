@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/execution"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
+	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -46,6 +47,7 @@ type EstimateInput struct {
 	Rpc         *rpc.Client
 	EntryPoint  common.Address
 	Op          *userop.UserOperation
+	Sos         state.OverrideSet
 	Ov          *Overhead
 	ChainID     *big.Int
 	MaxGasLimit *big.Int
@@ -63,6 +65,7 @@ func retryEstimateGas(err error, vgl int64, in *EstimateInput) (uint64, uint64, 
 			Rpc:         in.Rpc,
 			EntryPoint:  in.EntryPoint,
 			Op:          in.Op,
+			Sos:         in.Sos,
 			Ov:          in.Ov,
 			ChainID:     in.ChainID,
 			MaxGasLimit: in.MaxGasLimit,
@@ -113,6 +116,8 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 			Rpc:        in.Rpc,
 			EntryPoint: in.EntryPoint,
 			Op:         simOp,
+			Sos:        in.Sos,
+			ChainID:    in.ChainID,
 		})
 		simErr = err
 		if err == nil {
@@ -152,6 +157,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		Rpc:         in.Rpc,
 		EntryPoint:  in.EntryPoint,
 		Op:          simOp,
+		Sos:         in.Sos,
 		ChainID:     in.ChainID,
 		TraceFeeCap: in.Op.MaxFeePerGas,
 	})
@@ -180,6 +186,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		Rpc:        in.Rpc,
 		EntryPoint: in.EntryPoint,
 		Op:         simOp,
+		Sos:        in.Sos,
 		ChainID:    in.ChainID,
 	})
 	if err != nil {
@@ -203,6 +210,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					Rpc:        in.Rpc,
 					EntryPoint: in.EntryPoint,
 					Op:         simOp,
+					Sos:        in.Sos,
 					ChainID:    in.ChainID,
 				})
 				simErr = err

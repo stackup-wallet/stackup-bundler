@@ -170,14 +170,14 @@ func (i *Client) EstimateUserOperationGas(
 	hash := userOp.GetUserOpHash(epAddr, i.chainID)
 	l = l.WithValues("userop_hash", hash)
 
-	_, err = state.ParseOverrideData(os)
+	sos, err := state.ParseOverrideData(os)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
 	}
 
 	// Estimate gas limits
-	vg, cg, err := i.getGasEstimate(epAddr, userOp)
+	vg, cg, err := i.getGasEstimate(epAddr, userOp, state.WithZeroAddressOverride(sos))
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
