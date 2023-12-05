@@ -191,6 +191,9 @@ func (i *Client) EstimateUserOperationGas(
 		sos = state.WithMaxBalanceOverride(userOp.Sender, sos)
 	}
 
+	// Override op with suggested gas prices if maxFeePerGas is 0. This allows for more reliable gas
+	// estimations upstream. The default balance override also ensures simulations won't revert on
+	// insufficient funds.
 	if userOp.MaxFeePerGas.Cmp(common.Big0) != 1 {
 		gp, err := i.getGasPrices()
 		if err != nil {
