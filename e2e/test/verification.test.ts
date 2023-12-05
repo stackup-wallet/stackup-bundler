@@ -69,15 +69,20 @@ describe("During the verification phase", () => {
 
   describe("With no gas fees", () => {
     test("Sender with funds can estimate gas and send", async () => {
-      const acc = await Presets.Builder.SimpleAccount.init(
-        new ethers.Wallet(config.signingKey),
+      const signer = new ethers.Wallet(config.signingKey);
+      const fundedAcc = await Presets.Builder.SimpleAccount.init(
+        signer,
         config.nodeUrl,
         {
           overrideBundlerRpc: config.bundlerUrl,
         }
       );
       const op = await client.buildUserOperation(
-        acc.execute(ethers.constants.AddressZero, ethers.constants.Zero, "0x")
+        fundedAcc.execute(
+          ethers.constants.AddressZero,
+          ethers.constants.Zero,
+          "0x"
+        )
       );
 
       const builderWithEstimate = new UserOperationBuilder()
@@ -90,27 +95,38 @@ describe("During the verification phase", () => {
       const opWithEstimate = await client.buildUserOperation(
         builderWithEstimate
       );
+      expect(ethers.BigNumber.from(opWithEstimate.maxFeePerGas).isZero()).toBe(
+        true
+      );
+      expect(
+        ethers.BigNumber.from(opWithEstimate.maxPriorityFeePerGas).isZero()
+      ).toBe(true);
 
       const builderWithGasPrice = new UserOperationBuilder()
         .useDefaults(opWithEstimate)
-        .useMiddleware(Presets.Middleware.getGasPrice(provider));
+        .useMiddleware(Presets.Middleware.getGasPrice(provider))
+        .useMiddleware(Presets.Middleware.signUserOpHash(signer));
       const response = await client.sendUserOperation(builderWithGasPrice);
       const event = await response.wait();
-
       expect(event?.args.success).toBe(true);
     });
 
     test("Sender with zero funds can estimate gas but cannot send", async () => {
-      expect.assertions(1);
-      const acc = await Presets.Builder.SimpleAccount.init(
-        new ethers.Wallet(ethers.utils.randomBytes(32)),
+      expect.assertions(3);
+      const signer = new ethers.Wallet(ethers.utils.randomBytes(32));
+      const randAcc = await Presets.Builder.SimpleAccount.init(
+        signer,
         config.nodeUrl,
         {
           overrideBundlerRpc: config.bundlerUrl,
         }
       );
       const op = await client.buildUserOperation(
-        acc.execute(ethers.constants.AddressZero, ethers.constants.Zero, "0x")
+        randAcc.execute(
+          ethers.constants.AddressZero,
+          ethers.constants.Zero,
+          "0x"
+        )
       );
 
       const builderWithEstimate = new UserOperationBuilder()
@@ -123,11 +139,18 @@ describe("During the verification phase", () => {
       const opWithEstimate = await client.buildUserOperation(
         builderWithEstimate
       );
+      expect(ethers.BigNumber.from(opWithEstimate.maxFeePerGas).isZero()).toBe(
+        true
+      );
+      expect(
+        ethers.BigNumber.from(opWithEstimate.maxPriorityFeePerGas).isZero()
+      ).toBe(true);
 
       try {
         const builderWithGasPrice = new UserOperationBuilder()
           .useDefaults(opWithEstimate)
-          .useMiddleware(Presets.Middleware.getGasPrice(provider));
+          .useMiddleware(Presets.Middleware.getGasPrice(provider))
+          .useMiddleware(Presets.Middleware.signUserOpHash(signer));
         await client.sendUserOperation(builderWithGasPrice);
       } catch (error: any) {
         expect(error?.error.code).toBe(errorCodes.rejectedByEpOrAccount);
