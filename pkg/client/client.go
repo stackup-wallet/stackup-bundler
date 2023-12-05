@@ -28,6 +28,7 @@ type Client struct {
 	userOpHandler        modules.UserOpHandlerFunc
 	logger               logr.Logger
 	getUserOpReceipt     GetUserOpReceiptFunc
+	getGasPrices         GetGasPricesFunc
 	getGasEstimate       GetGasEstimateFunc
 	getUserOpByHash      GetUserOpByHashFunc
 }
@@ -48,6 +49,7 @@ func New(
 		userOpHandler:        noop.UserOpHandler,
 		logger:               logger.NewZeroLogr().WithName("client"),
 		getUserOpReceipt:     getUserOpReceiptNoop(),
+		getGasPrices:         getGasPricesNoop(),
 		getGasEstimate:       getGasEstimateNoop(),
 		getUserOpByHash:      getUserOpByHashNoop(),
 	}
@@ -77,6 +79,13 @@ func (i *Client) UseModules(handlers ...modules.UserOpHandlerFunc) {
 // EntryPoint address. This function is called in *Client.GetUserOperationReceipt.
 func (i *Client) SetGetUserOpReceiptFunc(fn GetUserOpReceiptFunc) {
 	i.getUserOpReceipt = fn
+}
+
+// SetGetGasPricesFunc defines a general function for fetching values for maxFeePerGas and
+// maxPriorityFeePerGas. This function is called in *Client.EstimateUserOperationGas if given fee values are
+// 0.
+func (i *Client) SetGetGasPricesFunc(fn GetGasPricesFunc) {
+	i.getGasPrices = fn
 }
 
 // SetGetGasEstimateFunc defines a general function for fetching an estimate for verificationGasLimit and
@@ -170,10 +179,29 @@ func (i *Client) EstimateUserOperationGas(
 	hash := userOp.GetUserOpHash(epAddr, i.chainID)
 	l = l.WithValues("userop_hash", hash)
 
+	// Parse state override set. If paymaster is not included and sender overrides are not set, default to
+	// overriding sender balance to max uint96. This ensures gas estimation is not blocked by insufficient
+	// funds.
 	sos, err := state.ParseOverrideData(os)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
+	}
+	if userOp.GetPaymaster() == common.HexToAddress("0x") {
+		sos = state.WithMaxBalanceOverride(userOp.Sender, sos)
+	}
+
+	// Override op with suggested gas prices if maxFeePerGas is 0. This allows for more reliable gas
+	// estimations upstream. The default balance override also ensures simulations won't revert on
+	// insufficient funds.
+	if userOp.MaxFeePerGas.Cmp(common.Big0) != 1 {
+		gp, err := i.getGasPrices()
+		if err != nil {
+			l.Error(err, "eth_estimateUserOperationGas error")
+			return nil, err
+		}
+		userOp.MaxFeePerGas = gp.MaxFeePerGas
+		userOp.MaxPriorityFeePerGas = gp.MaxPriorityFeePerGas
 	}
 
 	// Estimate gas limits

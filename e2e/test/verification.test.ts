@@ -1,10 +1,18 @@
 import { ethers } from "ethers";
-import { Client, Presets } from "userop";
+import {
+  BundlerJsonRpcProvider,
+  Client,
+  Presets,
+  UserOperationBuilder,
+} from "userop";
 import { errorCodes } from "../src/errors";
 import { TestAccount } from "../src/testAccount";
 import config from "../config";
 
 describe("During the verification phase", () => {
+  const provider = new BundlerJsonRpcProvider(config.nodeUrl).setBundlerRpc(
+    config.bundlerUrl
+  );
   let client: Client;
   let acc: TestAccount;
   beforeAll(async () => {
@@ -59,9 +67,100 @@ describe("During the verification phase", () => {
     });
   });
 
+  describe("With no gas fees", () => {
+    test("Sender with funds can estimate gas and send", async () => {
+      const signer = new ethers.Wallet(config.signingKey);
+      const fundedAcc = await Presets.Builder.SimpleAccount.init(
+        signer,
+        config.nodeUrl,
+        {
+          overrideBundlerRpc: config.bundlerUrl,
+        }
+      );
+      const op = await client.buildUserOperation(
+        fundedAcc.execute(
+          ethers.constants.AddressZero,
+          ethers.constants.Zero,
+          "0x"
+        )
+      );
+
+      const builderWithEstimate = new UserOperationBuilder()
+        .useDefaults({
+          ...op,
+          maxFeePerGas: 0,
+          maxPriorityFeePerGas: 0,
+        })
+        .useMiddleware(Presets.Middleware.estimateUserOperationGas(provider));
+      const opWithEstimate = await client.buildUserOperation(
+        builderWithEstimate
+      );
+      expect(ethers.BigNumber.from(opWithEstimate.maxFeePerGas).isZero()).toBe(
+        true
+      );
+      expect(
+        ethers.BigNumber.from(opWithEstimate.maxPriorityFeePerGas).isZero()
+      ).toBe(true);
+
+      const builderWithGasPrice = new UserOperationBuilder()
+        .useDefaults(opWithEstimate)
+        .useMiddleware(Presets.Middleware.getGasPrice(provider))
+        .useMiddleware(Presets.Middleware.signUserOpHash(signer));
+      const response = await client.sendUserOperation(builderWithGasPrice);
+      const event = await response.wait();
+      expect(event?.args.success).toBe(true);
+    });
+
+    test("Sender with zero funds can estimate gas but cannot send", async () => {
+      expect.assertions(3);
+      const signer = new ethers.Wallet(ethers.utils.randomBytes(32));
+      const randAcc = await Presets.Builder.SimpleAccount.init(
+        signer,
+        config.nodeUrl,
+        {
+          overrideBundlerRpc: config.bundlerUrl,
+        }
+      );
+      const op = await client.buildUserOperation(
+        randAcc.execute(
+          ethers.constants.AddressZero,
+          ethers.constants.Zero,
+          "0x"
+        )
+      );
+
+      const builderWithEstimate = new UserOperationBuilder()
+        .useDefaults({
+          ...op,
+          maxFeePerGas: 0,
+          maxPriorityFeePerGas: 0,
+        })
+        .useMiddleware(Presets.Middleware.estimateUserOperationGas(provider));
+      const opWithEstimate = await client.buildUserOperation(
+        builderWithEstimate
+      );
+      expect(ethers.BigNumber.from(opWithEstimate.maxFeePerGas).isZero()).toBe(
+        true
+      );
+      expect(
+        ethers.BigNumber.from(opWithEstimate.maxPriorityFeePerGas).isZero()
+      ).toBe(true);
+
+      try {
+        const builderWithGasPrice = new UserOperationBuilder()
+          .useDefaults(opWithEstimate)
+          .useMiddleware(Presets.Middleware.getGasPrice(provider))
+          .useMiddleware(Presets.Middleware.signUserOpHash(signer));
+        await client.sendUserOperation(builderWithGasPrice);
+      } catch (error: any) {
+        expect(error?.error.code).toBe(errorCodes.rejectedByEpOrAccount);
+      }
+    });
+  });
+
   describe("With state overrides", () => {
-    test("Sender with zero funds can successfully estimate UserOperation gas", async () => {
-      expect.assertions(4);
+    test("New sender will fail estimation if it uses its actual balance", async () => {
+      expect.assertions(1);
       const randAcc = await Presets.Builder.SimpleAccount.init(
         new ethers.Wallet(ethers.utils.randomBytes(32)),
         config.nodeUrl,
@@ -69,39 +168,25 @@ describe("During the verification phase", () => {
           overrideBundlerRpc: config.bundlerUrl,
         }
       );
-      randAcc
-        .setPreVerificationGas(0)
-        .setVerificationGasLimit(0)
-        .setCallGasLimit(0);
 
       try {
-        await client.sendUserOperation(
-          randAcc.execute(randAcc.getSender(), ethers.constants.Zero, "0x")
+        await client.buildUserOperation(
+          randAcc.execute(
+            ethers.constants.AddressZero,
+            ethers.constants.Zero,
+            "0x"
+          ),
+          {
+            [randAcc.getSender()]: {
+              balance: ethers.utils.hexValue(
+                await provider.getBalance(randAcc.getSender())
+              ),
+            },
+          }
         );
       } catch (error: any) {
         expect(error?.error.code).toBe(errorCodes.rejectedByEpOrAccount);
       }
-
-      await client.sendUserOperation(
-        randAcc.execute(randAcc.getSender(), ethers.constants.Zero, "0x"),
-        {
-          dryRun: true,
-          stateOverrides: {
-            [randAcc.getSender()]: {
-              balance: ethers.constants.MaxUint256.toHexString(),
-            },
-          },
-          onBuild(op) {
-            expect(ethers.BigNumber.from(op.preVerificationGas).gte(0)).toBe(
-              true
-            );
-            expect(ethers.BigNumber.from(op.verificationGasLimit).gte(0)).toBe(
-              true
-            );
-            expect(ethers.BigNumber.from(op.callGasLimit).gte(0)).toBe(true);
-          },
-        }
-      );
     });
   });
 });
