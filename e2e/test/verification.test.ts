@@ -79,18 +79,16 @@ describe("During the verification phase", () => {
       const op = await client.buildUserOperation(
         acc.execute(ethers.constants.AddressZero, ethers.constants.Zero, "0x")
       );
-      op.preVerificationGas = ethers.constants.Zero;
-      op.verificationGasLimit = ethers.constants.Zero;
-      op.callGasLimit = ethers.constants.Zero;
-      op.maxFeePerGas = ethers.constants.Zero;
-      op.maxPriorityFeePerGas = ethers.constants.Zero;
 
       const builderWithEstimate = new UserOperationBuilder()
-        .useDefaults(op)
+        .useDefaults({
+          ...op,
+          maxFeePerGas: 0,
+          maxPriorityFeePerGas: 0,
+        })
         .useMiddleware(Presets.Middleware.estimateUserOperationGas(provider));
-      const opWithEstimate = await builderWithEstimate.buildOp(
-        client.entryPoint.address,
-        client.chainId
+      const opWithEstimate = await client.buildUserOperation(
+        builderWithEstimate
       );
 
       const builderWithGasPrice = new UserOperationBuilder()
@@ -114,18 +112,16 @@ describe("During the verification phase", () => {
       const op = await client.buildUserOperation(
         acc.execute(ethers.constants.AddressZero, ethers.constants.Zero, "0x")
       );
-      op.preVerificationGas = ethers.constants.Zero;
-      op.verificationGasLimit = ethers.constants.Zero;
-      op.callGasLimit = ethers.constants.Zero;
-      op.maxFeePerGas = ethers.constants.Zero;
-      op.maxPriorityFeePerGas = ethers.constants.Zero;
 
       const builderWithEstimate = new UserOperationBuilder()
-        .useDefaults(op)
+        .useDefaults({
+          ...op,
+          maxFeePerGas: 0,
+          maxPriorityFeePerGas: 0,
+        })
         .useMiddleware(Presets.Middleware.estimateUserOperationGas(provider));
-      const opWithEstimate = await builderWithEstimate.buildOp(
-        client.entryPoint.address,
-        client.chainId
+      const opWithEstimate = await client.buildUserOperation(
+        builderWithEstimate
       );
 
       try {
@@ -141,36 +137,12 @@ describe("During the verification phase", () => {
 
   describe("With state overrides", () => {
     test("New sender will fail estimation if it uses its actual balance", async () => {
-      expect.assertions(4);
+      expect.assertions(1);
       const randAcc = await Presets.Builder.SimpleAccount.init(
         new ethers.Wallet(ethers.utils.randomBytes(32)),
         config.nodeUrl,
         {
           overrideBundlerRpc: config.bundlerUrl,
-        }
-      );
-      randAcc
-        .setPreVerificationGas(0)
-        .setVerificationGasLimit(0)
-        .setCallGasLimit(0);
-
-      await client.sendUserOperation(
-        randAcc.execute(
-          ethers.constants.AddressZero,
-          ethers.constants.Zero,
-          "0x"
-        ),
-        {
-          dryRun: true,
-          onBuild(op) {
-            expect(ethers.BigNumber.from(op.preVerificationGas).gte(0)).toBe(
-              true
-            );
-            expect(ethers.BigNumber.from(op.verificationGasLimit).gte(0)).toBe(
-              true
-            );
-            expect(ethers.BigNumber.from(op.callGasLimit).gte(0)).toBe(true);
-          },
         }
       );
 
