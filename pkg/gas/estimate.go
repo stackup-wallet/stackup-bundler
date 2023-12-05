@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/execution"
-	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -79,15 +78,6 @@ func retryEstimateGas(err error, vgl int64, in *EstimateInput) (uint64, uint64, 
 // EstimateGas uses the simulateHandleOp method on the EntryPoint to derive an estimate for
 // verificationGasLimit and callGasLimit.
 func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err error) {
-	// Skip if maxFeePerGas is zero.
-	if in.Op.MaxFeePerGas.Cmp(big.NewInt(0)) != 1 {
-		return 0, 0, errors.NewRPCError(
-			errors.INVALID_FIELDS,
-			"maxFeePerGas must be more than 0",
-			nil,
-		)
-	}
-
 	// Set the initial conditions.
 	data, err := in.Op.ToMap()
 	if err != nil {
@@ -97,9 +87,9 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(0))
 	data["callGasLimit"] = hexutil.EncodeBig(big.NewInt(0))
 
-	// Find the optimal verificationGasLimit with binary search. Setting gas price to 0 and maxing out the gas
-	// limit here would result in certain code paths not being executed which results in an inaccurate gas
-	// estimate.
+	// Find the optimal verificationGasLimit with binary search. A gas price of 0 may result in certain
+	// upstream code paths in the EVM to not be executed which can affect the reliability of gas estimates. In
+	// this case, consider calling the EstimateGas function after setting the gas price on the UserOperation.
 	l := int64(0)
 	r := in.MaxGasLimit.Int64()
 	f := in.lastVGL

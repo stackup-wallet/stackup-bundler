@@ -130,6 +130,7 @@ func PrivateMode() {
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
+	c.SetGetGasPricesFunc(client.GetGasPricesWithEthClient(eth))
 	c.SetGetGasEstimateFunc(
 		client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit),
 	)

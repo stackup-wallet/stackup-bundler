@@ -63,7 +63,7 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 	}
 	opts := utils.TraceCallOpts{
 		Tracer:         tracer.Loaded.BundlerCollectorTracer,
-		StateOverrides: state.WithZeroAddressOverride(nil),
+		StateOverrides: state.WithMaxBalanceOverride(common.HexToAddress("0x"), nil),
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err

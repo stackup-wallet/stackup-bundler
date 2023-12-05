@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/filter"
+	"github.com/stackup-wallet/stackup-bundler/pkg/fees"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
@@ -29,6 +30,26 @@ func getUserOpReceiptNoop() GetUserOpReceiptFunc {
 func GetUserOpReceiptWithEthClient(eth *ethclient.Client) GetUserOpReceiptFunc {
 	return func(hash string, ep common.Address) (*filter.UserOperationReceipt, error) {
 		return filter.GetUserOperationReceipt(eth, hash, ep)
+	}
+}
+
+// GetGasPricesFunc is a general interface for fetching values for maxFeePerGas and maxPriorityFeePerGas.
+type GetGasPricesFunc = func() (*fees.GasPrices, error)
+
+func getGasPricesNoop() GetGasPricesFunc {
+	return func() (*fees.GasPrices, error) {
+		return &fees.GasPrices{
+			MaxFeePerGas:         big.NewInt(0),
+			MaxPriorityFeePerGas: big.NewInt(0),
+		}, nil
+	}
+}
+
+// GetGasPricesWithEthClient returns an implementation of GetGasPricesFunc that relies on an eth client to
+// fetch values for maxFeePerGas and maxPriorityFeePerGas.
+func GetGasPricesWithEthClient(eth *ethclient.Client) GetGasPricesFunc {
+	return func() (*fees.GasPrices, error) {
+		return fees.NewGasPrices(eth)
 	}
 }
 
