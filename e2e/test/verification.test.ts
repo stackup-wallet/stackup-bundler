@@ -170,20 +170,17 @@ describe("During the verification phase", () => {
       );
 
       try {
-        await client.sendUserOperation(
+        await client.buildUserOperation(
           randAcc.execute(
             ethers.constants.AddressZero,
             ethers.constants.Zero,
             "0x"
           ),
           {
-            dryRun: true,
-            stateOverrides: {
-              [randAcc.getSender()]: {
-                balance: ethers.utils.hexValue(
-                  await provider.getBalance(randAcc.getSender())
-                ),
-              },
+            [randAcc.getSender()]: {
+              balance: ethers.utils.hexValue(
+                await provider.getBalance(randAcc.getSender())
+              ),
             },
           }
         );
