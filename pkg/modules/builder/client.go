@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -22,9 +23,10 @@ import (
 type BuilderClient struct {
 	eoa               *signer.EOA
 	eth               *ethclient.Client
-	rpc               *flashbotsrpc.FlashbotsRPC
+	rpc               *flashbotsrpc.BuilderBroadcastRPC
 	beneficiary       common.Address
 	blocksInTheFuture int
+	waitTimeout       time.Duration
 }
 
 // New returns an instance of a BuilderClient with modules to send UserOperation bundles via the mev-boost
@@ -32,7 +34,7 @@ type BuilderClient struct {
 func New(
 	eoa *signer.EOA,
 	eth *ethclient.Client,
-	fb *flashbotsrpc.FlashbotsRPC,
+	fb *flashbotsrpc.BuilderBroadcastRPC,
 	beneficiary common.Address,
 	blocksInTheFuture int,
 ) *BuilderClient {
@@ -42,11 +44,21 @@ func New(
 		rpc:               fb,
 		beneficiary:       beneficiary,
 		blocksInTheFuture: blocksInTheFuture,
+		waitTimeout:       DefaultWaitTimeout,
 	}
 }
 
+// SetWaitTimeout sets the total time to wait for a transaction to be included. When a timeout is reached, the
+// BatchHandler will throw an error if the transaction has not been included or has been included but with a
+// failed status.
+//
+// The default value is 72 seconds. Setting the value to 0 will skip waiting for a transaction to be included.
+func (b *BuilderClient) SetWaitTimeout(timeout time.Duration) {
+	b.waitTimeout = timeout
+}
+
 // SendUserOperation returns a BatchHandler that is used by the Bundler to send batches to a block builder
-// that supports eth_callBundle and eth_sendBundle.
+// that supports eth_sendBundle.
 func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
@@ -58,8 +70,11 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 			Batch:       ctx.Batch,
 			Beneficiary: b.beneficiary,
 			BaseFee:     ctx.BaseFee,
+			Tip:         ctx.Tip,
 			GasPrice:    ctx.GasPrice,
 			GasLimit:    0,
+			NoSend:      true,
+			WaitTimeout: b.waitTimeout,
 		}
 		for len(ctx.Batch) > 0 {
 			est, revert, err := transaction.EstimateHandleOpsGas(&opts)
@@ -79,8 +94,7 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 		if err != nil {
 			return err
 		}
-		blkNum := big.NewInt(0).SetUint64(bn)
-		NxtBlkNum := big.NewInt(0).Add(blkNum, big.NewInt(1))
+		nbn := big.NewInt(0).Add(big.NewInt(0).SetUint64(bn), big.NewInt(1))
 		mbf := ctx.BaseFee
 		for i := 0; i < b.blocksInTheFuture; i++ {
 			a := big.NewInt(0).Mul(mbf, big.NewInt(1125))
@@ -89,44 +103,39 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 		}
 		opts.BaseFee = mbf
 
-		// Call CreateRawHandleOps() with gas estimate and max base fee.
-		rawTx, err := transaction.CreateRawHandleOps(&opts)
+		// Create no send transaction to the EntryPoint
+		txn, err := transaction.HandleOps(&opts)
 		if err != nil {
 			return err
 		}
 
-		// Simulate bundle.
-		callBundleArgs := flashbotsrpc.FlashbotsCallBundleParam{
-			Txs:              []string{rawTx},
-			BlockNumber:      hexutil.EncodeBig(NxtBlkNum),
-			StateBlockNumber: "latest",
-		}
-		sim, err := b.rpc.FlashbotsCallBundle(b.eoa.PrivateKey, callBundleArgs)
-		if err != nil {
-			return err
-		}
-		if len(sim.Results) != 1 {
-			return fmt.Errorf("unexpected simulation result length, want 1, got %d", len(sim.Results))
-		}
-		if sim.Results[0].Error != "" {
-			// TODO: Implement better error handling and retry.
-			return errors.New(sim.Results[0].Error)
-		}
-
-		// Send bundle for all blocks up to a future block number.
-		// Note: Do not try to access bundleHash from results. Flashbots builder does not return it.
+		// Broadcast bundle to a list of ethereum block builders for all blocks up to a future block.
+		shouldFail := true
+		var errs error
 		for i := 0; i < b.blocksInTheFuture; i++ {
-			futureBlkNum := big.NewInt(0).Add(blkNum, big.NewInt(int64(i)))
+			fbn := big.NewInt(0).Add(nbn, big.NewInt(int64(i)))
 			sendBundleArgs := flashbotsrpc.FlashbotsSendBundleRequest{
-				Txs:         []string{rawTx},
-				BlockNumber: hexutil.EncodeBig(futureBlkNum),
+				Txs:         []string{transaction.ToRawTxHex(txn)},
+				BlockNumber: hexutil.EncodeBig(fbn),
 			}
-			_, err := b.rpc.FlashbotsSendBundle(b.eoa.PrivateKey, sendBundleArgs)
-			if err != nil {
-				return err
+
+			results := b.rpc.BroadcastBundle(b.eoa.PrivateKey, sendBundleArgs)
+			for _, result := range results {
+				if result.Err != nil {
+					errs = errors.Join(errs, result.Err)
+				} else {
+					shouldFail = false
+				}
 			}
 		}
 
-		return nil
+		// If there are no successful broadcast, return an error.
+		if shouldFail {
+			return fmt.Errorf("%w: \n\n%w", ErrFlashbotsBroadcastBundle, errs)
+		}
+
+		// Wait for transaction to be included on-chain.
+		_, err = transaction.Wait(txn, opts.Eth, opts.WaitTimeout)
+		return err
 	}
 }

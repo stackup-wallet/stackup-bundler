@@ -12,7 +12,7 @@ require (
 	github.com/go-logr/zerologr v1.2.3
 	github.com/go-playground/validator/v10 v10.12.0
 	github.com/google/go-cmp v0.5.9
-	github.com/metachris/flashbotsrpc v0.5.0
+	github.com/metachris/flashbotsrpc v0.6.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/puzpuzpuz/xsync/v3 v3.0.1
 	github.com/rs/zerolog v1.29.0
@@ -101,3 +101,5 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/metachris/flashbotsrpc => github.com/stackup-wallet/flashbotsrpc v0.6.1-rc1

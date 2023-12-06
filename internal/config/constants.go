@@ -5,6 +5,7 @@ import "math/big"
 var (
 	EthereumChainID        = big.NewInt(1)
 	GoerliChainID          = big.NewInt(5)
+	SepoliaChainID         = big.NewInt(11155111)
 	ArbitrumOneChainID     = big.NewInt(42161)
 	ArbitrumGoerliChainID  = big.NewInt(421613)
 	ArbitrumSepoliaChainID = big.NewInt(421614)
