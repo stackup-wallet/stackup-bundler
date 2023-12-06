@@ -58,7 +58,7 @@ func (b *BuilderClient) SetWaitTimeout(timeout time.Duration) {
 }
 
 // SendUserOperation returns a BatchHandler that is used by the Bundler to send batches to a block builder
-// that supports eth_callBundle and eth_sendBundle.
+// that supports eth_sendBundle.
 func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
