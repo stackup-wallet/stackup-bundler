@@ -103,7 +103,7 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 		}
 		opts.BaseFee = mbf
 
-		// Create raw transaction to the EntryPoint
+		// Create no send transaction to the EntryPoint
 		txn, err := transaction.HandleOps(&opts)
 		if err != nil {
 			return err
