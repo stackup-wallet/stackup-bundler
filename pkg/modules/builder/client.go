@@ -52,7 +52,7 @@ func New(
 // BatchHandler will throw an error if the transaction has not been included or has been included but with a
 // failed status.
 //
-// The default value is 30 seconds. Setting the value to 0 will skip waiting for a transaction to be included.
+// The default value is 72 seconds. Setting the value to 0 will skip waiting for a transaction to be included.
 func (b *BuilderClient) SetWaitTimeout(timeout time.Duration) {
 	b.waitTimeout = timeout
 }
