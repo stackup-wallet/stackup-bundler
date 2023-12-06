@@ -12,10 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-var (
-	ErrInvalidGasPriceOpts = errors.New("transaction: either the dynamic or legacy gas fees must be set")
-)
-
 // ToRawTxHex Takes a Geth types.Transaction and returns the encoded raw hex string.
 func ToRawTxHex(txn *types.Transaction) string {
 	rawTxn := new(bytes.Buffer)

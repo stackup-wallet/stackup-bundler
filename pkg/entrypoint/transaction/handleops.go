@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"context"
+	"errors"
 	"math"
 	"math/big"
 	"time"
@@ -116,7 +117,7 @@ func HandleOps(opts *Opts) (txn *types.Transaction, err error) {
 	} else if opts.GasPrice != nil {
 		auth.GasPrice = SuggestMeanGasPrice(opts.GasPrice, opts.Batch)
 	} else {
-		return nil, ErrInvalidGasPriceOpts
+		return nil, errors.New("transaction: either the dynamic or legacy gas fees must be set")
 	}
 
 	txn, err = ep.HandleOps(auth, toAbiType(opts.Batch), opts.Beneficiary)
