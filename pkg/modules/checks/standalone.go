@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/stackup-wallet/stackup-bundler/pkg/altmempools"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/simulation"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
@@ -28,6 +29,7 @@ type Standalone struct {
 	rpc                     *rpc.Client
 	eth                     *ethclient.Client
 	ov                      *gas.Overhead
+	alt                     *altmempools.Directory
 	maxVerificationGas      *big.Int
 	maxBatchGasLimit        *big.Int
 	maxOpsForUnstakedSender int
@@ -39,12 +41,13 @@ func New(
 	db *badger.DB,
 	rpc *rpc.Client,
 	ov *gas.Overhead,
+	alt *altmempools.Directory,
 	maxVerificationGas *big.Int,
 	maxBatchGasLimit *big.Int,
 	maxOpsForUnstakedSender int,
 ) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{db, rpc, eth, ov, maxVerificationGas, maxBatchGasLimit, maxOpsForUnstakedSender}
+	return &Standalone{db, rpc, eth, ov, alt, maxVerificationGas, maxBatchGasLimit, maxOpsForUnstakedSender}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -105,22 +108,23 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 			return nil
 		})
 		g.Go(func() error {
-			ic, err := simulation.TraceSimulateValidation(
-				s.rpc,
-				ctx.EntryPoint,
-				ctx.UserOp,
-				ctx.ChainID,
-				simulation.EntityStakes{
+			out, err := simulation.TraceSimulateValidation(&simulation.TraceInput{
+				Rpc:         s.rpc,
+				EntryPoint:  ctx.EntryPoint,
+				AltMempools: s.alt,
+				Op:          ctx.UserOp,
+				ChainID:     ctx.ChainID,
+				Stakes: simulation.EntityStakes{
 					ctx.UserOp.GetFactory():   ctx.GetDepositInfo(ctx.UserOp.GetFactory()),
 					ctx.UserOp.Sender:         ctx.GetDepositInfo(ctx.UserOp.Sender),
 					ctx.UserOp.GetPaymaster(): ctx.GetDepositInfo(ctx.UserOp.GetPaymaster()),
 				},
-			)
+			})
 			if err != nil {
 				return errors.NewRPCError(errors.BANNED_OPCODE, err.Error(), err.Error())
 			}
 
-			ch, err := getCodeHashes(ic, gc)
+			ch, err := getCodeHashes(out.TouchedContracts, gc)
 			if err != nil {
 				return errors.NewRPCError(errors.BANNED_OPCODE, err.Error(), err.Error())
 			}

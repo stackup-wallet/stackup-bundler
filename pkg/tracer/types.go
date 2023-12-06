@@ -62,4 +62,5 @@ type BundlerExecutionReturn struct {
 	ExecutionGasLimit  float64  `json:"executionGasLimit"`
 	UserOperationEvent *LogInfo `json:"userOperationEvent,omitempty"`
 	Output             string   `json:"output"`
+	Error              string   `json:"error"`
 }

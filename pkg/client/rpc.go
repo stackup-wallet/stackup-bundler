@@ -7,6 +7,12 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 )
 
+// Named UserOperation type for jsonrpc package.
+type userOperation map[string]any
+
+// Named StateOverride type for jsonrpc package.
+type optional_stateOverride map[string]any
+
 // RpcAdapter is an adapter for routing JSON-RPC method calls to the correct client functions.
 type RpcAdapter struct {
 	client *Client
@@ -19,13 +25,17 @@ func NewRpcAdapter(client *Client, debug *Debug) *RpcAdapter {
 }
 
 // Eth_sendUserOperation routes method calls to *Client.SendUserOperation.
-func (r *RpcAdapter) Eth_sendUserOperation(op map[string]any, ep string) (string, error) {
+func (r *RpcAdapter) Eth_sendUserOperation(op userOperation, ep string) (string, error) {
 	return r.client.SendUserOperation(op, ep)
 }
 
 // Eth_estimateUserOperationGas routes method calls to *Client.EstimateUserOperationGas.
-func (r *RpcAdapter) Eth_estimateUserOperationGas(op map[string]any, ep string) (*gas.GasEstimates, error) {
-	return r.client.EstimateUserOperationGas(op, ep)
+func (r *RpcAdapter) Eth_estimateUserOperationGas(
+	op userOperation,
+	ep string,
+	os optional_stateOverride,
+) (*gas.GasEstimates, error) {
+	return r.client.EstimateUserOperationGas(op, ep, os)
 }
 
 // Eth_getUserOperationReceipt routes method calls to *Client.GetUserOperationReceipt.

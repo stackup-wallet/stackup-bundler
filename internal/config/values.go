@@ -36,6 +36,10 @@ type Values struct {
 	OTELCollectorUrl     string
 	OTELInsecureMode     bool
 
+	// Alternative mempool variables.
+	AltMempoolIPFSGateway string
+	AltMempoolIds         []string
+
 	// Undocumented variables.
 	DebugMode bool
 	GinMode   string
@@ -61,6 +65,13 @@ func envArrayToAddressSlice(s string) []common.Address {
 	}
 
 	return slc
+}
+
+func envArrayToStringSlice(s string) []string {
+	if s == "" {
+		return []string{}
+	}
+	return strings.Split(s, ",")
 }
 
 func variableNotSetOrIsNil(env string) bool {
@@ -113,6 +124,8 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_otel_collector_headers")
 	_ = viper.BindEnv("erc4337_bundler_otel_collector_url")
 	_ = viper.BindEnv("erc4337_bundler_otel_insecure_mode")
+	_ = viper.BindEnv("erc4337_bundler_alt_mempool_ipfs_gateway")
+	_ = viper.BindEnv("erc4337_bundler_alt_mempool_ids")
 	_ = viper.BindEnv("erc4337_bundler_debug_mode")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
 
@@ -146,7 +159,7 @@ func GetValues() *Values {
 		panic("Fatal config error: erc4337_bundler_otel_service_name is set without a collector URL")
 	}
 
-	// Prioritize the PORT environment variable for Heroku deployment
+
 	if herokuPort := os.Getenv("PORT"); herokuPort != "" {
 		portValue, err := strconv.Atoi(herokuPort) // Convert PORT value from string to integer
 		if err == nil {
@@ -155,6 +168,11 @@ func GetValues() *Values {
 				fmt.Println("Warning: Could not convert PORT value to integer:", err)
 		}
 }
+
+	if viper.IsSet("erc4337_bundler_alt_mempool_ids") &&
+		variableNotSetOrIsNil("erc4337_bundler_alt_mempool_ipfs_gateway") {
+		panic("Fatal config error: erc4337_bundler_alt_mempool_ids is set without specifying an IPFS gateway")
+	}
 
 	// Return Values
 	privateKey := viper.GetString("erc4337_bundler_private_key")
@@ -173,6 +191,8 @@ func GetValues() *Values {
 	otelCollectorHeader := envKeyValStringToMap(viper.GetString("erc4337_bundler_otel_collector_headers"))
 	otelCollectorUrl := viper.GetString("erc4337_bundler_otel_collector_url")
 	otelInsecureMode := viper.GetBool("erc4337_bundler_otel_insecure_mode")
+	altMempoolIPFSGateway := viper.GetString("erc4337_bundler_alt_mempool_ipfs_gateway")
+	altMempoolIds := envArrayToStringSlice(viper.GetString("erc4337_bundler_alt_mempool_ids"))
 	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
@@ -192,6 +212,8 @@ func GetValues() *Values {
 		OTELCollectorHeaders:    otelCollectorHeader,
 		OTELCollectorUrl:        otelCollectorUrl,
 		OTELInsecureMode:        otelInsecureMode,
+		AltMempoolIPFSGateway:   altMempoolIPFSGateway,
+		AltMempoolIds:           altMempoolIds,
 		DebugMode:               debugMode,
 		GinMode:                 ginMode,
 	}

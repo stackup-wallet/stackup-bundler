@@ -16,6 +16,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/reverts"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/utils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
+	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -24,11 +25,13 @@ type TraceInput struct {
 	Rpc        *ethRpc.Client
 	EntryPoint common.Address
 	Op         *userop.UserOperation
+	Sos        state.OverrideSet
 	ChainID    *big.Int
 
 	// Optional params for simulateHandleOps
-	Target common.Address
-	Data   []byte
+	Target      common.Address
+	Data        []byte
+	TraceFeeCap *big.Int
 }
 
 type TraceOutput struct {
@@ -78,6 +81,10 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 	}
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
+	mf := in.Op.MaxFeePerGas
+	if in.TraceFeeCap != nil {
+		mf = in.TraceFeeCap
+	}
 	tx, err := ep.SimulateHandleOp(auth, entrypoint.UserOperation(*in.Op), in.Target, in.Data)
 	if err != nil {
 		return nil, err
@@ -86,12 +93,14 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 
 	var res tracer.BundlerExecutionReturn
 	req := utils.TraceCallReq{
-		From: common.HexToAddress("0x"),
-		To:   in.EntryPoint,
-		Data: tx.Data(),
+		From:         common.HexToAddress("0x"),
+		To:           in.EntryPoint,
+		Data:         tx.Data(),
+		MaxFeePerGas: hexutil.Big(*mf),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer: tracer.Loaded.BundlerExecutionTracer,
+		Tracer:         tracer.Loaded.BundlerExecutionTracer,
+		StateOverrides: state.WithMaxBalanceOverride(common.HexToAddress("0x"), in.Sos),
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err
@@ -108,7 +117,9 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 	sim, simErr := reverts.NewExecutionResult(outErr)
 	if simErr != nil {
 		fo, foErr := reverts.NewFailedOp(outErr)
-		if foErr != nil {
+		if foErr != nil && res.Error != "" {
+			return nil, errors.NewRPCError(errors.EXECUTION_REVERTED, res.Error, nil)
+		} else if foErr != nil {
 			return nil, fmt.Errorf("%s, %s", simErr, foErr)
 		}
 		return nil, errors.NewRPCError(errors.REJECTED_BY_EP_OR_ACCOUNT, fo.Reason, fo)
