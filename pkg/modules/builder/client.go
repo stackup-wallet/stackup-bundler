@@ -61,7 +61,6 @@ func (b *BuilderClient) SetWaitTimeout(timeout time.Duration) {
 // that supports eth_sendBundle.
 func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
-		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
 		opts := transaction.Opts{
 			EOA:         b.eoa,
 			Eth:         b.eth,
@@ -76,6 +75,8 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 			NoSend:      true,
 			WaitTimeout: b.waitTimeout,
 		}
+		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
+		estRev := []string{}
 		for len(ctx.Batch) > 0 {
 			est, revert, err := transaction.EstimateHandleOpsGas(&opts)
 
@@ -83,10 +84,17 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 				return err
 			} else if revert != nil {
 				ctx.MarkOpIndexForRemoval(revert.OpIndex)
+				estRev = append(estRev, revert.Reason)
 			} else {
 				opts.GasLimit = est
 				break
 			}
+		}
+		ctx.Data["estimate_revert_reasons"] = estRev
+
+		// No need to continue if the batch size is 0. Otherwise we would just be sending empty batches.
+		if len(ctx.Batch) == 0 {
+			return nil
 		}
 
 		// Calculate the max base fee up to a future block number.
@@ -135,7 +143,11 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 		}
 
 		// Wait for transaction to be included on-chain.
-		_, err = transaction.Wait(txn, opts.Eth, opts.WaitTimeout)
-		return err
+		if _, err := transaction.Wait(txn, opts.Eth, opts.WaitTimeout); err != nil {
+			return err
+		}
+		ctx.Data["txn_hash"] = txn.Hash().String()
+
+		return nil
 	}
 }
