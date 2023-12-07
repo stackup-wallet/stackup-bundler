@@ -112,6 +112,10 @@ func CalcOptimismPVGWithEthClient(
 		if err != nil {
 			return nil, err
 		}
+		tip, err := eth.SuggestGasTipCap(context.Background())
+		if err != nil {
+			return nil, err
+		}
 		tx, err := transaction.HandleOps(&transaction.Opts{
 			EOA:         dummy,
 			Eth:         eth,
@@ -120,6 +124,7 @@ func CalcOptimismPVGWithEthClient(
 			Batch:       []*userop.UserOperation{op},
 			Beneficiary: dummy.Address,
 			BaseFee:     head.BaseFee,
+			Tip:         tip,
 			GasLimit:    math.MaxUint64,
 			NoSend:      true,
 		})
