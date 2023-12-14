@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { Presets } from "userop";
-import { erc20ABI } from "./src/abi";
+import { erc20ABI, testPaymasterABI } from "./src/abi";
 import { fundIfRequired } from "./src/helpers";
 import config from "./config";
 
@@ -12,12 +12,18 @@ export default async function () {
     erc20ABI,
     provider
   );
+  const testPaymaster = new ethers.Contract(
+    config.testPaymaster,
+    testPaymasterABI,
+    provider
+  );
   const acc = await Presets.Builder.SimpleAccount.init(signer, config.nodeUrl);
   await fundIfRequired(
     provider,
     testToken,
     await signer.getAddress(),
     acc.getSender(),
-    config.testAccount
+    config.testAccount,
+    testPaymaster
   );
 }

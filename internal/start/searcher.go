@@ -16,6 +16,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/internal/config"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/internal/o11y"
+	"github.com/stackup-wallet/stackup-bundler/pkg/altmempools"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
@@ -59,7 +60,7 @@ func SearcherMode() {
 
 	eth := ethclient.NewClient(rpc)
 
-	fb := flashbotsrpc.NewFlashbotsRPC(conf.EthBuilderUrl)
+	fb := flashbotsrpc.NewBuilderBroadcastRPC(conf.EthBuilderUrls)
 
 	chain, err := eth.ChainID(context.Background())
 	if err != nil {
@@ -97,10 +98,16 @@ func SearcherMode() {
 		log.Fatal(err)
 	}
 
+	alt, err := altmempools.NewFromIPFS(chain, conf.AltMempoolIPFSGateway, conf.AltMempoolIds)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	check := checks.New(
 		db,
 		rpc,
 		ov,
+		alt,
 		conf.MaxVerificationGas,
 		conf.MaxBatchGasLimit,
 		conf.MaxOpsForUnstakedSender,
@@ -110,13 +117,15 @@ func SearcherMode() {
 
 	// TODO: Create separate go-routine for tracking transactions sent to the block builder.
 	builder := builder.New(eoa, eth, fb, beneficiary, conf.BlocksInTheFuture)
+
 	paymaster := paymaster.New(db)
 
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
+	c.SetGetGasPricesFunc(client.GetGasPricesWithEthClient(eth))
 	c.SetGetGasEstimateFunc(
-		client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit, conf.PMGasEstBuffer),
+		client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit),
 	)
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
@@ -183,6 +192,7 @@ func SearcherMode() {
 	}
 	r.POST("/", handlers...)
 	r.POST("/rpc", handlers...)
+
 	if err := r.Run(fmt.Sprintf(":%d", conf.Port)); err != nil {
 		log.Fatal(err)
 	}

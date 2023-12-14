@@ -91,7 +91,7 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 				break
 			}
 		}
-		ctx.Data["relayer_est_revert_reasons"] = estRev
+		ctx.Data["estimate_revert_reasons"] = estRev
 
 		// Call handleOps() with gas estimate. Any userOps that cause a revert at this stage will be
 		// caught and dropped in the next iteration.

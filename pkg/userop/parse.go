@@ -3,6 +3,7 @@ package userop
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"reflect"
 	"sync"
@@ -15,6 +16,8 @@ import (
 var (
 	validate = validator.New()
 	onlyOnce = sync.Once{}
+
+	ErrBadUserOperationData = errors.New("cannot decode UserOperation")
 )
 
 func exactFieldMatch(mapKey, fieldName string) bool {
@@ -100,7 +103,7 @@ func New(data map[string]any) (*UserOperation, error) {
 		return nil, err
 	}
 	if err := decoder.Decode(data); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrBadUserOperationData, err)
 	}
 
 	// Validate struct

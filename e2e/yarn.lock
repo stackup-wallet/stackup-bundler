@@ -1620,7 +1620,7 @@ electron-to-chromium@^1.4.431:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.454.tgz#774dc7cb5e58576d0125939ec34a4182f3ccc87d"
   integrity sha512-pmf1rbAStw8UEQ0sr2cdJtWl48ZMuPD9Sto8HVQOq9vx9j2WgDEN6lYoaqFvqEHYOmGA9oRGn7LqWI9ta0YugQ==
 
-elliptic@6.5.4:
+elliptic@6.5.4, elliptic@^6.5.4:
   version "6.5.4"
   resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.4.tgz#da37cebd31e79a1367e941b592ed1fbebd58abbb"
   integrity sha512-iLhC6ULemrljPZb+QutR5TQGB+pdW6KGD5RSegS+8sorOZT+rdQFbsQFJgvN3eRqNALqJer4oQ16YvJHlU8hzQ==
@@ -2580,6 +2580,11 @@ jest@^29.6.1:
     import-local "^3.0.2"
     jest-cli "^29.6.1"
 
+js-base64@^3.7.5:
+  version "3.7.5"
+  resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.7.5.tgz#21e24cf6b886f76d6f5f165bfcd69cc55b9e3fca"
+  integrity sha512-3MEt5DTINKqfScXKfJFrRbxkrnk2AxPWGBL/ycjz4dK8iqiSJ06UxD8jh8xuh6p10TX4t2+7FsBYVxxQbMg+qA==
+
 js-sha3@0.8.0:
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/js-sha3/-/js-sha3-0.8.0.tgz#b9b7a5da73afad7dedd0f8c463954cbde6818840"
@@ -3264,12 +3269,14 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
-userop@^0.3.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/userop/-/userop-0.3.3.tgz#e78e97fa2bcc9682d532766ee6c4dc086aa24ddf"
-  integrity sha512-7rPYqo5SJVVzUg9CPF3m03iXcMlXGRdkwtmhBlkHIroX8ftOSjlgwX7qDDv+uU1pumKQoqE5gNh3ydet9oFJ1Q==
+userop@^0.3.7:
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/userop/-/userop-0.3.7.tgz#cd2fe1fca2f438db6bce186a96918684cb9facb3"
+  integrity sha512-T4amKAySvJx5z5WLWf2pTtN6scLDqza4yODrWuNx7v9TIc/RGdHgY+5r3rvQ3W6om42heIW1Tnmw+B4LVL/Mgg==
   dependencies:
+    elliptic "^6.5.4"
     ethers "^5.7.2"
+    js-base64 "^3.7.5"
 
 v8-compile-cache-lib@^3.0.1:
   version "3.0.1"

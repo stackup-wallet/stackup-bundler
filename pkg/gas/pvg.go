@@ -112,7 +112,11 @@ func CalcOptimismPVGWithEthClient(
 		if err != nil {
 			return nil, err
 		}
-		tx, err := transaction.CreateRawHandleOps(&transaction.Opts{
+		tip, err := eth.SuggestGasTipCap(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		tx, err := transaction.HandleOps(&transaction.Opts{
 			EOA:         dummy,
 			Eth:         eth,
 			ChainID:     chainID,
@@ -120,14 +124,16 @@ func CalcOptimismPVGWithEthClient(
 			Batch:       []*userop.UserOperation{op},
 			Beneficiary: dummy.Address,
 			BaseFee:     head.BaseFee,
+			Tip:         tip,
 			GasLimit:    math.MaxUint64,
+			NoSend:      true,
 		})
 		if err != nil {
 			return nil, err
 		}
 
 		// Encode function data for GetL1Fee
-		data, err := hexutil.Decode(tx)
+		data, err := hexutil.Decode(transaction.ToRawTxHex(tx))
 		if err != nil {
 			return nil, err
 		}

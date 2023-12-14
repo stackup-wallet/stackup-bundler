@@ -5,5 +5,5 @@ import (
 )
 
 var (
-	DefaultWaitTimeout = 30 * time.Second
+	DefaultWaitTimeout = 72 * time.Second
 )

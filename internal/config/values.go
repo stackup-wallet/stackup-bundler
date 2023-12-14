@@ -21,13 +21,12 @@ type Values struct {
 	SupportedEntryPoints    []common.Address
 	MaxVerificationGas      *big.Int
 	MaxBatchGasLimit        *big.Int
-	PMGasEstBuffer          int64
 	MaxOpTTL                time.Duration
 	MaxOpsForUnstakedSender int
 	Beneficiary             string
 
 	// Searcher mode variables.
-	EthBuilderUrl     string
+	EthBuilderUrls    []string
 	BlocksInTheFuture int
 
 	// Observability variables.
@@ -35,6 +34,10 @@ type Values struct {
 	OTELCollectorHeaders map[string]string
 	OTELCollectorUrl     string
 	OTELInsecureMode     bool
+
+	// Alternative mempool variables.
+	AltMempoolIPFSGateway string
+	AltMempoolIds         []string
 
 	// Undocumented variables.
 	DebugMode bool
@@ -63,6 +66,13 @@ func envArrayToAddressSlice(s string) []common.Address {
 	return slc
 }
 
+func envArrayToStringSlice(s string) []string {
+	if s == "" {
+		return []string{}
+	}
+	return strings.Split(s, ",")
+}
+
 func variableNotSetOrIsNil(env string) bool {
 	return !viper.IsSet(env) || viper.GetString(env) == ""
 }
@@ -76,10 +86,9 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789")
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 3000000)
 	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 25000000)
-	viper.SetDefault("erc4337_bundler_paymaster_gas_estimate_buffer", 10)
 	viper.SetDefault("erc4337_bundler_max_op_ttl_seconds", 180)
 	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
-	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 25)
+	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 6)
 	viper.SetDefault("erc4337_bundler_otel_insecure_mode", false)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
@@ -106,15 +115,16 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
-	_ = viper.BindEnv("erc4337_bundler_paymaster_gas_estimate_buffer")
 	_ = viper.BindEnv("erc4337_bundler_max_op_ttl_seconds")
 	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
-	_ = viper.BindEnv("erc4337_bundler_eth_builder_url")
+	_ = viper.BindEnv("erc4337_bundler_eth_builder_urls")
 	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
 	_ = viper.BindEnv("erc4337_bundler_otel_service_name")
 	_ = viper.BindEnv("erc4337_bundler_otel_collector_headers")
 	_ = viper.BindEnv("erc4337_bundler_otel_collector_url")
 	_ = viper.BindEnv("erc4337_bundler_otel_insecure_mode")
+	_ = viper.BindEnv("erc4337_bundler_alt_mempool_ipfs_gateway")
+	_ = viper.BindEnv("erc4337_bundler_alt_mempool_ids")
 	_ = viper.BindEnv("erc4337_bundler_debug_mode")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
 
@@ -137,8 +147,8 @@ func GetValues() *Values {
 
 	switch viper.GetString("mode") {
 	case "searcher":
-		if variableNotSetOrIsNil("erc4337_bundler_eth_builder_url") {
-			panic("Fatal config error: erc4337_bundler_eth_builder_url not set")
+		if variableNotSetOrIsNil("erc4337_bundler_eth_builder_urls") {
+			panic("Fatal config error: erc4337_bundler_eth_builder_urls not set")
 		}
 	}
 
@@ -146,6 +156,12 @@ func GetValues() *Values {
 	if viper.IsSet("erc4337_bundler_otel_service_name") &&
 		variableNotSetOrIsNil("erc4337_bundler_otel_collector_url") {
 		panic("Fatal config error: erc4337_bundler_otel_service_name is set without a collector URL")
+	}
+
+	// Validate Alternative mempool variables
+	if viper.IsSet("erc4337_bundler_alt_mempool_ids") &&
+		variableNotSetOrIsNil("erc4337_bundler_alt_mempool_ipfs_gateway") {
+		panic("Fatal config error: erc4337_bundler_alt_mempool_ids is set without specifying an IPFS gateway")
 	}
 
 	// Return Values
@@ -157,15 +173,16 @@ func GetValues() *Values {
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
-	pmGasEstBuffer := int64(viper.GetInt("erc4337_bundler_paymaster_gas_estimate_buffer"))
 	maxOpTTL := time.Second * viper.GetDuration("erc4337_bundler_max_op_ttl_seconds")
 	maxOpsForUnstakedSender := viper.GetInt("erc4337_bundler_max_ops_for_unstaked_sender")
-	ethBuilderUrl := viper.GetString("erc4337_bundler_eth_builder_url")
+	ethBuilderUrls := envArrayToStringSlice(viper.GetString("erc4337_bundler_eth_builder_urls"))
 	blocksInTheFuture := viper.GetInt("erc4337_bundler_blocks_in_the_future")
 	otelServiceName := viper.GetString("erc4337_bundler_otel_service_name")
 	otelCollectorHeader := envKeyValStringToMap(viper.GetString("erc4337_bundler_otel_collector_headers"))
 	otelCollectorUrl := viper.GetString("erc4337_bundler_otel_collector_url")
 	otelInsecureMode := viper.GetBool("erc4337_bundler_otel_insecure_mode")
+	altMempoolIPFSGateway := viper.GetString("erc4337_bundler_alt_mempool_ipfs_gateway")
+	altMempoolIds := envArrayToStringSlice(viper.GetString("erc4337_bundler_alt_mempool_ids"))
 	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
@@ -177,15 +194,16 @@ func GetValues() *Values {
 		Beneficiary:             beneficiary,
 		MaxVerificationGas:      maxVerificationGas,
 		MaxBatchGasLimit:        maxBatchGasLimit,
-		PMGasEstBuffer:          pmGasEstBuffer,
 		MaxOpTTL:                maxOpTTL,
 		MaxOpsForUnstakedSender: maxOpsForUnstakedSender,
-		EthBuilderUrl:           ethBuilderUrl,
+		EthBuilderUrls:          ethBuilderUrls,
 		BlocksInTheFuture:       blocksInTheFuture,
 		OTELServiceName:         otelServiceName,
 		OTELCollectorHeaders:    otelCollectorHeader,
 		OTELCollectorUrl:        otelCollectorUrl,
 		OTELInsecureMode:        otelInsecureMode,
+		AltMempoolIPFSGateway:   altMempoolIPFSGateway,
+		AltMempoolIds:           altMempoolIds,
 		DebugMode:               debugMode,
 		GinMode:                 ginMode,
 	}

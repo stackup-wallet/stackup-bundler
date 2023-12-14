@@ -13,33 +13,43 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/stackup-wallet/stackup-bundler/pkg/altmempools"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/methods"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/utils"
+	"github.com/stackup-wallet/stackup-bundler/pkg/state"
 	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// TraceSimulateValidation makes a debug_traceCall to Entrypoint.simulateValidation(userop) and returns an
-// array of all the interacted contracts touched by entities during the trace.
-func TraceSimulateValidation(
-	rpc *rpc.Client,
-	entryPoint common.Address,
-	op *userop.UserOperation,
-	chainID *big.Int,
-	stakes EntityStakes,
-) ([]common.Address, error) {
-	ep, err := entrypoint.NewEntrypoint(entryPoint, ethclient.NewClient(rpc))
+type TraceInput struct {
+	Rpc         *rpc.Client
+	EntryPoint  common.Address
+	Op          *userop.UserOperation
+	ChainID     *big.Int
+	Stakes      EntityStakes
+	AltMempools *altmempools.Directory
+}
+
+type TraceOutput struct {
+	TouchedContracts []common.Address
+	AltMempoolIds    []string
+}
+
+// TraceSimulateValidation makes a debug_traceCall to Entrypoint.simulateValidation(userop) and returns
+// information related to the validation phase of a UserOperation.
+func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
+	ep, err := entrypoint.NewEntrypoint(in.EntryPoint, ethclient.NewClient(in.Rpc))
 	if err != nil {
 		return nil, err
 	}
-	auth, err := bind.NewKeyedTransactorWithChainID(utils.DummyPk, chainID)
+	auth, err := bind.NewKeyedTransactorWithChainID(utils.DummyPk, in.ChainID)
 	if err != nil {
 		return nil, err
 	}
 	auth.GasLimit = math.MaxUint64
 	auth.NoSend = true
-	tx, err := ep.SimulateValidation(auth, entrypoint.UserOperation(*op))
+	tx, err := ep.SimulateValidation(auth, entrypoint.UserOperation(*in.Op))
 	if err != nil {
 		return nil, err
 	}
@@ -47,19 +57,20 @@ func TraceSimulateValidation(
 	var res tracer.BundlerCollectorReturn
 	req := utils.TraceCallReq{
 		From:         common.HexToAddress("0x"),
-		To:           entryPoint,
+		To:           in.EntryPoint,
 		Data:         tx.Data(),
-		MaxFeePerGas: hexutil.Big(*op.MaxFeePerGas),
+		MaxFeePerGas: hexutil.Big(*in.Op.MaxFeePerGas),
 	}
 	opts := utils.TraceCallOpts{
 		Tracer:         tracer.Loaded.BundlerCollectorTracer,
-		StateOverrides: utils.DefaultStateOverrides,
+		StateOverrides: state.WithMaxBalanceOverride(common.HexToAddress("0x"), nil),
 	}
-	if err := rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
+	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
 		return nil, err
 	}
 
-	knownEntity, err := newKnownEntity(op, &res, stakes)
+	knownEntity, err := newKnownEntity(in.Op, &res, in.Stakes)
+	altMempoolIds := []string{}
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +89,7 @@ func TraceSimulateValidation(
 	}
 
 	create2Count, ok := knownEntity["factory"].Info.Opcodes[create2OpCode]
-	if ok && (create2Count > 1 || len(op.InitCode) == 0) {
+	if ok && (create2Count > 1 || len(in.Op.InitCode) == 0) {
 		return nil, fmt.Errorf("factory with too many %s", create2OpCode)
 	}
 	_, ok = knownEntity["account"].Info.Opcodes[create2OpCode]
@@ -90,12 +101,13 @@ func TraceSimulateValidation(
 		return nil, fmt.Errorf("paymaster uses banned opcode: %s", create2OpCode)
 	}
 
-	slotsByEntity := newStorageSlotsByEntity(stakes, res.Keccak)
+	slotsByEntity := newStorageSlotsByEntity(in.Stakes, res.Keccak)
 	for title, entity := range knownEntity {
 		v := &storageSlotsValidator{
-			Op:              op,
-			EntryPoint:      entryPoint,
-			SenderSlots:     slotsByEntity[op.Sender],
+			Op:              in.Op,
+			EntryPoint:      in.EntryPoint,
+			AltMempools:     in.AltMempools,
+			SenderSlots:     slotsByEntity[in.Op.Sender],
 			FactoryIsStaked: knownEntity["factory"].IsStaked,
 			EntityName:      title,
 			EntityAddr:      entity.Address,
@@ -103,8 +115,10 @@ func TraceSimulateValidation(
 			EntitySlots:     slotsByEntity[entity.Address],
 			EntityIsStaked:  entity.IsStaked,
 		}
-		if err := v.Process(); err != nil {
+		if ids, err := v.Process(); err != nil {
 			return nil, err
+		} else {
+			altMempoolIds = append(altMempoolIds, ids...)
 		}
 	}
 
@@ -115,7 +129,7 @@ func TraceSimulateValidation(
 			if err != nil {
 				return nil, fmt.Errorf(
 					"unexpected tracing result for op: %s, %s",
-					op.GetUserOpHash(entryPoint, chainID),
+					in.Op.GetUserOpHash(in.EntryPoint, in.ChainID),
 					err,
 				)
 			}
@@ -126,5 +140,8 @@ func TraceSimulateValidation(
 		}
 	}
 
-	return ic.ToSlice(), nil
+	return &TraceOutput{
+		TouchedContracts: ic.ToSlice(),
+		AltMempoolIds:    altMempoolIds,
+	}, nil
 }

@@ -5,7 +5,10 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
 var (
@@ -44,4 +47,8 @@ var (
 		UnstakeDelaySec: uint32(0),
 		WithdrawTime:    big.NewInt(0),
 	}
+
+	pk, _       = crypto.GenerateKey()
+	DummyEOA, _ = signer.New(hexutil.Encode(crypto.FromECDSA(pk))[2:])
+	MockHash    = "0xdeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddead"
 )

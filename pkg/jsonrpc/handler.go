@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
@@ -14,7 +15,16 @@ import (
 	"golang.org/x/text/language"
 )
 
-func jsonrpcError(c *gin.Context, code int, message string, data any, id *float64) {
+var (
+	optionalTypePrefix = "optional_"
+)
+
+func formatConversionErrMsg(i int, call *reflect.Value) string {
+	s, _ := strings.CutPrefix(call.Type().In(i).Name(), optionalTypePrefix)
+	return fmt.Sprintf("Param [%d] can't be converted to %s", i, s)
+}
+
+func jsonrpcError(c *gin.Context, code int, message string, data any, id any) {
 	c.JSON(http.StatusOK, gin.H{
 		"jsonrpc": "2.0",
 		"error": gin.H{
@@ -25,6 +35,39 @@ func jsonrpcError(c *gin.Context, code int, message string, data any, id *float6
 		"id": id,
 	})
 	c.Abort()
+}
+
+// parseRequestId checks if the JSON-RPC request contains an id field that is either NULL, Number, or String.
+func parseRequestId(data map[string]any) (any, bool) {
+	id, ok := data["id"]
+	_, isFloat64 := id.(float64)
+	_, isStr := id.(string)
+
+	if ok && (id == nil || isFloat64 || isStr) {
+		return id, true
+	}
+	return nil, false
+}
+
+// hasOptionalInput checks if the API method has defined an optional final input:
+//  1. The input must start with the "optional_" prefix in its name.
+//  2. The input must be of kind Map.
+func hasOptionalInput(numIn int, call *reflect.Value) bool {
+	return numIn > 0 &&
+		strings.HasPrefix(call.Type().In(numIn-1).Name(), optionalTypePrefix) &&
+		call.Type().In(numIn-1).Kind() == reflect.Map
+}
+
+// hasValidParamLength checks if the number of parameters in the request is correct:
+//  1. Ok if the number of params equals number of method inputs.
+//  2. Ok if optional input is defined and number of params is one less the number of method inputs.
+func hasValidParamLength(numParams, numIn int, hasOptional bool) bool {
+	return numParams == numIn || (hasOptional && numParams == numIn-1)
+}
+
+// isOptionalParamUndefined checks if the optional input has been left unset in the request.
+func isOptionalParamUndefined(numParams, numIn int, hasOptional bool) bool {
+	return hasOptional && numParams == numIn-1
 }
 
 // Controller returns a custom Gin middleware that handles incoming JSON-RPC requests via HTTP. It maps the
@@ -58,7 +101,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 			return
 		}
 
-		id, ok := data["id"].(float64)
+		id, ok := parseRequestId(data)
 		if !ok {
 			jsonrpcError(c, -32600, "Invalid Request", "No or invalid 'id' in request", nil)
 			return
@@ -87,12 +130,19 @@ func Controller(api interface{}) gin.HandlerFunc {
 			return
 		}
 
-		if call.Type().NumIn() != len(params) {
+		numIn := call.Type().NumIn()
+		numParams := len(params)
+		hasOptional := hasOptionalInput(numIn, &call)
+		if !hasValidParamLength(numParams, numIn, hasOptional) {
 			jsonrpcError(c, -32602, "Invalid params", "Invalid number of params", &id)
 			return
 		}
+		if isOptionalParamUndefined(numParams, numIn, hasOptional) {
+			params = append(params, map[string]any{})
+			numParams++
+		}
 
-		args := make([]reflect.Value, len(params))
+		args := make([]reflect.Value, numParams)
 		for i, arg := range params {
 			switch call.Type().In(i).Kind() {
 			case reflect.Float32:
@@ -102,7 +152,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -116,7 +166,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -138,7 +188,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -159,7 +209,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -180,7 +230,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -201,7 +251,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -222,7 +272,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -239,7 +289,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -253,7 +303,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -267,7 +317,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -288,7 +338,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -309,7 +359,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -330,7 +380,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -351,7 +401,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
@@ -372,7 +422,7 @@ func Controller(api interface{}) gin.HandlerFunc {
 						c,
 						-32602,
 						"Invalid params",
-						fmt.Sprintf("Param [%d] can't be converted to %v", i, call.Type().In(i).String()),
+						formatConversionErrMsg(i, &call),
 						&id,
 					)
 					return
