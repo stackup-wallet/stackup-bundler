@@ -1,6 +1,10 @@
 package config
 
-import "math/big"
+import (
+	"math/big"
+
+	mapset "github.com/deckarep/golang-set/v2"
+)
 
 var (
 	EthereumChainID        = big.NewInt(1)
@@ -17,4 +21,17 @@ var (
 	BaseSepoliaChainID     = big.NewInt(84532)
 	LyraChainID            = big.NewInt(957)
 	LyraSepoliaChainID     = big.NewInt(902)
+	Ancient8SepoliaChainID = big.NewInt(2863311531)
+
+	OpStackChains = mapset.NewSet[*big.Int](
+		OptimismChainID,
+		OptimismGoerliChainID,
+		OptimismSepoliaChainID,
+		BaseChainID,
+		BaseGoerliChainID,
+		BaseSepoliaChainID,
+		LyraChainID,
+		LyraSepoliaChainID,
+		Ancient8SepoliaChainID,
+	)
 )

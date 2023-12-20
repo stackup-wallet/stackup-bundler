@@ -89,14 +89,8 @@ func PrivateMode() {
 		ov.SetCalcPreVerificationGasFunc(gas.CalcArbitrumPVGWithEthClient(rpc, conf.SupportedEntryPoints[0]))
 		ov.SetPreVerificationGasBufferFactor(16)
 	}
-	if chain.Cmp(config.OptimismChainID) == 0 ||
-		chain.Cmp(config.OptimismGoerliChainID) == 0 ||
-		chain.Cmp(config.OptimismSepoliaChainID) == 0 ||
-		chain.Cmp(config.BaseChainID) == 0 ||
-		chain.Cmp(config.BaseGoerliChainID) == 0 ||
-		chain.Cmp(config.BaseSepoliaChainID) == 0 ||
-		chain.Cmp(config.LyraChainID) == 0 ||
-		chain.Cmp(config.LyraSepoliaChainID) == 0 {
+
+	if config.OpStackChains.Contains(chain) {
 		ov.SetCalcPreVerificationGasFunc(
 			gas.CalcOptimismPVGWithEthClient(rpc, chain, conf.SupportedEntryPoints[0]),
 		)
