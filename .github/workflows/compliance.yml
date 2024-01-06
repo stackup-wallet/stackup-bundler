@@ -41,6 +41,7 @@ jobs:
         run: |
           pdm install && \
           cd @account-abstraction && \
+          git checkout v0.6.0 && \
           yarn install --frozen-lockfile && \
           yarn compile && \
           cd ../spec && \
