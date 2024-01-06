@@ -34,6 +34,7 @@ jobs:
           repository: hazim-j/bundler-spec-tests
           ref: develop
           path: ./bundler-spec-tests
+          fetch-depth: 0
           submodules: true
 
       - name: Setup bundler spec test
