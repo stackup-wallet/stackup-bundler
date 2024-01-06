@@ -10,15 +10,6 @@ import (
 type EntityStakes map[common.Address]*entrypoint.IStakeManagerDepositInfo
 
 var (
-	// Up to the first number marker represents factory validation.
-	factoryNumberLevel = 0
-
-	// After the first number marker and before the second represents account validation.
-	accountNumberLevel = 1
-
-	// After the second number marker represents paymaster validation.
-	paymasterNumberLevel = 2
-
 	// Only one create2 opcode is allowed if these two conditions are met:
 	// 	1. op.initcode.length != 0
 	// 	2. During account simulation (i.e. before markerOpCode)

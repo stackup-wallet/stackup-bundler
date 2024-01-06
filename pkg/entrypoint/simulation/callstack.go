@@ -10,12 +10,13 @@ import (
 )
 
 type callEntry struct {
+	From   common.Address
 	To     common.Address
+	Value  *big.Int
 	Type   string
 	Method string
 	Revert any
 	Return any
-	Value  *big.Int
 }
 
 func newCallStack(calls []tracer.CallInfo) []*callEntry {
@@ -30,8 +31,15 @@ func newCallStack(calls []tracer.CallInfo) []*callEntry {
 			} else if call.Type == revertOpCode {
 				// TODO: implement...
 			} else {
+				v, ok := big.NewInt(0).SetString(top.Value, 0)
+				if !ok {
+					v = big.NewInt(0)
+				}
+
 				out = append(out, &callEntry{
+					From:   top.From,
 					To:     top.To,
+					Value:  v,
 					Type:   top.Type,
 					Method: top.Method,
 					Return: call.Data,

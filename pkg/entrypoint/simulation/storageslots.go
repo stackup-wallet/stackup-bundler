@@ -14,6 +14,11 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+var (
+	accessModeRead  = "read"
+	accessModeWrite = "write"
+)
+
 type storageSlots mapset.Set[string]
 
 type storageSlotsByEntity map[common.Address]storageSlots
@@ -53,15 +58,16 @@ type storageSlotsValidator struct {
 	FactoryIsStaked bool
 
 	// Parameters of the entity under validation
-	EntityName     string
-	EntityAddr     common.Address
-	EntityAccess   tracer.AccessMap
-	EntitySlots    storageSlots
-	EntityIsStaked bool
+	EntityName            string
+	EntityAddr            common.Address
+	EntityAccessMap       tracer.AccessMap
+	EntityContractSizeMap tracer.ContractSizeMap
+	EntitySlots           storageSlots
+	EntityIsStaked        bool
 }
 
 func isAssociatedWith(slots storageSlots, slot string) bool {
-	slotN, _ := big.NewInt(0).SetString(fmt.Sprintf("0x%s", slot), 0)
+	slotN, _ := big.NewInt(0).SetString(slot, 0)
 	for _, k := range slots.ToSlice() {
 		kn, _ := big.NewInt(0).SetString(fmt.Sprintf("0x%s", k), 0)
 		if slotN.Cmp(kn) >= 0 && slotN.Cmp(big.NewInt(0).Add(kn, big.NewInt(128))) <= 0 {
@@ -81,20 +87,44 @@ func (v *storageSlotsValidator) Process() ([]string, error) {
 	if entitySlots == nil {
 		entitySlots = mapset.NewSet[string]()
 	}
-
 	altMempoolIds := []string{}
-	for addr, access := range v.EntityAccess {
+
+	for ca, csi := range v.EntityContractSizeMap {
+		if ca != v.Op.Sender && csi.ContractSize == 0 {
+			return altMempoolIds, fmt.Errorf(
+				"%s uses %s on an address with no deployed code: %s",
+				v.EntityName,
+				csi.Opcode,
+				ca,
+			)
+		}
+	}
+
+	for addr, access := range v.EntityAccessMap {
 		if addr == v.Op.Sender || addr == v.EntryPoint {
 			continue
 		}
 
 		var mustStakeSlot string
-		accessTypes := map[string]tracer.Counts{
-			"read":  access.Reads,
-			"write": access.Writes,
+		accessTypes := map[string]any{
+			accessModeRead:  access.Reads,
+			accessModeWrite: access.Writes,
 		}
-		for key, slotCount := range accessTypes {
-			for slot := range slotCount {
+		for mode, val := range accessTypes {
+			slots := []string{}
+			if readMap, ok := val.(tracer.HexMap); ok {
+				for slot := range readMap {
+					slots = append(slots, slot)
+				}
+			} else if writeMap, ok := val.(tracer.Counts); ok {
+				for slot := range writeMap {
+					slots = append(slots, slot)
+				}
+			} else {
+				return altMempoolIds, fmt.Errorf("cannot decode %s access type: %+v", mode, val)
+			}
+
+			for _, slot := range slots {
 				if isAssociatedWith(senderSlots, slot) {
 					if (len(v.Op.InitCode) > 0 && !v.FactoryIsStaked) ||
 						(len(v.Op.InitCode) > 0 && v.FactoryIsStaked && v.EntityAddr != v.Op.Sender) {
@@ -102,7 +132,7 @@ func (v *storageSlotsValidator) Process() ([]string, error) {
 					} else {
 						continue
 					}
-				} else if isAssociatedWith(entitySlots, slot) || addr == v.EntityAddr {
+				} else if isAssociatedWith(entitySlots, slot) || mode == accessModeRead {
 					mustStakeSlot = slot
 				} else if ids := v.AltMempools.HasInvalidStorageAccessException(
 					v.EntityName,
@@ -114,7 +144,7 @@ func (v *storageSlotsValidator) Process() ([]string, error) {
 					return altMempoolIds, fmt.Errorf(
 						"%s has forbidden %s to %s slot %s",
 						v.EntityName,
-						key,
+						mode,
 						addr2KnownEntity(v.Op, addr),
 						slot,
 					)

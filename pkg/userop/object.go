@@ -3,6 +3,7 @@ package userop
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -70,6 +71,16 @@ func (op *UserOperation) GetFactory() common.Address {
 	}
 
 	return common.BytesToAddress(op.InitCode[:common.AddressLength])
+}
+
+// GetFactoryDataHex returns the data portion of InitCode if applicable. Otherwise it returns an empty byte
+// array.
+func (op *UserOperation) GetFactoryData() []byte {
+	if len(op.InitCode) < common.AddressLength {
+		return []byte{}
+	}
+
+	return op.InitCode[common.AddressLength:]
 }
 
 // GetMaxGasAvailable returns the max amount of gas that can be consumed by this UserOperation.
@@ -185,6 +196,16 @@ func (op *UserOperation) GetUserOpHash(entryPoint common.Address, chainID *big.I
 
 // MarshalJSON returns a JSON encoding of the UserOperation.
 func (op *UserOperation) MarshalJSON() ([]byte, error) {
+	// Note: The bundler spec test requires the address portion of the initCode to include the checksum.
+	ic := "0x"
+	if fa := op.GetFactory(); fa != common.HexToAddress("0x") {
+		ic = fmt.Sprintf(
+			"%s%s",
+			op.GetFactory(),
+			common.Bytes2Hex(op.GetFactoryData()),
+		)
+	}
+
 	return json.Marshal(&struct {
 		Sender               string `json:"sender"`
 		Nonce                string `json:"nonce"`
@@ -200,7 +221,7 @@ func (op *UserOperation) MarshalJSON() ([]byte, error) {
 	}{
 		Sender:               op.Sender.String(),
 		Nonce:                hexutil.EncodeBig(op.Nonce),
-		InitCode:             hexutil.Encode(op.InitCode),
+		InitCode:             ic,
 		CallData:             hexutil.Encode(op.CallData),
 		CallGasLimit:         hexutil.EncodeBig(op.CallGasLimit),
 		VerificationGasLimit: hexutil.EncodeBig(op.VerificationGasLimit),

@@ -21,11 +21,12 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/batch"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/entities"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/expire"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/relay"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
@@ -118,14 +119,14 @@ func PrivateMode() {
 		alt,
 		conf.MaxVerificationGas,
 		conf.MaxBatchGasLimit,
-		conf.MaxOpsForUnstakedSender,
+		conf.ReputationConstants,
 	)
 
 	exp := expire.New(conf.MaxOpTTL)
 
 	relayer := relay.New(eoa, eth, chain, beneficiary, logr)
 
-	paymaster := paymaster.New(db)
+	rep := entities.New(db, eth, conf.ReputationConstants)
 
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
@@ -135,12 +136,14 @@ func PrivateMode() {
 		client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit),
 	)
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
+	c.SetGetStakeFunc(modules.GetStakeWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
+		rep.CheckStatus(),
+		rep.CheckStakes(),
 		check.ValidateOpValues(),
-		paymaster.CheckStatus(),
 		check.SimulateOp(),
-		paymaster.IncOpsSeen(),
+		rep.IncOpsSeen(),
 	)
 
 	// Init Bundler
@@ -160,8 +163,9 @@ func PrivateMode() {
 		batch.MaintainGasLimit(conf.MaxBatchGasLimit),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
+		check.SimulateBatch(),
 		relayer.SendUserOperation(),
-		paymaster.IncOpsIncluded(),
+		rep.IncOpsIncluded(),
 		check.Clean(),
 	)
 	if err := b.Run(); err != nil {
@@ -171,7 +175,7 @@ func PrivateMode() {
 	// init Debug
 	var d *client.Debug
 	if conf.DebugMode {
-		d = client.NewDebug(eoa, eth, mem, b, chain, conf.SupportedEntryPoints[0], beneficiary)
+		d = client.NewDebug(eoa, eth, mem, rep, b, chain, conf.SupportedEntryPoints[0], beneficiary)
 		b.SetMaxBatch(1)
 		relayer.SetWaitTimeout(0)
 	}

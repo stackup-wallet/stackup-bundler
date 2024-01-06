@@ -25,9 +25,9 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/batch"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/builder"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/entities"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/expire"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules/paymaster"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel"
@@ -110,7 +110,7 @@ func SearcherMode() {
 		alt,
 		conf.MaxVerificationGas,
 		conf.MaxBatchGasLimit,
-		conf.MaxOpsForUnstakedSender,
+		conf.ReputationConstants,
 	)
 
 	exp := expire.New(conf.MaxOpTTL)
@@ -118,7 +118,7 @@ func SearcherMode() {
 	// TODO: Create separate go-routine for tracking transactions sent to the block builder.
 	builder := builder.New(eoa, eth, fb, beneficiary, conf.BlocksInTheFuture)
 
-	paymaster := paymaster.New(db)
+	rep := entities.New(db, eth, conf.ReputationConstants)
 
 	// Init Client
 	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
@@ -130,11 +130,12 @@ func SearcherMode() {
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
+		rep.CheckStatus(),
+		rep.CheckStakes(),
 		check.ValidateOpValues(),
-		paymaster.CheckStatus(),
 		check.SimulateOp(),
 		// TODO: add p2p propagation module
-		paymaster.IncOpsSeen(),
+		rep.IncOpsSeen(),
 	)
 
 	// Init Bundler
@@ -154,8 +155,9 @@ func SearcherMode() {
 		batch.MaintainGasLimit(conf.MaxBatchGasLimit),
 		check.CodeHashes(),
 		check.PaymasterDeposit(),
+		check.SimulateBatch(),
 		builder.SendUserOperation(),
-		paymaster.IncOpsIncluded(),
+		rep.IncOpsIncluded(),
 		check.Clean(),
 	)
 	if err := b.Run(); err != nil {
@@ -165,7 +167,7 @@ func SearcherMode() {
 	// init Debug
 	var d *client.Debug
 	if conf.DebugMode {
-		d = client.NewDebug(eoa, eth, mem, b, chain, conf.SupportedEntryPoints[0], beneficiary)
+		d = client.NewDebug(eoa, eth, mem, rep, b, chain, conf.SupportedEntryPoints[0], beneficiary)
 		b.SetMaxBatch(1)
 	}
 

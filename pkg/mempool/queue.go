@@ -9,16 +9,16 @@ import (
 )
 
 type set struct {
-	all     *sortedset.SortedSet
-	senders map[common.Address]*sortedset.SortedSet
+	all      *sortedset.SortedSet
+	entities map[common.Address]*sortedset.SortedSet
 }
 
-func (s *set) getSenderSortedSet(sender common.Address) *sortedset.SortedSet {
-	if _, ok := s.senders[sender]; !ok {
-		s.senders[sender] = sortedset.New()
+func (s *set) getEntitiesSortedSet(entity common.Address) *sortedset.SortedSet {
+	if _, ok := s.entities[entity]; !ok {
+		s.entities[entity] = sortedset.New()
 	}
 
-	return s.senders[sender]
+	return s.entities[entity]
 }
 
 type userOpQueues struct {
@@ -29,8 +29,8 @@ func (q *userOpQueues) getEntryPointSet(entryPoint common.Address) *set {
 	val, ok := q.setsByEntryPoint.Load(entryPoint)
 	if !ok {
 		val = &set{
-			all:     sortedset.New(),
-			senders: make(map[common.Address]*sortedset.SortedSet),
+			all:      sortedset.New(),
+			entities: make(map[common.Address]*sortedset.SortedSet),
 		}
 		q.setsByEntryPoint.Store(entryPoint, val)
 	}
@@ -40,17 +40,24 @@ func (q *userOpQueues) getEntryPointSet(entryPoint common.Address) *set {
 
 func (q *userOpQueues) AddOp(entryPoint common.Address, op *userop.UserOperation) {
 	eps := q.getEntryPointSet(entryPoint)
-	sss := eps.getSenderSortedSet(op.Sender)
 	key := string(getUniqueKey(entryPoint, op.Sender, op.Nonce))
 
 	eps.all.AddOrUpdate(key, sortedset.SCORE(eps.all.GetCount()), op)
-	sss.AddOrUpdate(key, sortedset.SCORE(op.Nonce.Int64()), op)
+	eps.getEntitiesSortedSet(op.Sender).AddOrUpdate(key, sortedset.SCORE(op.Nonce.Int64()), op)
+	if factory := op.GetFactory(); factory != common.HexToAddress("0x") {
+		fss := eps.getEntitiesSortedSet(factory)
+		fss.AddOrUpdate(key, sortedset.SCORE(fss.GetCount()), op)
+	}
+	if paymaster := op.GetPaymaster(); paymaster != common.HexToAddress("0x") {
+		pss := eps.getEntitiesSortedSet(paymaster)
+		pss.AddOrUpdate(key, sortedset.SCORE(pss.GetCount()), op)
+	}
 }
 
-func (q *userOpQueues) GetOps(entryPoint common.Address, sender common.Address) []*userop.UserOperation {
+func (q *userOpQueues) GetOps(entryPoint common.Address, entity common.Address) []*userop.UserOperation {
 	eps := q.getEntryPointSet(entryPoint)
-	sss := eps.getSenderSortedSet(sender)
-	nodes := sss.GetByRankRange(-1, -sss.GetCount(), false)
+	ess := eps.getEntitiesSortedSet(entity)
+	nodes := ess.GetByRankRange(-1, -ess.GetCount(), false)
 	batch := []*userop.UserOperation{}
 	for _, n := range nodes {
 		batch = append(batch, n.Value.(*userop.UserOperation))
@@ -73,10 +80,11 @@ func (q *userOpQueues) All(entryPoint common.Address) []*userop.UserOperation {
 func (q *userOpQueues) RemoveOps(entryPoint common.Address, ops ...*userop.UserOperation) {
 	eps := q.getEntryPointSet(entryPoint)
 	for _, op := range ops {
-		sss := eps.getSenderSortedSet(op.Sender)
 		key := string(getUniqueKey(entryPoint, op.Sender, op.Nonce))
 		eps.all.Remove(key)
-		sss.Remove(key)
+		eps.getEntitiesSortedSet(op.Sender).Remove(key)
+		eps.getEntitiesSortedSet(op.GetFactory()).Remove(key)
+		eps.getEntitiesSortedSet(op.GetPaymaster()).Remove(key)
 	}
 }
 

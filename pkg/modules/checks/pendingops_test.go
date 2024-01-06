@@ -1,23 +1,20 @@
 package checks
 
 import (
+	"errors"
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stackup-wallet/stackup-bundler/internal/testutils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// TestNoPendingOps calls checks.ValidatePendingOps with no pending UserOperations. Expect nil.
 func TestNoPendingOps(t *testing.T) {
 	penOps := []*userop.UserOperation{}
 	op := testutils.MockValidInitUserOp()
 	err := ValidatePendingOps(
 		op,
 		penOps,
-		testutils.MaxOpsForUnstakedSender,
-		testutils.MockGetNotStakeZeroDeposit,
 	)
 
 	if err != nil {
@@ -25,37 +22,73 @@ func TestNoPendingOps(t *testing.T) {
 	}
 }
 
-// TestPendingOpsNotStaked calls checks.ValidatePendingOps with pending UserOperations but sender is not
-// staked. Expect error.
-func TestPendingOpsNotStaked(t *testing.T) {
+func TestPendingOpsWithNewOp(t *testing.T) {
 	penOp := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
-	op.Nonce = big.NewInt(0).Add(penOp.Nonce, common.Big1)
+	op.Nonce = big.NewInt(1)
 	err := ValidatePendingOps(
 		op,
 		penOps,
-		testutils.MaxOpsForUnstakedSender,
-		testutils.MockGetNotStakeZeroDeposit,
 	)
 
-	if err == nil {
-		t.Fatal("got nil, want err")
+	if err != nil {
+		t.Fatalf("got err %v, want nil", err)
 	}
 }
 
-// TestPendingOpsStaked calls checks.ValidatePendingOps with pending UserOperations but sender is staked.
-// Expect nil.
-func TestPendingOpsStaked(t *testing.T) {
+func TestPendingOpsWithFailGasFeeReplacement(t *testing.T) {
 	penOp := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
-	op.Nonce = big.NewInt(0).Add(penOp.Nonce, common.Big1)
 	err := ValidatePendingOps(
 		op,
 		penOps,
-		testutils.MaxOpsForUnstakedSender,
-		testutils.MockGetStakeZeroDeposit,
+	)
+
+	if !errors.Is(err, ErrReplacementOpUnderpriced) {
+		t.Fatalf("got %v, want ErrReplacementOpUnderpriced", err)
+	}
+}
+
+func TestPendingOpsWithFailMaxFeeReplacement(t *testing.T) {
+	penOp := testutils.MockValidInitUserOp()
+	penOps := []*userop.UserOperation{penOp}
+	op := testutils.MockValidInitUserOp()
+	_, op.MaxPriorityFeePerGas = calcNewThresholds(op.MaxFeePerGas, op.MaxPriorityFeePerGas)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+	)
+
+	if !errors.Is(err, ErrReplacementOpUnderpriced) {
+		t.Fatalf("got %v, want ErrReplacementOpUnderpriced", err)
+	}
+}
+
+func TestPendingOpsWithFailMaxPriorityFeeReplacement(t *testing.T) {
+	penOp := testutils.MockValidInitUserOp()
+	penOps := []*userop.UserOperation{penOp}
+	op := testutils.MockValidInitUserOp()
+	op.MaxFeePerGas, _ = calcNewThresholds(op.MaxFeePerGas, op.MaxPriorityFeePerGas)
+	err := ValidatePendingOps(
+		op,
+		penOps,
+	)
+
+	if !errors.Is(err, ErrReplacementOpUnderpriced) {
+		t.Fatalf("got %v, want ErrReplacementOpUnderpriced", err)
+	}
+}
+
+func TestPendingOpsWithOkGasFeeReplacement(t *testing.T) {
+	penOp := testutils.MockValidInitUserOp()
+	penOps := []*userop.UserOperation{penOp}
+	op := testutils.MockValidInitUserOp()
+	op.MaxFeePerGas, op.MaxPriorityFeePerGas = calcNewThresholds(op.MaxFeePerGas, op.MaxPriorityFeePerGas)
+	err := ValidatePendingOps(
+		op,
+		penOps,
 	)
 
 	if err != nil {

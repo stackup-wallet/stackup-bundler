@@ -97,3 +97,21 @@ func (r *RpcAdapter) Debug_bundler_setBundlingMode(mode string) (string, error) 
 
 	return r.debug.SetBundlingMode(mode)
 }
+
+// Debug_bundler_setReputation routes method calls to *Debug.SetReputation.
+func (r *RpcAdapter) Debug_bundler_setReputation(entries []any, ep string) (string, error) {
+	if r.debug == nil {
+		return "", errors.New("rpc: debug mode is not enabled")
+	}
+
+	return r.debug.SetReputation(entries, ep)
+}
+
+// Debug_bundler_dumpReputation routes method calls to *Debug.DumpReputation.
+func (r *RpcAdapter) Debug_bundler_dumpReputation(ep string) ([]map[string]any, error) {
+	if r.debug == nil {
+		return []map[string]any{}, errors.New("rpc: debug mode is not enabled")
+	}
+
+	return r.debug.DumpReputation(ep)
+}

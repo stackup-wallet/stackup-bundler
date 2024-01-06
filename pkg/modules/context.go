@@ -2,10 +2,10 @@ package modules
 
 import (
 	"math/big"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -70,46 +70,92 @@ func (c *BatchHandlerCtx) MarkOpIndexForRemoval(index int) {
 // UserOpHandlerCtx is the object passed to UserOpHandler functions during the Client's SendUserOperation
 // process.
 type UserOpHandlerCtx struct {
-	UserOp     *userop.UserOperation
-	EntryPoint common.Address
-	ChainID    *big.Int
-	deposits   sync.Map
-	pendingOps []*userop.UserOperation
+	UserOp              *userop.UserOperation
+	EntryPoint          common.Address
+	ChainID             *big.Int
+	pendingSenderOps    []*userop.UserOperation
+	pendingFactoryOps   []*userop.UserOperation
+	pendingPaymasterOps []*userop.UserOperation
+	senderDeposit       *entrypoint.IStakeManagerDepositInfo
+	factoryDeposit      *entrypoint.IStakeManagerDepositInfo
+	paymasterDeposit    *entrypoint.IStakeManagerDepositInfo
 }
 
 // NewUserOpHandlerContext creates a new UserOpHandlerCtx using a given op.
 func NewUserOpHandlerContext(
+	mem *mempool.Mempool,
 	op *userop.UserOperation,
-	pendingOps []*userop.UserOperation,
 	entryPoint common.Address,
 	chainID *big.Int,
-) *UserOpHandlerCtx {
+	gs GetStakeFunc,
+) (*UserOpHandlerCtx, error) {
+	// Fetch any pending UserOperations in the mempool by entity
+	pso, err := mem.GetOps(entryPoint, op.Sender)
+	if err != nil {
+		return nil, err
+	}
+	pfo, err := mem.GetOps(entryPoint, op.GetFactory())
+	if err != nil {
+		return nil, err
+	}
+	ppo, err := mem.GetOps(entryPoint, op.GetPaymaster())
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the current entrypoint deposits by entity
+	sd, err := gs(entryPoint, op.Sender)
+	if err != nil {
+		return nil, err
+	}
+	fd, err := gs(entryPoint, op.GetFactory())
+	if err != nil {
+		return nil, err
+	}
+	pd, err := gs(entryPoint, op.GetPaymaster())
+	if err != nil {
+		return nil, err
+	}
+
 	return &UserOpHandlerCtx{
-		UserOp:     op,
-		EntryPoint: entryPoint,
-		ChainID:    chainID,
-		deposits:   sync.Map{},
-		pendingOps: append([]*userop.UserOperation{}, pendingOps...),
-	}
+		UserOp:              op,
+		EntryPoint:          entryPoint,
+		ChainID:             chainID,
+		pendingSenderOps:    pso,
+		pendingFactoryOps:   pfo,
+		pendingPaymasterOps: ppo,
+		senderDeposit:       sd,
+		factoryDeposit:      fd,
+		paymasterDeposit:    pd,
+	}, nil
 }
 
-// AddDepositInfo adds any entity's EntryPoint stake info to the current context.
-func (c *UserOpHandlerCtx) AddDepositInfo(entity common.Address, dep *entrypoint.IStakeManagerDepositInfo) {
-	c.deposits.Store(entity, dep)
+// GetSenderDepositInfo returns the current EntryPoint deposit for the sender.
+func (c *UserOpHandlerCtx) GetSenderDepositInfo() *entrypoint.IStakeManagerDepositInfo {
+	return c.senderDeposit
 }
 
-// GetDepositInfo retrieves any entity's EntryPoint stake info from the current context if it was previously
-// added. Otherwise returns nil
-func (c *UserOpHandlerCtx) GetDepositInfo(entity common.Address) *entrypoint.IStakeManagerDepositInfo {
-	dep, ok := c.deposits.Load(entity)
-	if !ok {
-		return nil
-	}
-
-	return dep.(*entrypoint.IStakeManagerDepositInfo)
+// GetFactoryDepositInfo returns the current EntryPoint deposit for the factory.
+func (c *UserOpHandlerCtx) GetFactoryDepositInfo() *entrypoint.IStakeManagerDepositInfo {
+	return c.factoryDeposit
 }
 
-// GetPendingOps returns all pending UserOperations in the mempool by the same UserOp.Sender.
-func (c *UserOpHandlerCtx) GetPendingOps() []*userop.UserOperation {
-	return c.pendingOps
+// GetPaymasterDepositInfo returns the current EntryPoint deposit for the paymaster.
+func (c *UserOpHandlerCtx) GetPaymasterDepositInfo() *entrypoint.IStakeManagerDepositInfo {
+	return c.paymasterDeposit
+}
+
+// GetPendingSenderOps returns all pending UserOperations in the mempool by the same sender.
+func (c *UserOpHandlerCtx) GetPendingSenderOps() []*userop.UserOperation {
+	return c.pendingSenderOps
+}
+
+// GetPendingFactoryOps returns all pending UserOperations in the mempool by the same factory.
+func (c *UserOpHandlerCtx) GetPendingFactoryOps() []*userop.UserOperation {
+	return c.pendingFactoryOps
+}
+
+// GetPendingPaymasterOps returns all pending UserOperations in the mempool by the same paymaster.
+func (c *UserOpHandlerCtx) GetPendingPaymasterOps() []*userop.UserOperation {
+	return c.pendingPaymasterOps
 }
