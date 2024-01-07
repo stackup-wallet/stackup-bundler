@@ -7,7 +7,7 @@ import (
 
 func NewReputationConstantsFromEnv() *entities.ReputationConstants {
 	viper.SetDefault("erc4337_bundler_min_unstake_delay", 86400)
-	viper.SetDefault("erc4337_bundler_min_unstake_value", 2000000000000000)
+	viper.SetDefault("erc4337_bundler_min_stake_value", 2000000000000000)
 	viper.SetDefault("erc4337_same_sender_mempool_count", 4)
 	viper.SetDefault("erc4337_same_unstaked_entity_mempool_count", 11)
 	viper.SetDefault("erc4337_throttled_entity_mempool_count", 4)
@@ -19,7 +19,7 @@ func NewReputationConstantsFromEnv() *entities.ReputationConstants {
 	viper.SetDefault("erc4337_ban_slack", 50)
 
 	_ = viper.BindEnv("erc4337_bundler_min_unstake_delay")
-	_ = viper.BindEnv("erc4337_bundler_min_unstake_value")
+	_ = viper.BindEnv("erc4337_bundler_min_stake_value")
 	_ = viper.BindEnv("erc4337_same_sender_mempool_count")
 	_ = viper.BindEnv("erc4337_same_unstaked_entity_mempool_count")
 	_ = viper.BindEnv("erc4337_throttled_entity_mempool_count")
@@ -32,7 +32,7 @@ func NewReputationConstantsFromEnv() *entities.ReputationConstants {
 
 	return &entities.ReputationConstants{
 		MinUnstakeDelay:                viper.GetInt("erc4337_bundler_min_unstake_delay"),
-		MinStakeValue:                  viper.GetInt64("erc4337_bundler_min_unstake_value"),
+		MinStakeValue:                  viper.GetInt64("erc4337_bundler_min_stake_value"),
 		SameSenderMempoolCount:         viper.GetInt("erc4337_same_sender_mempool_count"),
 		SameUnstakedEntityMempoolCount: viper.GetInt("erc4337_same_unstaked_entity_mempool_count"),
 		ThrottledEntityMempoolCount:    viper.GetInt("erc4337_throttled_entity_mempool_count"),
