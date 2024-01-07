@@ -68,7 +68,8 @@ jobs:
           --networkid 1337 \
           --dev \
           --allow-insecure-unlock \
-          --rpc.allow-unprotected-txs &
+          --rpc.allow-unprotected-txs \
+          --miner.gaslimit 12000000 &
 
       - name: Install bundler dependencies
         run: go mod download
