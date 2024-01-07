@@ -94,9 +94,9 @@ func (r *Reputation) CheckStatus() modules.UserOpHandlerFunc {
 	}
 }
 
-// CheckStakes returns a UserOpHandler that is used by the Client to determine if the userOp is allowed based
-// on the entities stake.
-func (r *Reputation) CheckStakes() modules.UserOpHandlerFunc {
+// ValidateOpLimit returns a UserOpHandler that is used by the Client to determine if the userOp is allowed
+// based on the entities stake and the number of pending ops in the mempool.
+func (r *Reputation) ValidateOpLimit() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
 		pso := ctx.GetPendingSenderOps()
 		sd := ctx.GetSenderDepositInfo()

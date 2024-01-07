@@ -140,7 +140,7 @@ func PrivateMode() {
 	c.UseLogger(logr)
 	c.UseModules(
 		rep.CheckStatus(),
-		rep.CheckStakes(),
+		rep.ValidateOpLimit(),
 		check.ValidateOpValues(),
 		check.SimulateOp(),
 		rep.IncOpsSeen(),

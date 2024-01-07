@@ -133,7 +133,7 @@ func SearcherMode() {
 	c.UseLogger(logr)
 	c.UseModules(
 		rep.CheckStatus(),
-		rep.CheckStakes(),
+		rep.ValidateOpLimit(),
 		check.ValidateOpValues(),
 		check.SimulateOp(),
 		// TODO: add p2p propagation module
