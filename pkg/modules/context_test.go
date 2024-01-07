@@ -21,10 +21,10 @@ func TestNoPendingOps(t *testing.T) {
 	op.PaymasterAndData = []byte{}
 
 	ctx, err := NewUserOpHandlerContext(
-		mem,
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
+		mem,
 		stake.GetStakeFuncNoop(),
 	)
 	if err != nil {
@@ -58,10 +58,10 @@ func TestGetPendingSenderOps(t *testing.T) {
 	_ = mem.AddOp(testutils.ValidAddress5, penOp3)
 
 	ctx, err := NewUserOpHandlerContext(
-		mem,
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
+		mem,
 		stake.GetStakeFuncNoop(),
 	)
 	if err != nil {
@@ -105,10 +105,10 @@ func TestGetPendingFactoryOps(t *testing.T) {
 	_ = mem.AddOp(testutils.ValidAddress5, penOp3)
 
 	ctx, err := NewUserOpHandlerContext(
-		mem,
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
+		mem,
 		stake.GetStakeFuncNoop(),
 	)
 	if err != nil {
@@ -152,10 +152,10 @@ func TestGetPendingPaymasterOps(t *testing.T) {
 	_ = mem.AddOp(testutils.ValidAddress5, penOp3)
 
 	ctx, err := NewUserOpHandlerContext(
-		mem,
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
+		mem,
 		stake.GetStakeFuncNoop(),
 	)
 	if err != nil {
@@ -184,10 +184,10 @@ func TestNilDepositInfo(t *testing.T) {
 	op.PaymasterAndData = []byte{}
 
 	ctx, err := NewUserOpHandlerContext(
-		mem,
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
+		mem,
 		func(entryPoint, entity common.Address) (*entrypoint.IStakeManagerDepositInfo, error) {
 			if entity == op.Sender {
 				return testutils.NonStakedZeroDepositInfo, nil
@@ -213,10 +213,10 @@ func TestGetSenderDepositInfo(t *testing.T) {
 	op.PaymasterAndData = []byte{}
 
 	ctx, err := NewUserOpHandlerContext(
-		mem,
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
+		mem,
 		func(entryPoint, entity common.Address) (*entrypoint.IStakeManagerDepositInfo, error) {
 			if entity == op.Sender {
 				return testutils.NonStakedZeroDepositInfo, nil
@@ -240,10 +240,10 @@ func TestGetFactoryDepositInfo(t *testing.T) {
 	op.PaymasterAndData = []byte{}
 
 	ctx, err := NewUserOpHandlerContext(
-		mem,
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
+		mem,
 		func(entryPoint, entity common.Address) (*entrypoint.IStakeManagerDepositInfo, error) {
 			if entity == testutils.ValidAddress1 {
 				return testutils.NonStakedZeroDepositInfo, nil
@@ -267,10 +267,10 @@ func TestGetPaymasterDepositInfo(t *testing.T) {
 	op.PaymasterAndData = testutils.ValidAddress1.Bytes()
 
 	ctx, err := NewUserOpHandlerContext(
-		mem,
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
+		mem,
 		func(entryPoint, entity common.Address) (*entrypoint.IStakeManagerDepositInfo, error) {
 			if entity == testutils.ValidAddress1 {
 				return testutils.NonStakedZeroDepositInfo, nil

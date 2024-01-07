@@ -136,10 +136,10 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 
 	// Run through client module stack.
 	ctx, err := modules.NewUserOpHandlerContext(
-		i.mempool,
 		userOp,
 		epAddr,
 		i.chainID,
+		i.mempool,
 		i.getStakeFunc,
 	)
 	if err != nil {

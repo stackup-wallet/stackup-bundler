@@ -84,10 +84,10 @@ type UserOpHandlerCtx struct {
 
 // NewUserOpHandlerContext creates a new UserOpHandlerCtx using a given op.
 func NewUserOpHandlerContext(
-	mem *mempool.Mempool,
 	op *userop.UserOperation,
 	entryPoint common.Address,
 	chainID *big.Int,
+	mem *mempool.Mempool,
 	gs stake.GetStakeFunc,
 ) (*UserOpHandlerCtx, error) {
 	// Fetch any pending UserOperations in the mempool by entity
