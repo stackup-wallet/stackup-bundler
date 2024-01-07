@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stackup-wallet/stackup-bundler/internal/testutils"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/stake"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -24,7 +25,7 @@ func TestNoPendingOps(t *testing.T) {
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
-		GetStakeFuncNoop(),
+		stake.GetStakeFuncNoop(),
 	)
 	if err != nil {
 		t.Fatalf("init failed: %v", err)
@@ -61,7 +62,7 @@ func TestGetPendingSenderOps(t *testing.T) {
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
-		GetStakeFuncNoop(),
+		stake.GetStakeFuncNoop(),
 	)
 	if err != nil {
 		t.Fatalf("init failed: %v", err)
@@ -108,7 +109,7 @@ func TestGetPendingFactoryOps(t *testing.T) {
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
-		GetStakeFuncNoop(),
+		stake.GetStakeFuncNoop(),
 	)
 	if err != nil {
 		t.Fatalf("init failed: %v", err)
@@ -155,7 +156,7 @@ func TestGetPendingPaymasterOps(t *testing.T) {
 		op,
 		testutils.ValidAddress5,
 		testutils.ChainID,
-		GetStakeFuncNoop(),
+		stake.GetStakeFuncNoop(),
 	)
 	if err != nil {
 		t.Fatalf("init failed: %v", err)

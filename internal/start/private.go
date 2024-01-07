@@ -18,10 +18,10 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/altmempools"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/stake"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
-	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/batch"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/checks"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/entities"
@@ -136,7 +136,7 @@ func PrivateMode() {
 		client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit),
 	)
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
-	c.SetGetStakeFunc(modules.GetStakeWithEthClient(eth))
+	c.SetGetStakeFunc(stake.GetStakeWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
 		rep.CheckStatus(),

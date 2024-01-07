@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/stake"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -87,7 +88,7 @@ func NewUserOpHandlerContext(
 	op *userop.UserOperation,
 	entryPoint common.Address,
 	chainID *big.Int,
-	gs GetStakeFunc,
+	gs stake.GetStakeFunc,
 ) (*UserOpHandlerCtx, error) {
 	// Fetch any pending UserOperations in the mempool by entity
 	pso, err := mem.GetOps(entryPoint, op.Sender)

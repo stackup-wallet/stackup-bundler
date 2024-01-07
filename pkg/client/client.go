@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/filter"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/stake"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
@@ -31,7 +32,7 @@ type Client struct {
 	getGasPrices         GetGasPricesFunc
 	getGasEstimate       GetGasEstimateFunc
 	getUserOpByHash      GetUserOpByHashFunc
-	getStakeFunc         modules.GetStakeFunc
+	getStakeFunc         stake.GetStakeFunc
 }
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
@@ -53,7 +54,7 @@ func New(
 		getGasPrices:         getGasPricesNoop(),
 		getGasEstimate:       getGasEstimateNoop(),
 		getUserOpByHash:      getUserOpByHashNoop(),
-		getStakeFunc:         modules.GetStakeFuncNoop(),
+		getStakeFunc:         stake.GetStakeFuncNoop(),
 	}
 }
 
@@ -105,7 +106,7 @@ func (i *Client) SetGetUserOpByHashFunc(fn GetUserOpByHashFunc) {
 
 // SetGetStakeFunc defines a general function for retrieving the EntryPoint stake for a given address. This
 // function is called in *Client.SendUserOperation to create a context.
-func (i *Client) SetGetStakeFunc(fn modules.GetStakeFunc) {
+func (i *Client) SetGetStakeFunc(fn stake.GetStakeFunc) {
 	i.getStakeFunc = fn
 }
 

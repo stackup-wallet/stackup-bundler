@@ -19,6 +19,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/altmempools"
 	"github.com/stackup-wallet/stackup-bundler/pkg/bundler"
 	"github.com/stackup-wallet/stackup-bundler/pkg/client"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/stake"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/jsonrpc"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
@@ -128,6 +129,7 @@ func SearcherMode() {
 		client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit),
 	)
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
+	c.SetGetStakeFunc(stake.GetStakeWithEthClient(eth))
 	c.UseLogger(logr)
 	c.UseModules(
 		rep.CheckStatus(),
