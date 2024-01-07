@@ -30,7 +30,8 @@ geth \
   --networkid 1337 \
   --dev \
   --allow-insecure-unlock \
-  --rpc.allow-unprotected-txs
+  --rpc.allow-unprotected-txs \
+  --miner.gaslimit 12000000
 ```
 
 In a separate process, navigate to the [eth-infinitism/account-abstraction](https://github.com/eth-infinitism/account-abstraction/) directory and run the following command to deploy the required contracts:
