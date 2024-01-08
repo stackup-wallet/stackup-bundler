@@ -1,4 +1,4 @@
-package paymaster
+package entities
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/internal/dbutils"
 )
 
-type addressCounter map[string]int
+type addressCounter map[common.Address]int
 
 type status int64
 
@@ -20,17 +20,13 @@ const (
 	banned
 )
 
-const minInclusionRateDenominator = 10
-const throttlingSlack = 10
-const banSlack = 50
-const emaHours = 24
-
 var (
-	opsCountPrefix = dbutils.JoinValues("paymaster", "opsCount")
+	emaHours       = 24
+	opsCountPrefix = dbutils.JoinValues("entity", "opsCount")
 )
 
-func getOpsCountKey(paymaster common.Address) []byte {
-	return []byte(dbutils.JoinValues(opsCountPrefix, paymaster.String()))
+func getOpsCountKey(entity common.Address) []byte {
+	return []byte(dbutils.JoinValues(opsCountPrefix, entity.String()))
 }
 
 func getOpsCountValue(opsSeen int, opsIncluded int) []byte {
@@ -70,11 +66,11 @@ func applyExpWeights(txn *badger.Txn, key []byte, value []byte) (opsSeen int, op
 	return opsSeen, opsIncluded, err
 }
 
-func getOpsCountByPaymaster(
+func getOpsCountByEntity(
 	txn *badger.Txn,
-	paymaster common.Address,
+	entity common.Address,
 ) (opsSeen int, opsIncluded int, err error) {
-	key := getOpsCountKey(paymaster)
+	key := getOpsCountKey(entity)
 	item, err := txn.Get(key)
 	if err != nil && err == badger.ErrKeyNotFound {
 		return 0, 0, nil
@@ -94,30 +90,26 @@ func getOpsCountByPaymaster(
 	return applyExpWeights(txn, key, value)
 }
 
-func incrementOpsSeenByPaymaster(txn *badger.Txn, paymaster common.Address) error {
-	opsSeen, opsIncluded, err := getOpsCountByPaymaster(txn, paymaster)
+func incrementOpsSeenByEntity(txn *badger.Txn, entity common.Address) error {
+	opsSeen, opsIncluded, err := getOpsCountByEntity(txn, entity)
 	if err != nil {
 		return err
 	}
 
-	e := badger.NewEntry(getOpsCountKey(paymaster), getOpsCountValue(opsSeen+1, opsIncluded))
+	e := badger.NewEntry(getOpsCountKey(entity), getOpsCountValue(opsSeen+1, opsIncluded))
 	return txn.SetEntry(e)
 }
 
-func incrementOpsIncludedByPaymasters(
-	txn *badger.Txn,
-	count addressCounter,
-	paymasters ...common.Address,
-) error {
-	for _, paymaster := range paymasters {
-		opsSeen, opsIncluded, err := getOpsCountByPaymaster(txn, paymaster)
+func incrementOpsIncludedByEntity(txn *badger.Txn, count addressCounter) error {
+	for entity, n := range count {
+		opsSeen, opsIncluded, err := getOpsCountByEntity(txn, entity)
 		if err != nil {
 			return err
 		}
 
 		e := badger.NewEntry(
-			getOpsCountKey(paymaster),
-			getOpsCountValue(opsSeen, opsIncluded+count[paymaster.String()]),
+			getOpsCountKey(entity),
+			getOpsCountValue(opsSeen, opsIncluded+n),
 		)
 		if err := txn.SetEntry(e); err != nil {
 			return err
@@ -127,8 +119,8 @@ func incrementOpsIncludedByPaymasters(
 	return nil
 }
 
-func getStatus(txn *badger.Txn, paymaster common.Address) (status, error) {
-	opsSeen, opsIncluded, err := getOpsCountByPaymaster(txn, paymaster)
+func getStatus(txn *badger.Txn, entity common.Address, repConst *ReputationConstants) (status, error) {
+	opsSeen, opsIncluded, err := getOpsCountByEntity(txn, entity)
 	if err != nil {
 		return ok, err
 	}
@@ -136,12 +128,18 @@ func getStatus(txn *badger.Txn, paymaster common.Address) (status, error) {
 		return ok, nil
 	}
 
-	minExpectedIncluded := opsSeen / minInclusionRateDenominator
-	if minExpectedIncluded <= opsIncluded+throttlingSlack {
+	minExpectedIncluded := opsSeen / repConst.MinInclusionRateDenominator
+	if minExpectedIncluded <= opsIncluded+repConst.ThrottlingSlack {
 		return ok, nil
-	} else if minExpectedIncluded <= opsIncluded+banSlack {
+	} else if minExpectedIncluded <= opsIncluded+repConst.BanSlack {
 		return throttled, nil
 	} else {
 		return banned, nil
 	}
+}
+
+func overrideEntity(txn *badger.Txn, entry *ReputationOverride) error {
+	return txn.SetEntry(
+		badger.NewEntry(getOpsCountKey(entry.Address), getOpsCountValue(entry.OpsSeen, entry.OpsIncluded)),
+	)
 }

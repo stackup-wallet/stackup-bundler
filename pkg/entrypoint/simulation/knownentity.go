@@ -1,16 +1,15 @@
 package simulation
 
 import (
-	"fmt"
-
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/methods"
 	"github.com/stackup-wallet/stackup-bundler/pkg/tracer"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 type knownEntity map[string]struct {
 	Address  common.Address
-	Info     tracer.NumberLevelInfo
+	Info     tracer.CallFromEntryPointInfo
 	IsStaked bool
 }
 
@@ -19,24 +18,36 @@ func newKnownEntity(
 	res *tracer.BundlerCollectorReturn,
 	stakes EntityStakes,
 ) (knownEntity, error) {
-	if len(res.NumberLevels) != 3 {
-		return nil, fmt.Errorf("unexpected NumberLevels length in tracing result: %d", len(res.NumberLevels))
+	si := tracer.CallFromEntryPointInfo{}
+	fi := tracer.CallFromEntryPointInfo{}
+	pi := tracer.CallFromEntryPointInfo{}
+	for _, c := range res.CallsFromEntryPoint {
+		switch c.TopLevelTargetAddress {
+		case op.Sender:
+			si = c
+		case op.GetPaymaster():
+			pi = c
+		default:
+			if c.TopLevelMethodSig.String() == methods.CreateSenderSelector {
+				fi = c
+			}
+		}
 	}
 
 	return knownEntity{
-		"factory": {
-			Address:  op.GetFactory(),
-			Info:     res.NumberLevels[factoryNumberLevel],
-			IsStaked: stakes[op.GetFactory()] != nil && stakes[op.GetFactory()].Staked,
-		},
 		"account": {
 			Address:  op.Sender,
-			Info:     res.NumberLevels[accountNumberLevel],
+			Info:     si,
 			IsStaked: stakes[op.Sender] != nil && stakes[op.Sender].Staked,
+		},
+		"factory": {
+			Address:  op.GetFactory(),
+			Info:     fi,
+			IsStaked: stakes[op.GetFactory()] != nil && stakes[op.GetFactory()].Staked,
 		},
 		"paymaster": {
 			Address:  op.GetPaymaster(),
-			Info:     res.NumberLevels[paymasterNumberLevel],
+			Info:     pi,
 			IsStaked: stakes[op.GetPaymaster()] != nil && stakes[op.GetPaymaster()].Staked,
 		},
 	}, nil

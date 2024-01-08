@@ -77,14 +77,21 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 
 	ic := mapset.NewSet[common.Address]()
 	for title, entity := range knownEntity {
+		if entity.Info.OOG {
+			return nil, fmt.Errorf("%s OOG", title)
+		}
+		if _, ok := entity.Info.ExtCodeAccessInfo[in.EntryPoint]; ok {
+			return nil, fmt.Errorf("%s has forbidden EXTCODE* access to the EntryPoint", title)
+		}
 		for opcode := range entity.Info.Opcodes {
 			if bannedOpCodes.Contains(opcode) {
 				return nil, fmt.Errorf("%s uses banned opcode: %s", title, opcode)
 			}
 		}
 
-		for addrHex := range entity.Info.ContractSize {
-			ic.Add(common.HexToAddress(addrHex))
+		ic.Add(entity.Address)
+		for addr := range entity.Info.ContractSize {
+			ic.Add(addr)
 		}
 	}
 
@@ -104,16 +111,17 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 	slotsByEntity := newStorageSlotsByEntity(in.Stakes, res.Keccak)
 	for title, entity := range knownEntity {
 		v := &storageSlotsValidator{
-			Op:              in.Op,
-			EntryPoint:      in.EntryPoint,
-			AltMempools:     in.AltMempools,
-			SenderSlots:     slotsByEntity[in.Op.Sender],
-			FactoryIsStaked: knownEntity["factory"].IsStaked,
-			EntityName:      title,
-			EntityAddr:      entity.Address,
-			EntityAccess:    entity.Info.Access,
-			EntitySlots:     slotsByEntity[entity.Address],
-			EntityIsStaked:  entity.IsStaked,
+			Op:                    in.Op,
+			EntryPoint:            in.EntryPoint,
+			AltMempools:           in.AltMempools,
+			SenderSlots:           slotsByEntity[in.Op.Sender],
+			FactoryIsStaked:       knownEntity["factory"].IsStaked,
+			EntityName:            title,
+			EntityAddr:            entity.Address,
+			EntityAccessMap:       entity.Info.Access,
+			EntityContractSizeMap: entity.Info.ContractSize,
+			EntitySlots:           slotsByEntity[entity.Address],
+			EntityIsStaked:        entity.IsStaked,
 		}
 		if ids, err := v.Process(); err != nil {
 			return nil, err
@@ -137,6 +145,17 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 			if len(out.Context) != 0 && !knownEntity["paymaster"].IsStaked {
 				return nil, errors.New("unstaked paymaster must not return context")
 			}
+		} else if call.To == in.EntryPoint && call.Method == methods.BalanceOfSelector {
+			return nil, fmt.Errorf(
+				"%s cannot call balanceOf on EntryPoint",
+				addr2KnownEntity(in.Op, call.From),
+			)
+		} else if call.To != in.EntryPoint && call.Value.Cmp(common.Big0) == 1 {
+			return nil, fmt.Errorf(
+				"%s has a forbidden value transfer to %s",
+				addr2KnownEntity(in.Op, call.From),
+				addr2KnownEntity(in.Op, call.To),
+			)
 		}
 	}
 

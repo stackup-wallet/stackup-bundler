@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -12,7 +13,11 @@ import (
 //
 //  1. currently has nonempty code on chain
 //  2. has a sufficient deposit to pay for the UserOperation
-func ValidatePaymasterAndData(op *userop.UserOperation, gc GetCodeFunc, gs GetStakeFunc) error {
+func ValidatePaymasterAndData(
+	op *userop.UserOperation,
+	dep *entrypoint.IStakeManagerDepositInfo,
+	gc GetCodeFunc,
+) error {
 	if len(op.PaymasterAndData) == 0 {
 		return nil
 	}
@@ -30,10 +35,6 @@ func ValidatePaymasterAndData(op *userop.UserOperation, gc GetCodeFunc, gs GetSt
 		return errors.New("paymaster: code not deployed")
 	}
 
-	dep, err := gs(pm)
-	if err != nil {
-		return err
-	}
 	if dep.Deposit.Cmp(op.GetMaxPrefund()) < 0 {
 		return errors.New("paymaster: not enough deposit to cover max prefund")
 	}

@@ -34,6 +34,7 @@ jobs:
           repository: hazim-j/bundler-spec-tests
           ref: develop
           path: ./bundler-spec-tests
+          fetch-depth: 0
           submodules: true
 
       - name: Setup bundler spec test
@@ -41,6 +42,7 @@ jobs:
         run: |
           pdm install && \
           cd @account-abstraction && \
+          git checkout v0.6.0 && \
           yarn install --frozen-lockfile && \
           yarn compile && \
           cd ../spec && \
@@ -94,7 +96,6 @@ jobs:
           ERC4337_BUNDLER_ETH_CLIENT_URL: http://localhost:8545/
           ERC4337_BUNDLER_PORT: 3000
           ERC4337_BUNDLER_DEBUG_MODE: true
-          ERC4337_BUNDLER_MAX_BATCH_GAS_LIMIT: 12000000
           # This key is for testing purposes only. Do not use for anything else.
           ERC4337_BUNDLER_PRIVATE_KEY: c6cbc5ffad570fdad0544d1b5358a36edeb98d163b6567912ac4754e144d4edb
 

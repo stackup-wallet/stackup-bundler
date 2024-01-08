@@ -9,21 +9,22 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/entities"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
 type Values struct {
 	// Documented variables.
-	PrivateKey              string
-	EthClientUrl            string
-	Port                    int
-	DataDirectory           string
-	SupportedEntryPoints    []common.Address
-	MaxVerificationGas      *big.Int
-	MaxBatchGasLimit        *big.Int
-	MaxOpTTL                time.Duration
-	MaxOpsForUnstakedSender int
-	Beneficiary             string
+	PrivateKey           string
+	EthClientUrl         string
+	Port                 int
+	DataDirectory        string
+	SupportedEntryPoints []common.Address
+	MaxVerificationGas   *big.Int
+	MaxBatchGasLimit     *big.Int
+	MaxOpTTL             time.Duration
+	Beneficiary          string
+	ReputationConstants  *entities.ReputationConstants
 
 	// Searcher mode variables.
 	EthBuilderUrls    []string
@@ -84,10 +85,9 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_port", 4337)
 	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
 	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789")
-	viper.SetDefault("erc4337_bundler_max_verification_gas", 3000000)
-	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 25000000)
+	viper.SetDefault("erc4337_bundler_max_verification_gas", 6000000)
+	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 18000000)
 	viper.SetDefault("erc4337_bundler_max_op_ttl_seconds", 180)
-	viper.SetDefault("erc4337_bundler_max_ops_for_unstaked_sender", 4)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 6)
 	viper.SetDefault("erc4337_bundler_otel_insecure_mode", false)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
@@ -116,7 +116,6 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
 	_ = viper.BindEnv("erc4337_bundler_max_op_ttl_seconds")
-	_ = viper.BindEnv("erc4337_bundler_max_ops_for_unstaked_sender")
 	_ = viper.BindEnv("erc4337_bundler_eth_builder_urls")
 	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
 	_ = viper.BindEnv("erc4337_bundler_otel_service_name")
@@ -174,7 +173,6 @@ func GetValues() *Values {
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
 	maxOpTTL := time.Second * viper.GetDuration("erc4337_bundler_max_op_ttl_seconds")
-	maxOpsForUnstakedSender := viper.GetInt("erc4337_bundler_max_ops_for_unstaked_sender")
 	ethBuilderUrls := envArrayToStringSlice(viper.GetString("erc4337_bundler_eth_builder_urls"))
 	blocksInTheFuture := viper.GetInt("erc4337_bundler_blocks_in_the_future")
 	otelServiceName := viper.GetString("erc4337_bundler_otel_service_name")
@@ -186,25 +184,25 @@ func GetValues() *Values {
 	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
-		PrivateKey:              privateKey,
-		EthClientUrl:            ethClientUrl,
-		Port:                    port,
-		DataDirectory:           dataDirectory,
-		SupportedEntryPoints:    supportedEntryPoints,
-		Beneficiary:             beneficiary,
-		MaxVerificationGas:      maxVerificationGas,
-		MaxBatchGasLimit:        maxBatchGasLimit,
-		MaxOpTTL:                maxOpTTL,
-		MaxOpsForUnstakedSender: maxOpsForUnstakedSender,
-		EthBuilderUrls:          ethBuilderUrls,
-		BlocksInTheFuture:       blocksInTheFuture,
-		OTELServiceName:         otelServiceName,
-		OTELCollectorHeaders:    otelCollectorHeader,
-		OTELCollectorUrl:        otelCollectorUrl,
-		OTELInsecureMode:        otelInsecureMode,
-		AltMempoolIPFSGateway:   altMempoolIPFSGateway,
-		AltMempoolIds:           altMempoolIds,
-		DebugMode:               debugMode,
-		GinMode:                 ginMode,
+		PrivateKey:            privateKey,
+		EthClientUrl:          ethClientUrl,
+		Port:                  port,
+		DataDirectory:         dataDirectory,
+		SupportedEntryPoints:  supportedEntryPoints,
+		Beneficiary:           beneficiary,
+		MaxVerificationGas:    maxVerificationGas,
+		MaxBatchGasLimit:      maxBatchGasLimit,
+		MaxOpTTL:              maxOpTTL,
+		ReputationConstants:   NewReputationConstantsFromEnv(),
+		EthBuilderUrls:        ethBuilderUrls,
+		BlocksInTheFuture:     blocksInTheFuture,
+		OTELServiceName:       otelServiceName,
+		OTELCollectorHeaders:  otelCollectorHeader,
+		OTELCollectorUrl:      otelCollectorUrl,
+		OTELInsecureMode:      otelInsecureMode,
+		AltMempoolIPFSGateway: altMempoolIPFSGateway,
+		AltMempoolIds:         altMempoolIds,
+		DebugMode:             debugMode,
+		GinMode:               ginMode,
 	}
 }

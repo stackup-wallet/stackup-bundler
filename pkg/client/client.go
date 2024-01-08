@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stackup-wallet/stackup-bundler/internal/logger"
 	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/filter"
+	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/stake"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/mempool"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
@@ -31,6 +32,7 @@ type Client struct {
 	getGasPrices         GetGasPricesFunc
 	getGasEstimate       GetGasEstimateFunc
 	getUserOpByHash      GetUserOpByHashFunc
+	getStakeFunc         stake.GetStakeFunc
 }
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
@@ -52,6 +54,7 @@ func New(
 		getGasPrices:         getGasPricesNoop(),
 		getGasEstimate:       getGasEstimateNoop(),
 		getUserOpByHash:      getUserOpByHashNoop(),
+		getStakeFunc:         stake.GetStakeFuncNoop(),
 	}
 }
 
@@ -101,6 +104,12 @@ func (i *Client) SetGetUserOpByHashFunc(fn GetUserOpByHashFunc) {
 	i.getUserOpByHash = fn
 }
 
+// SetGetStakeFunc defines a general function for retrieving the EntryPoint stake for a given address. This
+// function is called in *Client.SendUserOperation to create a context.
+func (i *Client) SetGetStakeFunc(fn stake.GetStakeFunc) {
+	i.getStakeFunc = fn
+}
+
 // SendUserOperation implements the method call for eth_sendUserOperation.
 // It returns true if userOp was accepted otherwise returns an error.
 func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error) {
@@ -125,15 +134,18 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 	hash := userOp.GetUserOpHash(epAddr, i.chainID)
 	l = l.WithValues("userop_hash", hash)
 
-	// Fetch any pending UserOperations in the mempool by the same sender
-	penOps, err := i.mempool.GetOps(epAddr, userOp.Sender)
+	// Run through client module stack.
+	ctx, err := modules.NewUserOpHandlerContext(
+		userOp,
+		epAddr,
+		i.chainID,
+		i.mempool,
+		i.getStakeFunc,
+	)
 	if err != nil {
 		l.Error(err, "eth_sendUserOperation error")
 		return "", err
 	}
-
-	// Run through client module stack.
-	ctx := modules.NewUserOpHandlerContext(userOp, penOps, epAddr, i.chainID)
 	if err := i.userOpHandler(ctx); err != nil {
 		l.Error(err, "eth_sendUserOperation error")
 		return "", err

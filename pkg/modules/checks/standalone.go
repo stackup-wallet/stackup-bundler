@@ -16,6 +16,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/gas"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules"
+	"github.com/stackup-wallet/stackup-bundler/pkg/modules/entities"
 	"github.com/stackup-wallet/stackup-bundler/pkg/modules/gasprice"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 	"golang.org/x/sync/errgroup"
@@ -25,14 +26,14 @@ import (
 // intended for bundlers that are independent of an Ethereum node and hence relies on a given ethClient to
 // query blockchain state.
 type Standalone struct {
-	db                      *badger.DB
-	rpc                     *rpc.Client
-	eth                     *ethclient.Client
-	ov                      *gas.Overhead
-	alt                     *altmempools.Directory
-	maxVerificationGas      *big.Int
-	maxBatchGasLimit        *big.Int
-	maxOpsForUnstakedSender int
+	db                 *badger.DB
+	rpc                *rpc.Client
+	eth                *ethclient.Client
+	ov                 *gas.Overhead
+	alt                *altmempools.Directory
+	maxVerificationGas *big.Int
+	maxBatchGasLimit   *big.Int
+	repConst           *entities.ReputationConstants
 }
 
 // New returns a Standalone instance with methods that can be used in Client and Bundler modules to perform
@@ -44,32 +45,26 @@ func New(
 	alt *altmempools.Directory,
 	maxVerificationGas *big.Int,
 	maxBatchGasLimit *big.Int,
-	maxOpsForUnstakedSender int,
+	repConst *entities.ReputationConstants,
 ) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{db, rpc, eth, ov, alt, maxVerificationGas, maxBatchGasLimit, maxOpsForUnstakedSender}
+	return &Standalone{db, rpc, eth, ov, alt, maxVerificationGas, maxBatchGasLimit, repConst}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
 // received by the Client. This should be one of the first modules executed by the Client.
 func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
-		penOps := ctx.GetPendingOps()
 		gc := getCodeWithEthClient(s.eth)
-		gbf := gasprice.GetBaseFeeWithEthClient(s.eth)
-		gs, err := getStakeWithEthClient(ctx, s.eth)
-		if err != nil {
-			return err
-		}
 
 		g := new(errgroup.Group)
 		g.Go(func() error { return ValidateSender(ctx.UserOp, gc) })
-		g.Go(func() error { return ValidateInitCode(ctx.UserOp, gs) })
+		g.Go(func() error { return ValidateInitCode(ctx.UserOp) })
 		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.ov, s.maxVerificationGas) })
-		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, gs) })
+		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, ctx.GetPaymasterDepositInfo(), gc) })
 		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp, s.ov) })
-		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gbf) })
-		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps, s.maxOpsForUnstakedSender, gs) })
+		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gasprice.GetBaseFeeWithEthClient(s.eth)) })
+		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, ctx.GetPendingSenderOps()) })
 		g.Go(func() error { return ValidateGasAvailable(ctx.UserOp, s.maxBatchGasLimit) })
 
 		if err := g.Wait(); err != nil {
@@ -115,9 +110,9 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 				Op:          ctx.UserOp,
 				ChainID:     ctx.ChainID,
 				Stakes: simulation.EntityStakes{
-					ctx.UserOp.GetFactory():   ctx.GetDepositInfo(ctx.UserOp.GetFactory()),
-					ctx.UserOp.Sender:         ctx.GetDepositInfo(ctx.UserOp.Sender),
-					ctx.UserOp.GetPaymaster(): ctx.GetDepositInfo(ctx.UserOp.GetPaymaster()),
+					ctx.UserOp.Sender:         ctx.GetSenderDepositInfo(),
+					ctx.UserOp.GetFactory():   ctx.GetFactoryDepositInfo(),
+					ctx.UserOp.GetPaymaster(): ctx.GetPaymasterDepositInfo(),
 				},
 			})
 			if err != nil {
@@ -192,6 +187,12 @@ func (s *Standalone) PaymasterDeposit() modules.BatchHandlerFunc {
 			}
 		}
 
+		return nil
+	}
+}
+
+func (s *Standalone) SimulateBatch() modules.BatchHandlerFunc {
+	return func(ctx *modules.BatchHandlerCtx) error {
 		return nil
 	}
 }
