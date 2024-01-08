@@ -199,11 +199,7 @@ func (op *UserOperation) MarshalJSON() ([]byte, error) {
 	// Note: The bundler spec test requires the address portion of the initCode to include the checksum.
 	ic := "0x"
 	if fa := op.GetFactory(); fa != common.HexToAddress("0x") {
-		ic = fmt.Sprintf(
-			"%s%s",
-			op.GetFactory(),
-			common.Bytes2Hex(op.GetFactoryData()),
-		)
+		ic = fmt.Sprintf("%s%s", fa, common.Bytes2Hex(op.GetFactoryData()))
 	}
 
 	return json.Marshal(&struct {
