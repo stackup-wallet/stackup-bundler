@@ -131,6 +131,7 @@ func (d *Debug) SetReputation(entries []any, ep string) (string, error) {
 }
 
 // DumpReputation returns the reputation data of all known addresses.
+// TODO: Implement
 func (d *Debug) DumpReputation(ep string) ([]map[string]any, error) {
 	return []map[string]any{}, nil
 }
