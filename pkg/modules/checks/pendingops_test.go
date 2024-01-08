@@ -37,7 +37,7 @@ func TestPendingOpsWithNewOp(t *testing.T) {
 	}
 }
 
-func TestPendingOpsWithFailGasFeeReplacement(t *testing.T) {
+func TestPendingOpsWithNoGasFeeReplacement(t *testing.T) {
 	penOp := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
