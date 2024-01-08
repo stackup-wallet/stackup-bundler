@@ -15,13 +15,14 @@ import (
 )
 
 var (
-	accessModeRead  = "read"
-	accessModeWrite = "write"
+	accessModeRead       = "read"
+	accessModeWrite      = "write"
+	associatedSlotOffset = big.NewInt(128)
 )
 
-type storageSlots mapset.Set[string]
+type storageSlotSet mapset.Set[string]
 
-type storageSlotsByEntity map[common.Address]storageSlots
+type storageSlotsByEntity map[common.Address]storageSlotSet
 
 func newStorageSlotsByEntity(stakes EntityStakes, keccak []string) storageSlotsByEntity {
 	storageSlotsByEntity := make(storageSlotsByEntity)
@@ -54,7 +55,7 @@ type storageSlotsValidator struct {
 	AltMempools *altmempools.Directory
 
 	// Parameters of specific entities required for all validation
-	SenderSlots     storageSlots
+	SenderSlots     storageSlotSet
 	FactoryIsStaked bool
 
 	// Parameters of the entity under validation
@@ -62,15 +63,16 @@ type storageSlotsValidator struct {
 	EntityAddr            common.Address
 	EntityAccessMap       tracer.AccessMap
 	EntityContractSizeMap tracer.ContractSizeMap
-	EntitySlots           storageSlots
+	EntitySlots           storageSlotSet
 	EntityIsStaked        bool
 }
 
-func isAssociatedWith(slots storageSlots, slot string) bool {
-	slotN, _ := big.NewInt(0).SetString(slot, 0)
-	for _, k := range slots.ToSlice() {
-		kn, _ := big.NewInt(0).SetString(fmt.Sprintf("0x%s", k), 0)
-		if slotN.Cmp(kn) >= 0 && slotN.Cmp(big.NewInt(0).Add(kn, big.NewInt(128))) <= 0 {
+func isAssociatedWith(entitySlots storageSlotSet, slot string) bool {
+	slotBN, _ := big.NewInt(0).SetString(slot, 0)
+	for _, entitySlot := range entitySlots.ToSlice() {
+		entitySlotBN, _ := big.NewInt(0).SetString(fmt.Sprintf("0x%s", entitySlot), 0)
+		maxAssocSlotBN := big.NewInt(0).Add(entitySlotBN, associatedSlotOffset)
+		if slotBN.Cmp(entitySlotBN) >= 0 && slotBN.Cmp(maxAssocSlotBN) <= 0 {
 			return true
 		}
 	}
