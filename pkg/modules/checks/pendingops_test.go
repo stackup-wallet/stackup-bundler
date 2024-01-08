@@ -55,7 +55,7 @@ func TestPendingOpsWithFailMaxFeeReplacement(t *testing.T) {
 	penOp := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
-	_, op.MaxPriorityFeePerGas = calcNewThresholds(op.MaxFeePerGas, op.MaxPriorityFeePerGas)
+	op.MaxFeePerGas, _ = calcNewThresholds(op.MaxFeePerGas, op.MaxPriorityFeePerGas)
 	err := ValidatePendingOps(
 		op,
 		penOps,
@@ -70,7 +70,7 @@ func TestPendingOpsWithFailMaxPriorityFeeReplacement(t *testing.T) {
 	penOp := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
-	op.MaxFeePerGas, _ = calcNewThresholds(op.MaxFeePerGas, op.MaxPriorityFeePerGas)
+	_, op.MaxPriorityFeePerGas = calcNewThresholds(op.MaxFeePerGas, op.MaxPriorityFeePerGas)
 	err := ValidatePendingOps(
 		op,
 		penOps,
