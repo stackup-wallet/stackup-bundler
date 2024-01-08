@@ -51,7 +51,7 @@ func TestPendingOpsWithFailGasFeeReplacement(t *testing.T) {
 	}
 }
 
-func TestPendingOpsWithFailMaxFeeReplacement(t *testing.T) {
+func TestPendingOpsWithOnlyMaxFeeReplacement(t *testing.T) {
 	penOp := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
@@ -66,7 +66,7 @@ func TestPendingOpsWithFailMaxFeeReplacement(t *testing.T) {
 	}
 }
 
-func TestPendingOpsWithFailMaxPriorityFeeReplacement(t *testing.T) {
+func TestPendingOpsWithOnlyMaxPriorityFeeReplacement(t *testing.T) {
 	penOp := testutils.MockValidInitUserOp()
 	penOps := []*userop.UserOperation{penOp}
 	op := testutils.MockValidInitUserOp()
