@@ -98,7 +98,7 @@ var tracer = {
 
     if (opcode === "REVERT" || opcode === "RETURN") {
       if (log.getDepth() === 1) {
-        // exit() is not called on top-level return/revent, so we reconstruct it
+        // exit() is not called on top-level return/revert, so we reconstruct it
         // from opcode
         var ofs = parseInt(log.stack.peek(0).toString());
         var len = parseInt(log.stack.peek(1).toString());
