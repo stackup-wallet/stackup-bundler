@@ -17,14 +17,14 @@ var tracer = {
 
   fault: function fault(log, _db) {
     this.debug.push(
-      "fault depth=",
-      log.getDepth(),
-      " gas=",
-      log.getGas(),
-      " cost=",
-      log.getCost(),
-      " err=",
-      log.getError()
+      "fault depth=" +
+        log.getDepth() +
+        " gas=" +
+        log.getGas() +
+        " cost=" +
+        log.getCost() +
+        " err=" +
+        log.getError()
     );
   },
 
