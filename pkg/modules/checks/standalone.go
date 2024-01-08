@@ -55,9 +55,7 @@ func New(
 // received by the Client. This should be one of the first modules executed by the Client.
 func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 	return func(ctx *modules.UserOpHandlerCtx) error {
-		penOps := ctx.GetPendingSenderOps()
 		gc := getCodeWithEthClient(s.eth)
-		gbf := gasprice.GetBaseFeeWithEthClient(s.eth)
 
 		g := new(errgroup.Group)
 		g.Go(func() error { return ValidateSender(ctx.UserOp, gc) })
@@ -65,8 +63,8 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.ov, s.maxVerificationGas) })
 		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, ctx.GetPaymasterDepositInfo()) })
 		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp, s.ov) })
-		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gbf) })
-		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, penOps) })
+		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gasprice.GetBaseFeeWithEthClient(s.eth)) })
+		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, ctx.GetPendingSenderOps()) })
 		g.Go(func() error { return ValidateGasAvailable(ctx.UserOp, s.maxBatchGasLimit) })
 
 		if err := g.Wait(); err != nil {
