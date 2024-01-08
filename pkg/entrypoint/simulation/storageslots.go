@@ -28,7 +28,7 @@ func newStorageSlotsByEntity(stakes EntityStakes, keccak []string) storageSlotsB
 	storageSlotsByEntity := make(storageSlotsByEntity)
 
 	for _, k := range keccak {
-		value := common.Bytes2Hex(crypto.Keccak256(common.Hex2Bytes(k[2:])))
+		value := hexutil.Encode(crypto.Keccak256(common.Hex2Bytes(k[2:])))
 
 		for addr := range stakes {
 			if addr == common.HexToAddress("0x") {
@@ -70,7 +70,7 @@ type storageSlotsValidator struct {
 func isAssociatedWith(entitySlots storageSlots, slot string) bool {
 	slotBN, _ := big.NewInt(0).SetString(slot, 0)
 	for _, entitySlot := range entitySlots.ToSlice() {
-		entitySlotBN, _ := big.NewInt(0).SetString(fmt.Sprintf("0x%s", entitySlot), 0)
+		entitySlotBN, _ := big.NewInt(0).SetString(entitySlot, 0)
 		maxAssocSlotBN := big.NewInt(0).Add(entitySlotBN, associatedSlotOffset)
 		if slotBN.Cmp(entitySlotBN) >= 0 && slotBN.Cmp(maxAssocSlotBN) <= 0 {
 			return true
