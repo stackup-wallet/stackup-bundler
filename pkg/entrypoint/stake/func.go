@@ -15,8 +15,8 @@ func GetStakeFuncNoop() GetStakeFunc {
 	}
 }
 
-// GetStakeWithEthClient returns a GetStakeFunc that uses an EntryPoint binding to get stake info and adds it
-// to the current context.
+// GetStakeWithEthClient returns a GetStakeFunc that relies on an eth client to get stake info from the
+// EntryPoint.
 func GetStakeWithEthClient(eth *ethclient.Client) GetStakeFunc {
 	return func(entryPoint, addr common.Address) (*entrypoint.IStakeManagerDepositInfo, error) {
 		if addr == common.HexToAddress("0x") {
