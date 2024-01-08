@@ -73,7 +73,7 @@ func (op *UserOperation) GetFactory() common.Address {
 	return common.BytesToAddress(op.InitCode[:common.AddressLength])
 }
 
-// GetFactoryDataHex returns the data portion of InitCode if applicable. Otherwise it returns an empty byte
+// GetFactoryData returns the data portion of InitCode if applicable. Otherwise it returns an empty byte
 // array.
 func (op *UserOperation) GetFactoryData() []byte {
 	if len(op.InitCode) < common.AddressLength {
