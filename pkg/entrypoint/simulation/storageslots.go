@@ -20,9 +20,9 @@ var (
 	associatedSlotOffset = big.NewInt(128)
 )
 
-type storageSlotSet mapset.Set[string]
+type storageSlots mapset.Set[string]
 
-type storageSlotsByEntity map[common.Address]storageSlotSet
+type storageSlotsByEntity map[common.Address]storageSlots
 
 func newStorageSlotsByEntity(stakes EntityStakes, keccak []string) storageSlotsByEntity {
 	storageSlotsByEntity := make(storageSlotsByEntity)
@@ -55,7 +55,7 @@ type storageSlotsValidator struct {
 	AltMempools *altmempools.Directory
 
 	// Parameters of specific entities required for all validation
-	SenderSlots     storageSlotSet
+	SenderSlots     storageSlots
 	FactoryIsStaked bool
 
 	// Parameters of the entity under validation
@@ -63,11 +63,11 @@ type storageSlotsValidator struct {
 	EntityAddr            common.Address
 	EntityAccessMap       tracer.AccessMap
 	EntityContractSizeMap tracer.ContractSizeMap
-	EntitySlots           storageSlotSet
+	EntitySlots           storageSlots
 	EntityIsStaked        bool
 }
 
-func isAssociatedWith(entitySlots storageSlotSet, slot string) bool {
+func isAssociatedWith(entitySlots storageSlots, slot string) bool {
 	slotBN, _ := big.NewInt(0).SetString(slot, 0)
 	for _, entitySlot := range entitySlots.ToSlice() {
 		entitySlotBN, _ := big.NewInt(0).SetString(fmt.Sprintf("0x%s", entitySlot), 0)
