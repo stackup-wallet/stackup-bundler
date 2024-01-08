@@ -69,7 +69,7 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 		return nil, err
 	}
 
-	knownEntity, err := newKnownEntity(in.Op, in.EntryPoint, &res, in.Stakes)
+	knownEntity, err := newKnownEntity(in.Op, &res, in.Stakes)
 	altMempoolIds := []string{}
 	if err != nil {
 		return nil, err

@@ -15,7 +15,6 @@ type knownEntity map[string]struct {
 
 func newKnownEntity(
 	op *userop.UserOperation,
-	entryPoint common.Address,
 	res *tracer.BundlerCollectorReturn,
 	stakes EntityStakes,
 ) (knownEntity, error) {
