@@ -24,6 +24,7 @@ type ContractSizeInfo struct {
 }
 type ContractSizeMap map[common.Address]ContractSizeInfo
 
+// ExtCodeAccessInfoMap provides context on potentially illegal use of EXTCODESIZE.
 type ExtCodeAccessInfoMap map[common.Address]string
 
 // CallFromEntryPoint provides context on opcodes and storage access made via the EntryPoint to UserOperation
