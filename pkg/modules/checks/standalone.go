@@ -61,7 +61,7 @@ func (s *Standalone) ValidateOpValues() modules.UserOpHandlerFunc {
 		g.Go(func() error { return ValidateSender(ctx.UserOp, gc) })
 		g.Go(func() error { return ValidateInitCode(ctx.UserOp) })
 		g.Go(func() error { return ValidateVerificationGas(ctx.UserOp, s.ov, s.maxVerificationGas) })
-		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, gc, ctx.GetPaymasterDepositInfo()) })
+		g.Go(func() error { return ValidatePaymasterAndData(ctx.UserOp, ctx.GetPaymasterDepositInfo(), gc) })
 		g.Go(func() error { return ValidateCallGasLimit(ctx.UserOp, s.ov) })
 		g.Go(func() error { return ValidateFeePerGas(ctx.UserOp, gasprice.GetBaseFeeWithEthClient(s.eth)) })
 		g.Go(func() error { return ValidatePendingOps(ctx.UserOp, ctx.GetPendingSenderOps()) })

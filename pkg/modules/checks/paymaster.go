@@ -15,8 +15,8 @@ import (
 //  2. has a sufficient deposit to pay for the UserOperation
 func ValidatePaymasterAndData(
 	op *userop.UserOperation,
-	gc GetCodeFunc,
 	dep *entrypoint.IStakeManagerDepositInfo,
+	gc GetCodeFunc,
 ) error {
 	if len(op.PaymasterAndData) == 0 {
 		return nil
