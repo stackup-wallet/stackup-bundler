@@ -1,7 +1,6 @@
 package client
 
 import (
-	"errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -20,8 +19,7 @@ type GetUserOpReceiptFunc = func(hash string, ep common.Address) (*filter.UserOp
 
 func getUserOpReceiptNoop() GetUserOpReceiptFunc {
 	return func(hash string, ep common.Address) (*filter.UserOperationReceipt, error) {
-		//lint:ignore ST1005 This needs to match the bundler test spec.
-		return nil, errors.New("Missing/invalid userOpHash")
+		return nil, nil
 	}
 }
 
@@ -67,8 +65,7 @@ func getGasEstimateNoop() GetGasEstimateFunc {
 		op *userop.UserOperation,
 		sos state.OverrideSet,
 	) (verificationGas uint64, callGas uint64, err error) {
-		//lint:ignore ST1005 This needs to match the bundler test spec.
-		return 0, 0, errors.New("Missing/invalid userOpHash")
+		return 0, 0, nil
 	}
 }
 
@@ -103,8 +100,7 @@ type GetUserOpByHashFunc func(hash string, ep common.Address, chain *big.Int) (*
 
 func getUserOpByHashNoop() GetUserOpByHashFunc {
 	return func(hash string, ep common.Address, chain *big.Int) (*filter.HashLookupResult, error) {
-		//lint:ignore ST1005 This needs to match the bundler test spec.
-		return nil, errors.New("Missing/invalid userOpHash")
+		return nil, nil
 	}
 }
 
