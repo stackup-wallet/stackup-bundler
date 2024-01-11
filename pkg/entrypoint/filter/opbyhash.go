@@ -31,6 +31,11 @@ func GetUserOperationByHash(
 	entryPoint common.Address,
 	chainID *big.Int,
 ) (*HashLookupResult, error) {
+	if !IsValidUserOpHash(userOpHash) {
+		//lint:ignore ST1005 This needs to match the bundler test spec.
+		return nil, errors.New("Missing/invalid userOpHash")
+	}
+
 	it, err := filterUserOperationEvent(eth, userOpHash, entryPoint)
 	if err != nil {
 		return nil, err
@@ -45,8 +50,7 @@ func GetUserOperationByHash(
 		if err != nil {
 			return nil, err
 		} else if isPending {
-			//lint:ignore ST1005 This needs to match the bundler test spec.
-			return nil, errors.New("Missing/invalid userOpHash")
+			return nil, nil
 		}
 
 		hex := hexutil.Encode(tx.Data())
@@ -106,6 +110,5 @@ func GetUserOperationByHash(
 
 	}
 
-	//lint:ignore ST1005 This needs to match the bundler test spec.
-	return nil, errors.New("Missing/invalid userOpHash")
+	return nil, nil
 }

@@ -44,6 +44,11 @@ func GetUserOperationReceipt(
 	userOpHash string,
 	entryPoint common.Address,
 ) (*UserOperationReceipt, error) {
+	if !IsValidUserOpHash(userOpHash) {
+		//lint:ignore ST1005 This needs to match the bundler test spec.
+		return nil, errors.New("Missing/invalid userOpHash")
+	}
+
 	it, err := filterUserOperationEvent(eth, userOpHash, entryPoint)
 	if err != nil {
 		return nil, err
@@ -58,8 +63,7 @@ func GetUserOperationReceipt(
 		if err != nil {
 			return nil, err
 		} else if isPending {
-			//lint:ignore ST1005 This needs to match the bundler test spec.
-			return nil, errors.New("Missing/invalid userOpHash")
+			return nil, nil
 		}
 		from, err := types.Sender(types.LatestSignerForChainID(tx.ChainId()), tx)
 		if err != nil {
@@ -92,6 +96,5 @@ func GetUserOperationReceipt(
 		}, nil
 	}
 
-	//lint:ignore ST1005 This needs to match the bundler test spec.
-	return nil, errors.New("Missing/invalid userOpHash")
+	return nil, nil
 }
