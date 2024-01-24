@@ -33,6 +33,7 @@ type Standalone struct {
 	alt                *altmempools.Directory
 	maxVerificationGas *big.Int
 	maxBatchGasLimit   *big.Int
+	tracer             string
 	repConst           *entities.ReputationConstants
 }
 
@@ -45,10 +46,11 @@ func New(
 	alt *altmempools.Directory,
 	maxVerificationGas *big.Int,
 	maxBatchGasLimit *big.Int,
+	tracer string,
 	repConst *entities.ReputationConstants,
 ) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{db, rpc, eth, ov, alt, maxVerificationGas, maxBatchGasLimit, repConst}
+	return &Standalone{db, rpc, eth, ov, alt, maxVerificationGas, maxBatchGasLimit, tracer, repConst}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -109,6 +111,7 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 				AltMempools: s.alt,
 				Op:          ctx.UserOp,
 				ChainID:     ctx.ChainID,
+				Tracer:      s.tracer,
 				Stakes: simulation.EntityStakes{
 					ctx.UserOp.Sender:         ctx.GetSenderDepositInfo(),
 					ctx.UserOp.GetFactory():   ctx.GetFactoryDepositInfo(),

@@ -111,6 +111,7 @@ func SearcherMode() {
 		alt,
 		conf.MaxVerificationGas,
 		conf.MaxBatchGasLimit,
+		conf.NativeBundlerCollectorTracer,
 		conf.ReputationConstants,
 	)
 

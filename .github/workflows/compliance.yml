@@ -49,16 +49,9 @@ jobs:
           yarn install --frozen-lockfile && \
           yarn build
 
-      - name: Install Geth
-        run: |
-          wget https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.12.2-bed84606.tar.gz && \
-          tar -xvf geth-linux-amd64-1.12.2-bed84606.tar.gz
-
       - name: Run Geth
         run: |
-          cd geth-linux-amd64-1.12.2-bed84606 && \
-          ./geth \
-          --verbosity 1 \
+          docker run -d -p 8545:8545 stackupwallet/go-ethereum:v1.13.10 \
           --http.vhosts '*,localhost,host.docker.internal' \
           --http \
           --http.api eth,net,web3,debug \
@@ -69,7 +62,7 @@ jobs:
           --dev \
           --allow-insecure-unlock \
           --rpc.allow-unprotected-txs \
-          --miner.gaslimit 12000000 &
+          --miner.gaslimit 12000000
 
       - name: Install bundler dependencies
         run: go mod download
@@ -96,6 +89,7 @@ jobs:
           ERC4337_BUNDLER_ETH_CLIENT_URL: http://localhost:8545/
           ERC4337_BUNDLER_PORT: 3000
           ERC4337_BUNDLER_DEBUG_MODE: true
+          ERC4337_BUNDLER_NATIVE_BUNDLER_COLLECTOR_TRACER: bundlerCollectorTracer
           # This key is for testing purposes only. Do not use for anything else.
           ERC4337_BUNDLER_PRIVATE_KEY: c6cbc5ffad570fdad0544d1b5358a36edeb98d163b6567912ac4754e144d4edb
 
