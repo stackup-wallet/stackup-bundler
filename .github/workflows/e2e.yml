@@ -64,7 +64,8 @@ jobs:
 
       - name: Run Geth
         run: |
-          docker run -d -p 8545:8545 stackupwallet/go-ethereum:v1.13.10 \
+          docker run -d --name node -p 8545:8545 \
+          stackupwallet/go-ethereum:v1.13.11 \
           --http.vhosts '*,localhost,host.docker.internal' \
           --http \
           --http.api eth,net,web3,debug \
