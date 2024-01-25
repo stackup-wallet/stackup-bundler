@@ -27,6 +27,7 @@ type TraceInput struct {
 	EntryPoint  common.Address
 	Op          *userop.UserOperation
 	ChainID     *big.Int
+	Tracer      string
 	Stakes      EntityStakes
 	AltMempools *altmempools.Directory
 }
@@ -53,6 +54,10 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 	if err != nil {
 		return nil, err
 	}
+	t := tracer.Loaded.BundlerCollectorTracer
+	if in.Tracer != "" {
+		t = in.Tracer
+	}
 
 	var res tracer.BundlerCollectorReturn
 	req := utils.TraceCallReq{
@@ -62,7 +67,7 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 		MaxFeePerGas: hexutil.Big(*in.Op.MaxFeePerGas),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer:         tracer.Loaded.BundlerCollectorTracer,
+		Tracer:         t,
 		StateOverrides: state.WithMaxBalanceOverride(common.HexToAddress("0x"), nil),
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {

@@ -61,3 +61,11 @@ Assuming you have your environment properly setup, you can use the following com
 ```bash
 yarn run test
 ```
+
+## Using native tracers for faster performance
+
+For better performance, build Geth from source using the [ERC-4337 Execution Clients](https://github.com/stackup-wallet/erc-4337-execution-clients) repository. Run the built geth binary and reset the bundler with the following config:
+
+```
+ERC4337_BUNDLER_NATIVE_BUNDLER_COLLECTOR_TRACER=bundlerCollectorTracer
+```

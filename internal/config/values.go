@@ -15,16 +15,17 @@ import (
 
 type Values struct {
 	// Documented variables.
-	PrivateKey           string
-	EthClientUrl         string
-	Port                 int
-	DataDirectory        string
-	SupportedEntryPoints []common.Address
-	MaxVerificationGas   *big.Int
-	MaxBatchGasLimit     *big.Int
-	MaxOpTTL             time.Duration
-	Beneficiary          string
-	ReputationConstants  *entities.ReputationConstants
+	PrivateKey                   string
+	EthClientUrl                 string
+	Port                         int
+	DataDirectory                string
+	SupportedEntryPoints         []common.Address
+	MaxVerificationGas           *big.Int
+	MaxBatchGasLimit             *big.Int
+	MaxOpTTL                     time.Duration
+	Beneficiary                  string
+	NativeBundlerCollectorTracer string
+	ReputationConstants          *entities.ReputationConstants
 
 	// Searcher mode variables.
 	EthBuilderUrls    []string
@@ -113,6 +114,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_data_directory")
 	_ = viper.BindEnv("erc4337_bundler_supported_entry_points")
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
+	_ = viper.BindEnv("erc4337_bundler_native_bundler_collector_tracer")
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
 	_ = viper.BindEnv("erc4337_bundler_max_op_ttl_seconds")
@@ -170,6 +172,7 @@ func GetValues() *Values {
 	dataDirectory := viper.GetString("erc4337_bundler_data_directory")
 	supportedEntryPoints := envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points"))
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
+	nativeBundlerCollectorTracer := viper.GetString("erc4337_bundler_native_bundler_collector_tracer")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
 	maxOpTTL := time.Second * viper.GetDuration("erc4337_bundler_max_op_ttl_seconds")
@@ -184,25 +187,26 @@ func GetValues() *Values {
 	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
-		PrivateKey:            privateKey,
-		EthClientUrl:          ethClientUrl,
-		Port:                  port,
-		DataDirectory:         dataDirectory,
-		SupportedEntryPoints:  supportedEntryPoints,
-		Beneficiary:           beneficiary,
-		MaxVerificationGas:    maxVerificationGas,
-		MaxBatchGasLimit:      maxBatchGasLimit,
-		MaxOpTTL:              maxOpTTL,
-		ReputationConstants:   NewReputationConstantsFromEnv(),
-		EthBuilderUrls:        ethBuilderUrls,
-		BlocksInTheFuture:     blocksInTheFuture,
-		OTELServiceName:       otelServiceName,
-		OTELCollectorHeaders:  otelCollectorHeader,
-		OTELCollectorUrl:      otelCollectorUrl,
-		OTELInsecureMode:      otelInsecureMode,
-		AltMempoolIPFSGateway: altMempoolIPFSGateway,
-		AltMempoolIds:         altMempoolIds,
-		DebugMode:             debugMode,
-		GinMode:               ginMode,
+		PrivateKey:                   privateKey,
+		EthClientUrl:                 ethClientUrl,
+		Port:                         port,
+		DataDirectory:                dataDirectory,
+		SupportedEntryPoints:         supportedEntryPoints,
+		Beneficiary:                  beneficiary,
+		NativeBundlerCollectorTracer: nativeBundlerCollectorTracer,
+		MaxVerificationGas:           maxVerificationGas,
+		MaxBatchGasLimit:             maxBatchGasLimit,
+		MaxOpTTL:                     maxOpTTL,
+		ReputationConstants:          NewReputationConstantsFromEnv(),
+		EthBuilderUrls:               ethBuilderUrls,
+		BlocksInTheFuture:            blocksInTheFuture,
+		OTELServiceName:              otelServiceName,
+		OTELCollectorHeaders:         otelCollectorHeader,
+		OTELCollectorUrl:             otelCollectorUrl,
+		OTELInsecureMode:             otelInsecureMode,
+		AltMempoolIPFSGateway:        altMempoolIPFSGateway,
+		AltMempoolIds:                altMempoolIds,
+		DebugMode:                    debugMode,
+		GinMode:                      ginMode,
 	}
 }

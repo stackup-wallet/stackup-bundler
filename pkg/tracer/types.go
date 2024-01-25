@@ -35,7 +35,7 @@ type CallFromEntryPointInfo struct {
 	Opcodes               Counts               `json:"opcodes"`
 	Access                AccessMap            `json:"access"`
 	ContractSize          ContractSizeMap      `json:"contractSize"`
-	ExtCodeAccessInfo     ExtCodeAccessInfoMap `json:"ExtCodeAccessInfo"`
+	ExtCodeAccessInfo     ExtCodeAccessInfoMap `json:"extCodeAccessInfo"`
 	OOG                   bool                 `json:"oog"`
 }
 
