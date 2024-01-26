@@ -194,6 +194,7 @@ func (s *Standalone) PaymasterDeposit() modules.BatchHandlerFunc {
 	}
 }
 
+// TODO: Implement
 func (s *Standalone) SimulateBatch() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		return nil

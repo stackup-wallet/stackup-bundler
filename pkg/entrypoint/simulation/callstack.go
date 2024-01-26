@@ -27,9 +27,9 @@ func newCallStack(calls []tracer.CallInfo) []*callEntry {
 			top, _ := stack.Pop()
 
 			if strings.Contains(top.Type, "CREATE") {
-				// TODO: implement...
+				// TODO: implement
 			} else if call.Type == revertOpCode {
-				// TODO: implement...
+				// TODO: implement
 			} else {
 				v, ok := big.NewInt(0).SetString(top.Value, 0)
 				if !ok {
