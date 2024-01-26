@@ -41,6 +41,10 @@ type Values struct {
 	AltMempoolIPFSGateway string
 	AltMempoolIds         []string
 
+	// Stack Specific gas calculation variables.
+	CalcOpGas  bool
+	CalcArbGas bool
+
 	// Undocumented variables.
 	DebugMode bool
 	GinMode   string
@@ -91,6 +95,8 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_max_op_ttl_seconds", 180)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 6)
 	viper.SetDefault("erc4337_bundler_otel_insecure_mode", false)
+	viper.SetDefault("erc4337_calc_op_gas", false)
+	viper.SetDefault("erc4337_calc_arb_gas", false)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
@@ -126,6 +132,8 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_otel_insecure_mode")
 	_ = viper.BindEnv("erc4337_bundler_alt_mempool_ipfs_gateway")
 	_ = viper.BindEnv("erc4337_bundler_alt_mempool_ids")
+	_ = viper.BindEnv("erc4337_calc_op_gas")
+	_ = viper.BindEnv("erc4337_calc_arb_gas")
 	_ = viper.BindEnv("erc4337_bundler_debug_mode")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
 
@@ -165,6 +173,11 @@ func GetValues() *Values {
 		panic("Fatal config error: erc4337_bundler_alt_mempool_ids is set without specifying an IPFS gateway")
 	}
 
+	// Make sure we don't have both gas calculation modes enabled
+	if viper.GetBool("erc4337_calc_op_gas") && viper.GetBool("erc4337_calc_arb_gas") {
+		panic("Fatal config error: erc4337_calc_op_gas and erc4337_calc_arb_gas cannot both be set")
+	}
+
 	// Return Values
 	privateKey := viper.GetString("erc4337_bundler_private_key")
 	ethClientUrl := viper.GetString("erc4337_bundler_eth_client_url")
@@ -184,6 +197,8 @@ func GetValues() *Values {
 	otelInsecureMode := viper.GetBool("erc4337_bundler_otel_insecure_mode")
 	altMempoolIPFSGateway := viper.GetString("erc4337_bundler_alt_mempool_ipfs_gateway")
 	altMempoolIds := envArrayToStringSlice(viper.GetString("erc4337_bundler_alt_mempool_ids"))
+	calcArbGas := viper.GetBool("erc4337_calc_arb_gas")
+	calcOpGas := viper.GetBool("erc4337_calc_op_gas")
 	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
@@ -206,6 +221,8 @@ func GetValues() *Values {
 		OTELInsecureMode:             otelInsecureMode,
 		AltMempoolIPFSGateway:        altMempoolIPFSGateway,
 		AltMempoolIds:                altMempoolIds,
+		CalcArbGas:                   calcArbGas,
+		CalcOpGas:                    calcOpGas,
 		DebugMode:                    debugMode,
 		GinMode:                      ginMode,
 	}
