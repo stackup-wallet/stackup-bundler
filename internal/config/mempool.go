@@ -14,7 +14,6 @@ func NewReputationConstantsFromEnv() *entities.ReputationConstants {
 	viper.SetDefault("erc4337_bundler_throttled_entity_live_blocks", 10)
 	viper.SetDefault("erc4337_bundler_throttled_entity_bundle_count", 4)
 	viper.SetDefault("erc4337_bundler_min_inclusion_rate_denominator", 10)
-	viper.SetDefault("erc4337_bundler_inclusion_rate_factor", 10)
 	viper.SetDefault("erc4337_bundler_throttling_slack", 10)
 	viper.SetDefault("erc4337_bundler_ban_slack", 50)
 
@@ -26,7 +25,6 @@ func NewReputationConstantsFromEnv() *entities.ReputationConstants {
 	_ = viper.BindEnv("erc4337_bundler_throttled_entity_live_blocks")
 	_ = viper.BindEnv("erc4337_bundler_throttled_entity_bundle_count")
 	_ = viper.BindEnv("erc4337_bundler_min_inclusion_rate_denominator")
-	_ = viper.BindEnv("erc4337_bundler_inclusion_rate_factor")
 	_ = viper.BindEnv("erc4337_bundler_throttling_slack")
 	_ = viper.BindEnv("erc4337_bundler_ban_slack")
 
@@ -39,7 +37,6 @@ func NewReputationConstantsFromEnv() *entities.ReputationConstants {
 		ThrottledEntityLiveBlocks:      viper.GetInt("erc4337_bundler_throttled_entity_live_blocks"),
 		ThrottledEntityBundleCount:     viper.GetInt("erc4337_bundler_throttled_entity_bundle_count"),
 		MinInclusionRateDenominator:    viper.GetInt("erc4337_bundler_min_inclusion_rate_denominator"),
-		InclusionRateFactor:            viper.GetInt("erc4337_bundler_inclusion_rate_factor"),
 		ThrottlingSlack:                viper.GetInt("erc4337_bundler_throttling_slack"),
 		BanSlack:                       viper.GetInt("erc4337_bundler_ban_slack"),
 	}

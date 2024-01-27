@@ -21,7 +21,6 @@ type ReputationConstants struct {
 	ThrottledEntityLiveBlocks      int
 	ThrottledEntityBundleCount     int
 	MinInclusionRateDenominator    int
-	InclusionRateFactor            int
 	ThrottlingSlack                int
 	BanSlack                       int
 }
