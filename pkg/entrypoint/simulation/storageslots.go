@@ -134,14 +134,14 @@ func (v *storageSlotsValidator) Process() ([]string, error) {
 					} else {
 						continue
 					}
-				} else if isAssociatedWith(entitySlots, slot) || mode == accessModeRead {
-					mustStakeSlot = slot
-				} else if ids := v.AltMempools.HasInvalidStorageAccessException(
+				} else if amIds := v.AltMempools.HasInvalidStorageAccessException(
 					v.EntityName,
 					addr2KnownEntity(v.Op, addr),
-					fmt.Sprintf("0x%s", slot),
-				); len(ids) > 0 {
-					altMempoolIds = append(altMempoolIds, ids...)
+					slot,
+				); len(amIds) == 0 && (isAssociatedWith(entitySlots, slot) || mode == accessModeRead) {
+					mustStakeSlot = slot
+				} else if len(amIds) > 0 {
+					altMempoolIds = append(altMempoolIds, amIds...)
 				} else {
 					return altMempoolIds, fmt.Errorf(
 						"%s has forbidden %s to %s slot %s",
