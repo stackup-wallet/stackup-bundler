@@ -138,7 +138,7 @@ func (v *storageSlotsValidator) Process() ([]string, error) {
 					v.EntityName,
 					addr2KnownEntity(v.Op, addr),
 					slot,
-				); len(amIds) == 0 && (isAssociatedWith(entitySlots, slot) || mode == accessModeRead) {
+				); (isAssociatedWith(entitySlots, slot) || mode == accessModeRead) && len(amIds) == 0 {
 					mustStakeSlot = slot
 				} else if len(amIds) > 0 {
 					altMempoolIds = append(altMempoolIds, amIds...)
