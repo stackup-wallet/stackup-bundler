@@ -23,15 +23,15 @@ var (
 	LyraSepoliaChainID     = big.NewInt(902)
 	Ancient8SepoliaChainID = big.NewInt(28122024)
 
-	OpStackChains = mapset.NewSet[*big.Int](
-		OptimismChainID,
-		OptimismGoerliChainID,
-		OptimismSepoliaChainID,
-		BaseChainID,
-		BaseGoerliChainID,
-		BaseSepoliaChainID,
-		LyraChainID,
-		LyraSepoliaChainID,
-		Ancient8SepoliaChainID,
+	OpStackChains = mapset.NewSet(
+		OptimismChainID.Uint64(),
+		OptimismGoerliChainID.Uint64(),
+		OptimismSepoliaChainID.Uint64(),
+		BaseChainID.Uint64(),
+		BaseGoerliChainID.Uint64(),
+		BaseSepoliaChainID.Uint64(),
+		LyraChainID.Uint64(),
+		LyraSepoliaChainID.Uint64(),
+		Ancient8SepoliaChainID.Uint64(),
 	)
 )

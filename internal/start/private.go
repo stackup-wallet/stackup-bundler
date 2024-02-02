@@ -91,7 +91,7 @@ func PrivateMode() {
 		ov.SetPreVerificationGasBufferFactor(16)
 	}
 
-	if conf.IsOpStackNetwork || config.OpStackChains.Contains(chain) {
+	if conf.IsOpStackNetwork || config.OpStackChains.Contains(chain.Uint64()) {
 		ov.SetCalcPreVerificationGasFunc(
 			gas.CalcOptimismPVGWithEthClient(rpc, chain, conf.SupportedEntryPoints[0]),
 		)
