@@ -7,7 +7,7 @@
 
 # Getting started
 
-A modular Go implementation of an ERC-4337 Bundler.
+A fast, reliable, and modular Go implementation of an ERC-4337 Bundler.
 
 # Running an instance
 
