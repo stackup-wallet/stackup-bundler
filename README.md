@@ -1,4 +1,4 @@
-![](https://i.imgur.com/t0P3vWU.png)
+![](https://i.imgur.com/fMnLV0q.png)
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/stackup-wallet/stackup-bundler)
 ![Compliance status](https://github.com/stackup-wallet/stackup-bundler/actions/workflows/compliance.yml/badge.svg?branch=main)
