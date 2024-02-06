@@ -14,6 +14,7 @@ func filterUserOperationEvent(
 	eth *ethclient.Client,
 	userOpHash string,
 	entryPoint common.Address,
+	blkRange uint64,
 ) (*entrypoint.EntrypointUserOperationEventIterator, error) {
 	ep, err := entrypoint.NewEntrypoint(entryPoint, eth)
 	if err != nil {
@@ -25,9 +26,9 @@ func filterUserOperationEvent(
 	}
 	toBlk := big.NewInt(0).SetUint64(bn)
 	startBlk := big.NewInt(0)
-	sub10kBlk := big.NewInt(0).Sub(toBlk, big.NewInt(10000))
-	if sub10kBlk.Cmp(startBlk) > 0 {
-		startBlk = sub10kBlk
+	subBlkRange := big.NewInt(0).Sub(toBlk, big.NewInt(0).SetUint64(blkRange))
+	if subBlkRange.Cmp(startBlk) > 0 {
+		startBlk = subBlkRange
 	}
 
 	return ep.FilterUserOperationEvent(

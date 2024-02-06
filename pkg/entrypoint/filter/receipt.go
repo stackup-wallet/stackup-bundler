@@ -43,13 +43,14 @@ func GetUserOperationReceipt(
 	eth *ethclient.Client,
 	userOpHash string,
 	entryPoint common.Address,
+	blkRange uint64,
 ) (*UserOperationReceipt, error) {
 	if !IsValidUserOpHash(userOpHash) {
 		//lint:ignore ST1005 This needs to match the bundler test spec.
 		return nil, errors.New("Missing/invalid userOpHash")
 	}
 
-	it, err := filterUserOperationEvent(eth, userOpHash, entryPoint)
+	it, err := filterUserOperationEvent(eth, userOpHash, entryPoint, blkRange)
 	if err != nil {
 		return nil, err
 	}

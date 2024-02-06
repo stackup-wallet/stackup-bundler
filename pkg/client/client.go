@@ -33,6 +33,7 @@ type Client struct {
 	getGasEstimate       GetGasEstimateFunc
 	getUserOpByHash      GetUserOpByHashFunc
 	getStakeFunc         stake.GetStakeFunc
+	opLookupLimit        uint64
 }
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
@@ -42,6 +43,7 @@ func New(
 	ov *gas.Overhead,
 	chainID *big.Int,
 	supportedEntryPoints []common.Address,
+	opLookupLimit uint64,
 ) *Client {
 	return &Client{
 		mempool:              mempool,
@@ -55,6 +57,7 @@ func New(
 		getGasEstimate:       getGasEstimateNoop(),
 		getUserOpByHash:      getUserOpByHashNoop(),
 		getStakeFunc:         stake.GetStakeFuncNoop(),
+		opLookupLimit:        opLookupLimit,
 	}
 }
 
@@ -249,7 +252,7 @@ func (i *Client) GetUserOperationReceipt(
 	// Init logger
 	l := i.logger.WithName("eth_getUserOperationReceipt").WithValues("userop_hash", hash)
 
-	ev, err := i.getUserOpReceipt(hash, i.supportedEntryPoints[0])
+	ev, err := i.getUserOpReceipt(hash, i.supportedEntryPoints[0], i.opLookupLimit)
 	if err != nil {
 		l.Error(err, "eth_getUserOperationReceipt error")
 		return nil, err
@@ -265,7 +268,7 @@ func (i *Client) GetUserOperationByHash(hash string) (*filter.HashLookupResult, 
 	// Init logger
 	l := i.logger.WithName("eth_getUserOperationByHash").WithValues("userop_hash", hash)
 
-	res, err := i.getUserOpByHash(hash, i.supportedEntryPoints[0], i.chainID)
+	res, err := i.getUserOpByHash(hash, i.supportedEntryPoints[0], i.chainID, i.opLookupLimit)
 	if err != nil {
 		l.Error(err, "eth_getUserOperationByHash error")
 		return nil, err

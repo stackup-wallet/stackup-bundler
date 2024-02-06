@@ -23,6 +23,7 @@ type Values struct {
 	MaxVerificationGas           *big.Int
 	MaxBatchGasLimit             *big.Int
 	MaxOpTTL                     time.Duration
+	OpLookupLimit                uint64
 	Beneficiary                  string
 	NativeBundlerCollectorTracer string
 	ReputationConstants          *entities.ReputationConstants
@@ -92,6 +93,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 6000000)
 	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 18000000)
 	viper.SetDefault("erc4337_bundler_max_op_ttl_seconds", 180)
+	viper.SetDefault("erc4337_bundler_op_lookup_limit", 2000)
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 6)
 	viper.SetDefault("erc4337_bundler_otel_insecure_mode", false)
 	viper.SetDefault("erc4337_bundler_is_op_stack_network", false)
@@ -122,6 +124,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
 	_ = viper.BindEnv("erc4337_bundler_max_op_ttl_seconds")
+	_ = viper.BindEnv("erc4337_bundler_op_lookup_limit")
 	_ = viper.BindEnv("erc4337_bundler_eth_builder_urls")
 	_ = viper.BindEnv("erc4337_bundler_blocks_in_the_future")
 	_ = viper.BindEnv("erc4337_bundler_otel_service_name")
@@ -181,6 +184,7 @@ func GetValues() *Values {
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
 	maxOpTTL := time.Second * viper.GetDuration("erc4337_bundler_max_op_ttl_seconds")
+	opLookupLimit := viper.GetUint64("erc4337_bundler_op_lookup_limit")
 	ethBuilderUrls := envArrayToStringSlice(viper.GetString("erc4337_bundler_eth_builder_urls"))
 	blocksInTheFuture := viper.GetInt("erc4337_bundler_blocks_in_the_future")
 	otelServiceName := viper.GetString("erc4337_bundler_otel_service_name")
@@ -203,6 +207,7 @@ func GetValues() *Values {
 		MaxVerificationGas:           maxVerificationGas,
 		MaxBatchGasLimit:             maxBatchGasLimit,
 		MaxOpTTL:                     maxOpTTL,
+		OpLookupLimit:                opLookupLimit,
 		ReputationConstants:          NewReputationConstantsFromEnv(),
 		EthBuilderUrls:               ethBuilderUrls,
 		BlocksInTheFuture:            blocksInTheFuture,

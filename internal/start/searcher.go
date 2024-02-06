@@ -123,7 +123,7 @@ func SearcherMode() {
 	rep := entities.New(db, eth, conf.ReputationConstants)
 
 	// Init Client
-	c := client.New(mem, ov, chain, conf.SupportedEntryPoints)
+	c := client.New(mem, ov, chain, conf.SupportedEntryPoints, conf.OpLookupLimit)
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
 	c.SetGetGasPricesFunc(client.GetGasPricesWithEthClient(eth))
 	c.SetGetGasEstimateFunc(

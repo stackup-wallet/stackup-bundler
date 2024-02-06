@@ -13,12 +13,12 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// GetUserOpReceiptFunc is a general interface for fetching a UserOperationReceipt given a userOpHash and
-// EntryPoint address.
-type GetUserOpReceiptFunc = func(hash string, ep common.Address) (*filter.UserOperationReceipt, error)
+// GetUserOpReceiptFunc is a general interface for fetching a UserOperationReceipt given a userOpHash,
+// EntryPoint address, and block range.
+type GetUserOpReceiptFunc = func(hash string, ep common.Address, blkRange uint64) (*filter.UserOperationReceipt, error)
 
 func getUserOpReceiptNoop() GetUserOpReceiptFunc {
-	return func(hash string, ep common.Address) (*filter.UserOperationReceipt, error) {
+	return func(hash string, ep common.Address, blkRange uint64) (*filter.UserOperationReceipt, error) {
 		return nil, nil
 	}
 }
@@ -26,8 +26,8 @@ func getUserOpReceiptNoop() GetUserOpReceiptFunc {
 // GetUserOpReceiptWithEthClient returns an implementation of GetUserOpReceiptFunc that relies on an eth
 // client to fetch a UserOperationReceipt.
 func GetUserOpReceiptWithEthClient(eth *ethclient.Client) GetUserOpReceiptFunc {
-	return func(hash string, ep common.Address) (*filter.UserOperationReceipt, error) {
-		return filter.GetUserOperationReceipt(eth, hash, ep)
+	return func(hash string, ep common.Address, blkRange uint64) (*filter.UserOperationReceipt, error) {
+		return filter.GetUserOperationReceipt(eth, hash, ep, blkRange)
 	}
 }
 
@@ -95,11 +95,11 @@ func GetGasEstimateWithEthClient(
 }
 
 // GetUserOpByHashFunc is a general interface for fetching a UserOperation given a userOpHash, EntryPoint
-// address, and chain ID.
-type GetUserOpByHashFunc func(hash string, ep common.Address, chain *big.Int) (*filter.HashLookupResult, error)
+// address, chain ID, and block range.
+type GetUserOpByHashFunc func(hash string, ep common.Address, chain *big.Int, blkRange uint64) (*filter.HashLookupResult, error)
 
 func getUserOpByHashNoop() GetUserOpByHashFunc {
-	return func(hash string, ep common.Address, chain *big.Int) (*filter.HashLookupResult, error) {
+	return func(hash string, ep common.Address, chain *big.Int, blkRange uint64) (*filter.HashLookupResult, error) {
 		return nil, nil
 	}
 }
@@ -107,7 +107,7 @@ func getUserOpByHashNoop() GetUserOpByHashFunc {
 // GetUserOpByHashWithEthClient returns an implementation of GetUserOpByHashFunc that relies on an eth client
 // to fetch a UserOperation.
 func GetUserOpByHashWithEthClient(eth *ethclient.Client) GetUserOpByHashFunc {
-	return func(hash string, ep common.Address, chain *big.Int) (*filter.HashLookupResult, error) {
-		return filter.GetUserOperationByHash(eth, hash, ep, chain)
+	return func(hash string, ep common.Address, chain *big.Int, blkRange uint64) (*filter.HashLookupResult, error) {
+		return filter.GetUserOperationByHash(eth, hash, ep, chain, blkRange)
 	}
 }
