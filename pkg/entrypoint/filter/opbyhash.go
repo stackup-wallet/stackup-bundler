@@ -30,13 +30,14 @@ func GetUserOperationByHash(
 	userOpHash string,
 	entryPoint common.Address,
 	chainID *big.Int,
+	blkRange uint64,
 ) (*HashLookupResult, error) {
 	if !IsValidUserOpHash(userOpHash) {
 		//lint:ignore ST1005 This needs to match the bundler test spec.
 		return nil, errors.New("Missing/invalid userOpHash")
 	}
 
-	it, err := filterUserOperationEvent(eth, userOpHash, entryPoint)
+	it, err := filterUserOperationEvent(eth, userOpHash, entryPoint, blkRange)
 	if err != nil {
 		return nil, err
 	}
