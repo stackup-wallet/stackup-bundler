@@ -156,6 +156,7 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 						hexutil.Encode(data),
 					)
 				}
+
 				return nil, fmt.Errorf("%s, %s", revErr, panErr)
 			}
 
