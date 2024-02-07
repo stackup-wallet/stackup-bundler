@@ -17,9 +17,9 @@ const config: IConfig = {
 
   // https://github.com/stackup-wallet/contracts/blob/main/contracts/test
   testERC20Token: "0x3870419Ba2BBf0127060bCB37f69A1b1C090992B",
-  testGas: "0x450d8479B0ceF1e6933DED809e12845aF413A50D",
-  testAccount: "0x6D7d359cE9e60dDa36EE712cE9B5947B4C72F862",
-  testPaymaster: "0xa9C7F67D5Be8A805dC80f06E49BDe939384E300b",
+  testGas: "0x3Eb396057D1eaB0aB9000c11c4E7F11e7974934f",
+  testAccount: "0x6306eBAaa03a9F6DcA1d036c152EDeCF809147E3",
+  testPaymaster: "0xfC7D123030203aaebcB0C72B1412Faa090b166f5",
 };
 
 export default config;

@@ -1,5 +1,10 @@
 import { ethers } from "ethers";
-import { Presets, Client, ISendUserOperationOpts } from "userop";
+import {
+  Presets,
+  Client,
+  ISendUserOperationOpts,
+  UserOperationBuilder,
+} from "userop";
 import { getCallGasLimitBenchmark } from "../src/helpers";
 import { erc20ABI, testGasABI } from "../src/abi";
 import { errorCodes } from "../src/errors";
@@ -146,13 +151,77 @@ describe("During the execution phase", () => {
     }
   });
 
+  test("Sender can execute callData with a handled revert", async () => {
+    const response = await client.sendUserOperation(
+      acc.execute(
+        config.testGas,
+        0,
+        testGas.interface.encodeFunctionData("handleRevert", [])
+      ),
+      { ...opChecks(provider) }
+    );
+    const event = await response.wait();
+
+    expect(event?.args.success).toBe(true);
+  });
+
+  test("Sender cannot estimate gas values with an unhandled revert", async () => {
+    expect.assertions(1);
+    try {
+      await client.sendUserOperation(
+        acc.execute(
+          config.testGas,
+          0,
+          testGas.interface.encodeFunctionData("triggerRevert", [])
+        ),
+        { ...opChecks(provider) }
+      );
+    } catch (error: any) {
+      expect(error?.error.code).toBe(errorCodes.executionReverted);
+    }
+  });
+
+  test("Sender can cause a failed UserOperation with an unhandled revert", async () => {
+    // Create a good UserOperation
+    const op = await client.buildUserOperation(
+      acc.execute(
+        config.testGas,
+        0,
+        testGas.interface.encodeFunctionData("handleRevert", [])
+      )
+    );
+
+    // Generate callData to trigger an unhandled revert
+    const callData = acc
+      .execute(
+        config.testGas,
+        0,
+        testGas.interface.encodeFunctionData("triggerRevert", [])
+      )
+      .getCallData();
+
+    // Create a bad UserOperation
+    const builder = new UserOperationBuilder()
+      .useDefaults(op)
+      .setCallData(callData)
+      .useMiddleware(
+        Presets.Middleware.signUserOpHash(new ethers.Wallet(config.signingKey))
+      );
+
+    // Assert that the UserOperation failed
+    const response = await client.sendUserOperation(builder);
+    const event = await response.wait();
+
+    expect(event?.args.success).toBe(false);
+  });
+
   describe("With increasing call stack size", () => {
     describe("With zero value", () => {
       [0, 2, 4, 8, 16].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
           let opts = opChecks(provider);
-          if (depth === 8) opts = opCheckDeep(1195897);
-          if (depth === 16) opts = opCheckDeep(4365893);
+          if (depth === 8) opts = opCheckDeep(1196346);
+          if (depth === 16) opts = opCheckDeep(4366802);
 
           const response = await client.sendUserOperation(
             acc.execute(
@@ -178,8 +247,8 @@ describe("During the execution phase", () => {
       [0, 2, 4, 8, 16].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
           let opts = opChecks(provider);
-          if (depth === 8) opts = opCheckDeep(1262227);
-          if (depth === 16) opts = opCheckDeep(4499616);
+          if (depth === 8) opts = opCheckDeep(1262679);
+          if (depth === 16) opts = opCheckDeep(4500529);
 
           const response = await client.sendUserOperation(
             acc.execute(
@@ -234,8 +303,8 @@ describe("During the execution phase", () => {
       [0, 1, 2, 3].forEach((depth) => {
         test(`Sender can make contract interactions with ${depth} recursive calls`, async () => {
           let opts = opChecks(provider);
-          if (depth === 2) opts = opCheckDeep(866332);
-          if (depth === 3) opts = opCheckDeep(7929055);
+          if (depth === 2) opts = opCheckDeep(866962);
+          if (depth === 3) opts = opCheckDeep(7933237);
 
           const width = depth;
           const response = await client.sendUserOperation(
