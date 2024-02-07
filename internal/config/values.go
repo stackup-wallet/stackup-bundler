@@ -42,8 +42,9 @@ type Values struct {
 	AltMempoolIPFSGateway string
 	AltMempoolIds         []string
 
-	// Stack Specific gas calculation variables.
-	IsOpStackNetwork bool
+	// Rollup related variables.
+	IsOpStackNetwork   bool
+	IsRIP7212Supported bool
 
 	// Undocumented variables.
 	DebugMode bool
@@ -97,6 +98,7 @@ func GetValues() *Values {
 	viper.SetDefault("erc4337_bundler_blocks_in_the_future", 6)
 	viper.SetDefault("erc4337_bundler_otel_insecure_mode", false)
 	viper.SetDefault("erc4337_bundler_is_op_stack_network", false)
+	viper.SetDefault("erc4337_bundler_is_rip7212_supported", false)
 	viper.SetDefault("erc4337_bundler_debug_mode", false)
 	viper.SetDefault("erc4337_bundler_gin_mode", gin.ReleaseMode)
 
@@ -134,6 +136,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_alt_mempool_ipfs_gateway")
 	_ = viper.BindEnv("erc4337_bundler_alt_mempool_ids")
 	_ = viper.BindEnv("erc4337_bundler_is_op_stack_network")
+	_ = viper.BindEnv("erc4337_bundler_is_rip7212_supported")
 	_ = viper.BindEnv("erc4337_bundler_debug_mode")
 	_ = viper.BindEnv("erc4337_bundler_gin_mode")
 
@@ -194,6 +197,7 @@ func GetValues() *Values {
 	altMempoolIPFSGateway := viper.GetString("erc4337_bundler_alt_mempool_ipfs_gateway")
 	altMempoolIds := envArrayToStringSlice(viper.GetString("erc4337_bundler_alt_mempool_ids"))
 	isOpStackNetwork := viper.GetBool("erc4337_bundler_is_op_stack_network")
+	isRIP7212Supported := viper.GetBool("erc4337_bundler_is_rip7212_supported")
 	debugMode := viper.GetBool("erc4337_bundler_debug_mode")
 	ginMode := viper.GetString("erc4337_bundler_gin_mode")
 	return &Values{
@@ -218,6 +222,7 @@ func GetValues() *Values {
 		AltMempoolIPFSGateway:        altMempoolIPFSGateway,
 		AltMempoolIds:                altMempoolIds,
 		IsOpStackNetwork:             isOpStackNetwork,
+		IsRIP7212Supported:           isRIP7212Supported,
 		DebugMode:                    debugMode,
 		GinMode:                      ginMode,
 	}

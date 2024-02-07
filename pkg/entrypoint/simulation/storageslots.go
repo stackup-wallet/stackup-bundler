@@ -50,9 +50,10 @@ func newStorageSlotsByEntity(stakes EntityStakes, keccak []string) storageSlotsB
 
 type storageSlotsValidator struct {
 	// Global parameters
-	Op          *userop.UserOperation
-	EntryPoint  common.Address
-	AltMempools *altmempools.Directory
+	Op                 *userop.UserOperation
+	EntryPoint         common.Address
+	IsRIP7212Supported bool
+	AltMempools        *altmempools.Directory
 
 	// Parameters of specific entities required for all validation
 	SenderSlots     storageSlots
@@ -80,6 +81,10 @@ func isAssociatedWith(entitySlots storageSlots, slot string) bool {
 	return false
 }
 
+func isRIP7212Call(isRIP7212Supported bool, addr common.Address) bool {
+	return isRIP7212Supported && addr == rip7212precompile
+}
+
 func (v *storageSlotsValidator) Process() ([]string, error) {
 	senderSlots := v.SenderSlots
 	if senderSlots == nil {
@@ -92,7 +97,7 @@ func (v *storageSlotsValidator) Process() ([]string, error) {
 	altMempoolIds := []string{}
 
 	for ca, csi := range v.EntityContractSizeMap {
-		if ca != v.Op.Sender && csi.ContractSize == 0 {
+		if ca != v.Op.Sender && csi.ContractSize == 0 && !isRIP7212Call(v.IsRIP7212Supported, ca) {
 			return altMempoolIds, fmt.Errorf(
 				"%s uses %s on an address with no deployed code: %s",
 				v.EntityName,
