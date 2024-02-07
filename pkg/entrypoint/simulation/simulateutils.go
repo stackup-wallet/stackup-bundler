@@ -36,4 +36,8 @@ var (
 
 	revertOpCode = "REVERT"
 	returnOpCode = "RETURN"
+
+	// Precompiled contract that performs secp256r1 signature verification. See
+	// https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md
+	rip7212precompile = common.HexToAddress("0x100")
 )

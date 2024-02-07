@@ -23,13 +23,14 @@ import (
 )
 
 type TraceInput struct {
-	Rpc         *rpc.Client
-	EntryPoint  common.Address
-	Op          *userop.UserOperation
-	ChainID     *big.Int
-	Tracer      string
-	Stakes      EntityStakes
-	AltMempools *altmempools.Directory
+	Rpc                *rpc.Client
+	EntryPoint         common.Address
+	Op                 *userop.UserOperation
+	ChainID            *big.Int
+	IsRIP7212Supported bool
+	Tracer             string
+	Stakes             EntityStakes
+	AltMempools        *altmempools.Directory
 }
 
 type TraceOutput struct {
@@ -118,6 +119,7 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 		v := &storageSlotsValidator{
 			Op:                    in.Op,
 			EntryPoint:            in.EntryPoint,
+			IsRIP7212Supported:    in.IsRIP7212Supported,
 			AltMempools:           in.AltMempools,
 			SenderSlots:           slotsByEntity[in.Op.Sender],
 			FactoryIsStaked:       knownEntity["factory"].IsStaked,

@@ -115,6 +115,7 @@ func PrivateMode() {
 		alt,
 		conf.MaxVerificationGas,
 		conf.MaxBatchGasLimit,
+		conf.IsRIP7212Supported,
 		conf.NativeBundlerCollectorTracer,
 		conf.ReputationConstants,
 	)

@@ -33,6 +33,7 @@ type Standalone struct {
 	alt                *altmempools.Directory
 	maxVerificationGas *big.Int
 	maxBatchGasLimit   *big.Int
+	isRIP7212Supported bool
 	tracer             string
 	repConst           *entities.ReputationConstants
 }
@@ -46,11 +47,23 @@ func New(
 	alt *altmempools.Directory,
 	maxVerificationGas *big.Int,
 	maxBatchGasLimit *big.Int,
+	isRIP7212Supported bool,
 	tracer string,
 	repConst *entities.ReputationConstants,
 ) *Standalone {
 	eth := ethclient.NewClient(rpc)
-	return &Standalone{db, rpc, eth, ov, alt, maxVerificationGas, maxBatchGasLimit, tracer, repConst}
+	return &Standalone{
+		db,
+		rpc,
+		eth,
+		ov,
+		alt,
+		maxVerificationGas,
+		maxBatchGasLimit,
+		isRIP7212Supported,
+		tracer,
+		repConst,
+	}
 }
 
 // ValidateOpValues returns a UserOpHandler that runs through some first line sanity checks for new UserOps
@@ -106,12 +119,13 @@ func (s *Standalone) SimulateOp() modules.UserOpHandlerFunc {
 		})
 		g.Go(func() error {
 			out, err := simulation.TraceSimulateValidation(&simulation.TraceInput{
-				Rpc:         s.rpc,
-				EntryPoint:  ctx.EntryPoint,
-				AltMempools: s.alt,
-				Op:          ctx.UserOp,
-				ChainID:     ctx.ChainID,
-				Tracer:      s.tracer,
+				Rpc:                s.rpc,
+				EntryPoint:         ctx.EntryPoint,
+				AltMempools:        s.alt,
+				Op:                 ctx.UserOp,
+				ChainID:            ctx.ChainID,
+				IsRIP7212Supported: s.isRIP7212Supported,
+				Tracer:             s.tracer,
 				Stakes: simulation.EntityStakes{
 					ctx.UserOp.Sender:         ctx.GetSenderDepositInfo(),
 					ctx.UserOp.GetFactory():   ctx.GetFactoryDepositInfo(),
