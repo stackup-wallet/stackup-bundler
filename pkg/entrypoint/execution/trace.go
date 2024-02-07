@@ -149,15 +149,11 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 		if revErr != nil {
 			code, panErr := errors.DecodePanic(data)
 			if panErr != nil {
-				if len(data) != 0 {
-					return nil, errors.NewRPCError(
-						errors.EXECUTION_REVERTED,
-						"execution reverted with data",
-						hexutil.Encode(data),
-					)
-				}
-
-				return nil, fmt.Errorf("%s, %s", revErr, panErr)
+				return nil, errors.NewRPCError(
+					errors.EXECUTION_REVERTED,
+					"execution reverted with data",
+					hexutil.Encode(data),
+				)
 			}
 
 			return out, errors.NewRPCError(
