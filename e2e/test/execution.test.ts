@@ -165,7 +165,7 @@ describe("During the execution phase", () => {
     expect(event?.args.success).toBe(true);
   });
 
-  test("Sender cannot estimate callData with an unhandled revert", async () => {
+  test("Sender cannot estimate gas values with an unhandled revert", async () => {
     expect.assertions(1);
     try {
       await client.sendUserOperation(
