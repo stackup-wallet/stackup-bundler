@@ -159,6 +159,13 @@ export const erc20ABI = [
 export const testGasABI = [
   {
     inputs: [],
+    name: "handleRevert",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "offset",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
@@ -184,6 +191,13 @@ export const testGasABI = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "triggerRevert",
+    outputs: [],
+    stateMutability: "pure",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "uint256", name: "times", type: "uint256" }],
     name: "wasteGas",
     outputs: [],
@@ -196,6 +210,13 @@ export const testAccountABI = [
   {
     stateMutability: "payable",
     type: "fallback",
+  },
+  {
+    inputs: [],
+    name: "handleRevert",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
   },
   {
     inputs: [],
@@ -261,6 +282,13 @@ export const testAccountABI = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "triggerRevert",
+    outputs: [],
+    stateMutability: "pure",
     type: "function",
   },
   {
@@ -401,6 +429,13 @@ export const testPaymasterABI = [
   },
   {
     inputs: [],
+    name: "handleRevert",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "offset",
     outputs: [
       {
@@ -486,6 +521,13 @@ export const testPaymasterABI = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "triggerRevert",
+    outputs: [],
+    stateMutability: "pure",
     type: "function",
   },
   {

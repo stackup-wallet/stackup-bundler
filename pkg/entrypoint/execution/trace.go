@@ -126,7 +126,13 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 	}
 	out.Result = sim
 
-	if len(res.Reverts) != 0 {
+	ev, err := parseUserOperationEvent(in.EntryPoint, ep, res.UserOperationEvent)
+	if err != nil {
+		return out, err
+	}
+	out.Event = ev
+
+	if !ev.Success && len(res.Reverts) != 0 {
 		data, err := hexutil.Decode(res.Reverts[len(res.Reverts)-1])
 		if err != nil {
 			return out, err
@@ -154,12 +160,6 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 		}
 		return out, errors.NewRPCError(errors.EXECUTION_REVERTED, reason, reason)
 	}
-
-	ev, err := parseUserOperationEvent(in.EntryPoint, ep, res.UserOperationEvent)
-	if err != nil {
-		return out, err
-	}
-	out.Event = ev
 
 	return out, nil
 }
