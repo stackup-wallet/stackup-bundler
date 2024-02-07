@@ -151,7 +151,7 @@ describe("During the execution phase", () => {
     }
   });
 
-  test("Sender can execute callData with a nested handled revert", async () => {
+  test("Sender can execute callData with a handled revert", async () => {
     const response = await client.sendUserOperation(
       acc.execute(
         config.testGas,
