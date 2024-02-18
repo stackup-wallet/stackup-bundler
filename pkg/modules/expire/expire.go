@@ -31,7 +31,7 @@ func (e *ExpireHandler) DropExpired() modules.BatchHandlerFunc {
 			if seenAt, ok := e.seenAt[hash]; !ok {
 				e.seenAt[hash] = time.Now()
 			} else if seenAt.Add(e.ttl).Before(time.Now()) {
-				ctx.MarkOpIndexForRemoval(i)
+				ctx.MarkOpIndexForRemoval(i, "op expired")
 			}
 		}
 		return nil

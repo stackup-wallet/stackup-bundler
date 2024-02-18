@@ -38,7 +38,7 @@ func TestDropExpired(t *testing.T) {
 		t.Fatalf("got pending removal length %d, want 1", len(ctx.Batch))
 	} else if !testutils.IsOpsEqual(ctx.Batch[0], op2) {
 		t.Fatal("incorrect batch: Dropped legit op")
-	} else if !testutils.IsOpsEqual(ctx.PendingRemoval[0], op1) {
+	} else if !testutils.IsOpsEqual(ctx.PendingRemoval[0].Op, op1) {
 		t.Fatal("incorrect pending removal: Didn't drop bad op")
 	}
 
