@@ -163,8 +163,12 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 
 	// Remove userOps that remain in the context from mempool.
 	rmOps := append([]*userop.UserOperation{}, ctx.Batch...)
+	dh := []string{}
+	dr := []string{}
 	for _, item := range ctx.PendingRemoval {
 		rmOps = append(rmOps, item.Op)
+		dh = append(dh, item.Op.GetUserOpHash(ep, i.chainID).String())
+		dr = append(dr, item.Reason)
 	}
 	if err := i.mempool.RemoveOps(ep, rmOps...); err != nil {
 		l.Error(err, "bundler run error")
@@ -177,13 +181,6 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 		bat = append(bat, op.GetUserOpHash(ep, i.chainID).String())
 	}
 	l = l.WithValues("batch_userop_hashes", bat)
-
-	dh := []string{}
-	dr := []string{}
-	for _, item := range ctx.PendingRemoval {
-		dh = append(dh, item.Op.GetUserOpHash(ep, i.chainID).String())
-		dr = append(dr, item.Reason)
-	}
 	l = l.WithValues("dropped_userop_hashes", dh)
 	l = l.WithValues("dropped_userop_reasons", dr)
 
