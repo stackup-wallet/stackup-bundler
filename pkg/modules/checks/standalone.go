@@ -166,7 +166,7 @@ func (s *Standalone) CodeHashes() modules.BatchHandlerFunc {
 				return err
 			}
 			if changed {
-				ctx.MarkOpIndexForRemoval(i)
+				ctx.MarkOpIndexForRemoval(i, "code hash changed")
 			}
 		}
 		return nil
@@ -200,7 +200,7 @@ func (s *Standalone) PaymasterDeposit() modules.BatchHandlerFunc {
 
 			deps[pm] = big.NewInt(0).Sub(deps[pm], op.GetMaxPrefund())
 			if deps[pm].Cmp(common.Big0) < 0 {
-				ctx.MarkOpIndexForRemoval(i)
+				ctx.MarkOpIndexForRemoval(i, "insufficient paymaster deposit")
 			}
 		}
 
@@ -220,7 +220,9 @@ func (s *Standalone) SimulateBatch() modules.BatchHandlerFunc {
 func (s *Standalone) Clean() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
 		all := append([]*userop.UserOperation{}, ctx.Batch...)
-		all = append(all, ctx.PendingRemoval...)
+		for _, item := range ctx.PendingRemoval {
+			all = append(all, item.Op)
+		}
 		hashes := []common.Hash{}
 		for _, op := range all {
 			hashes = append(hashes, op.GetUserOpHash(ctx.EntryPoint, ctx.ChainID))

@@ -77,21 +77,18 @@ func (r *Relayer) SendUserOperation() modules.BatchHandlerFunc {
 			WaitTimeout: r.waitTimeout,
 		}
 		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
-		estRev := []string{}
 		for len(ctx.Batch) > 0 {
 			est, revert, err := transaction.EstimateHandleOpsGas(&opts)
 
 			if err != nil {
 				return err
 			} else if revert != nil {
-				ctx.MarkOpIndexForRemoval(revert.OpIndex)
-				estRev = append(estRev, revert.Reason)
+				ctx.MarkOpIndexForRemoval(revert.OpIndex, revert.Reason)
 			} else {
 				opts.GasLimit = est
 				break
 			}
 		}
-		ctx.Data["estimate_revert_reasons"] = estRev
 
 		// Call handleOps() with gas estimate. Any userOps that cause a revert at this stage will be
 		// caught and dropped in the next iteration.

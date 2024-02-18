@@ -10,12 +10,17 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
+type PendingRemovalItem struct {
+	Op     *userop.UserOperation
+	Reason string
+}
+
 // BatchHandlerCtx is the object passed to BatchHandler functions during the Bundler's Run process. It
 // also contains a Data field for adding arbitrary key-value pairs to the context. These values will be
 // logged by the Bundler at the end of each run.
 type BatchHandlerCtx struct {
 	Batch          []*userop.UserOperation
-	PendingRemoval []*userop.UserOperation
+	PendingRemoval []*PendingRemovalItem
 	EntryPoint     common.Address
 	ChainID        *big.Int
 	BaseFee        *big.Int
@@ -38,7 +43,7 @@ func NewBatchHandlerContext(
 
 	return &BatchHandlerCtx{
 		Batch:          copy,
-		PendingRemoval: []*userop.UserOperation{},
+		PendingRemoval: []*PendingRemovalItem{},
 		EntryPoint:     entryPoint,
 		ChainID:        chainID,
 		BaseFee:        baseFee,
@@ -50,7 +55,7 @@ func NewBatchHandlerContext(
 
 // MarkOpIndexForRemoval will remove the op by index from the batch and add it to the pending removal array.
 // This should be used for ops that are not to be included on-chain and dropped from the mempool.
-func (c *BatchHandlerCtx) MarkOpIndexForRemoval(index int) {
+func (c *BatchHandlerCtx) MarkOpIndexForRemoval(index int, reason string) {
 	batch := []*userop.UserOperation{}
 	var op *userop.UserOperation
 	for i, curr := range c.Batch {
@@ -65,7 +70,10 @@ func (c *BatchHandlerCtx) MarkOpIndexForRemoval(index int) {
 	}
 
 	c.Batch = batch
-	c.PendingRemoval = append(c.PendingRemoval, op)
+	c.PendingRemoval = append(c.PendingRemoval, &PendingRemovalItem{
+		Op:     op,
+		Reason: reason,
+	})
 }
 
 // UserOpHandlerCtx is the object passed to UserOpHandler functions during the Client's SendUserOperation

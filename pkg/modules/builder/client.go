@@ -76,21 +76,18 @@ func (b *BuilderClient) SendUserOperation() modules.BatchHandlerFunc {
 			WaitTimeout: b.waitTimeout,
 		}
 		// Estimate gas for handleOps() and drop all userOps that cause unexpected reverts.
-		estRev := []string{}
 		for len(ctx.Batch) > 0 {
 			est, revert, err := transaction.EstimateHandleOpsGas(&opts)
 
 			if err != nil {
 				return err
 			} else if revert != nil {
-				ctx.MarkOpIndexForRemoval(revert.OpIndex)
-				estRev = append(estRev, revert.Reason)
+				ctx.MarkOpIndexForRemoval(revert.OpIndex, revert.Reason)
 			} else {
 				opts.GasLimit = est
 				break
 			}
 		}
-		ctx.Data["estimate_revert_reasons"] = estRev
 
 		// No need to continue if the batch size is 0. Otherwise we would just be sending empty batches.
 		if len(ctx.Batch) == 0 {
