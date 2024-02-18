@@ -15,7 +15,7 @@ func FilterUnderpriced() modules.BatchHandlerFunc {
 		b := []*userop.UserOperation{}
 		for _, op := range ctx.Batch {
 			if ctx.BaseFee != nil && ctx.BaseFee.Cmp(common.Big0) != 0 && ctx.Tip != nil {
-				gp := big.NewInt(0).Add(ctx.BaseFee, ctx.Tip)
+				gp := big.NewInt(0).Add(ctx.BaseFee, big.NewInt(0))
 				if op.GetDynamicGasPrice(ctx.BaseFee).Cmp(gp) >= 0 {
 					b = append(b, op)
 				}
