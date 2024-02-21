@@ -131,7 +131,13 @@ func PrivateMode() {
 	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
 	c.SetGetGasPricesFunc(client.GetGasPricesWithEthClient(eth))
 	c.SetGetGasEstimateFunc(
-		client.GetGasEstimateWithEthClient(rpc, ov, chain, conf.MaxBatchGasLimit),
+		client.GetGasEstimateWithEthClient(
+			rpc,
+			ov,
+			chain,
+			conf.MaxBatchGasLimit,
+			conf.NativeBundlerExecutorTracer,
+		),
 	)
 	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
 	c.SetGetStakeFunc(stake.GetStakeWithEthClient(eth))

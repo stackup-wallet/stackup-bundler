@@ -50,6 +50,7 @@ type EstimateInput struct {
 	Ov          *Overhead
 	ChainID     *big.Int
 	MaxGasLimit *big.Int
+	Tracer      string
 
 	attempts int64
 	lastVGL  int64
@@ -68,6 +69,7 @@ func retryEstimateGas(err error, vgl int64, in *EstimateInput) (uint64, uint64, 
 			Ov:          in.Ov,
 			ChainID:     in.ChainID,
 			MaxGasLimit: in.MaxGasLimit,
+			Tracer:      in.Tracer,
 			attempts:    in.attempts + 1,
 			lastVGL:     vgl,
 		})
@@ -150,6 +152,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		Sos:         in.Sos,
 		ChainID:     in.ChainID,
 		TraceFeeCap: in.Op.MaxFeePerGas,
+		Tracer:      in.Tracer,
 	})
 	if err != nil {
 		return retryEstimateGas(err, f, in)
@@ -178,6 +181,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		Op:         simOp,
 		Sos:        in.Sos,
 		ChainID:    in.ChainID,
+		Tracer:     in.Tracer,
 	})
 	if err != nil {
 		// Execution is successful but one shot tracing has failed. Fallback to binary search with an
@@ -202,6 +206,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					Op:         simOp,
 					Sos:        in.Sos,
 					ChainID:    in.ChainID,
+					Tracer:     in.Tracer,
 				})
 				simErr = err
 				if err == nil {
