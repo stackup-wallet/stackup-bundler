@@ -106,6 +106,7 @@ jobs:
           ERC4337_BUNDLER_ETH_CLIENT_URL: http://localhost:8545/
           ERC4337_BUNDLER_DEBUG_MODE: true
           ERC4337_BUNDLER_NATIVE_BUNDLER_COLLECTOR_TRACER: bundlerCollectorTracer
+          ERC4337_BUNDLER_NATIVE_BUNDLER_EXECUTOR_TRACER: bundlerExecutorTracer
           # This key is for testing purposes only. Do not use for anything else.
           ERC4337_BUNDLER_PRIVATE_KEY: c6cbc5ffad570fdad0544d1b5358a36edeb98d163b6567912ac4754e144d4edb
 

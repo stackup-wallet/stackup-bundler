@@ -26,6 +26,7 @@ type Values struct {
 	OpLookupLimit                uint64
 	Beneficiary                  string
 	NativeBundlerCollectorTracer string
+	NativeBundlerExecutorTracer  string
 	ReputationConstants          *entities.ReputationConstants
 
 	// Searcher mode variables.
@@ -123,6 +124,7 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_supported_entry_points")
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
 	_ = viper.BindEnv("erc4337_bundler_native_bundler_collector_tracer")
+	_ = viper.BindEnv("erc4337_bundler_native_bundler_executor_tracer")
 	_ = viper.BindEnv("erc4337_bundler_max_verification_gas")
 	_ = viper.BindEnv("erc4337_bundler_max_batch_gas_limit")
 	_ = viper.BindEnv("erc4337_bundler_max_op_ttl_seconds")
@@ -184,6 +186,7 @@ func GetValues() *Values {
 	supportedEntryPoints := envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points"))
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	nativeBundlerCollectorTracer := viper.GetString("erc4337_bundler_native_bundler_collector_tracer")
+	nativeBundlerExecutorTracer := viper.GetString("erc4337_bundler_native_bundler_executor_tracer")
 	maxVerificationGas := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_verification_gas")))
 	maxBatchGasLimit := big.NewInt(int64(viper.GetInt("erc4337_bundler_max_batch_gas_limit")))
 	maxOpTTL := time.Second * viper.GetDuration("erc4337_bundler_max_op_ttl_seconds")
@@ -208,6 +211,7 @@ func GetValues() *Values {
 		SupportedEntryPoints:         supportedEntryPoints,
 		Beneficiary:                  beneficiary,
 		NativeBundlerCollectorTracer: nativeBundlerCollectorTracer,
+		NativeBundlerExecutorTracer:  nativeBundlerExecutorTracer,
 		MaxVerificationGas:           maxVerificationGas,
 		MaxBatchGasLimit:             maxBatchGasLimit,
 		MaxOpTTL:                     maxOpTTL,

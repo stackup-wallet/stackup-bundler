@@ -76,6 +76,7 @@ func GetGasEstimateWithEthClient(
 	ov *gas.Overhead,
 	chain *big.Int,
 	maxGasLimit *big.Int,
+	tracer string,
 ) GetGasEstimateFunc {
 	return func(
 		ep common.Address,
@@ -90,6 +91,7 @@ func GetGasEstimateWithEthClient(
 			Ov:          ov,
 			ChainID:     chain,
 			MaxGasLimit: maxGasLimit,
+			Tracer:      tracer,
 		})
 	}
 }

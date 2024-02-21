@@ -27,6 +27,7 @@ type TraceInput struct {
 	Op         *userop.UserOperation
 	Sos        state.OverrideSet
 	ChainID    *big.Int
+	Tracer     string
 
 	// Optional params for simulateHandleOps
 	Target      common.Address
@@ -89,6 +90,10 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 	if err != nil {
 		return nil, err
 	}
+	t := tracer.Loaded.BundlerExecutionTracer
+	if in.Tracer != "" {
+		t = in.Tracer
+	}
 	out := &TraceOutput{}
 
 	var res tracer.BundlerExecutionReturn
@@ -99,7 +104,7 @@ func TraceSimulateHandleOp(in *TraceInput) (*TraceOutput, error) {
 		MaxFeePerGas: hexutil.Big(*mf),
 	}
 	opts := utils.TraceCallOpts{
-		Tracer:         tracer.Loaded.BundlerExecutionTracer,
+		Tracer:         t,
 		StateOverrides: state.WithMaxBalanceOverride(common.HexToAddress("0x"), in.Sos),
 	}
 	if err := in.Rpc.CallContext(context.Background(), &res, "debug_traceCall", &req, "latest", &opts); err != nil {
