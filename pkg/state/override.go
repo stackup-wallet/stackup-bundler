@@ -20,27 +20,6 @@ type OverrideAccount struct {
 // debug_traceCall.
 type OverrideSet map[common.Address]OverrideAccount
 
-// Copy creates a deep copy of the OverrideSet.
-func (os OverrideSet) Copy() (OverrideSet, error) {
-	cpy := OverrideSet{}
-	for k, v := range os {
-		b, err := json.Marshal(v)
-		if err != nil {
-			return nil, err
-		}
-
-		oa := OverrideAccount{}
-		err = json.Unmarshal(b, &oa)
-		if err != nil {
-			return nil, err
-		}
-
-		cpy[k] = oa
-	}
-
-	return cpy, nil
-}
-
 // ParseOverrideData decodes a map into an OverrideSet and validates all the fields are correctly typed.
 func ParseOverrideData(data map[string]any) (OverrideSet, error) {
 	os := OverrideSet{}

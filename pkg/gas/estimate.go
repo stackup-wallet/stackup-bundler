@@ -91,7 +91,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 
 	// If paymaster is not included and sender overrides are not set, default to overriding sender balance to
 	// max uint96. This ensures gas estimation is not blocked by insufficient funds.
-	sosCpy, err := in.Sos.Copy()
+	sosCpy, err := state.Copy(in.Sos)
 	if err != nil {
 		return 0, 0, err
 	}
