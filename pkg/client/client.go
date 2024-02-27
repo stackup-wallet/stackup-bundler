@@ -194,16 +194,11 @@ func (i *Client) EstimateUserOperationGas(
 	hash := userOp.GetUserOpHash(epAddr, i.chainID)
 	l = l.WithValues("userop_hash", hash)
 
-	// Parse state override set. If paymaster is not included and sender overrides are not set, default to
-	// overriding sender balance to max uint96. This ensures gas estimation is not blocked by insufficient
-	// funds.
+	// Parse state override set.
 	sos, err := state.ParseOverrideData(os)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
-	}
-	if userOp.GetPaymaster() == common.HexToAddress("0x") {
-		sos = state.WithMaxBalanceOverride(userOp.Sender, sos)
 	}
 
 	// Override op with suggested gas prices if maxFeePerGas is 0. This allows for more reliable gas
