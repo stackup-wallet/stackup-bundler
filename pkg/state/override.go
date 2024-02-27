@@ -30,7 +30,11 @@ func (os OverrideSet) Copy() (OverrideSet, error) {
 		}
 
 		oa := OverrideAccount{}
-		json.Unmarshal(b, &oa)
+		err = json.Unmarshal(b, &oa)
+		if err != nil {
+			return nil, err
+		}
+
 		cpy[k] = oa
 	}
 
