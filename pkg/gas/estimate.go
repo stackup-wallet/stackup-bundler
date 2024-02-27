@@ -89,6 +89,16 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(0))
 	data["callGasLimit"] = hexutil.EncodeBig(big.NewInt(0))
 
+	// If paymaster is not included and sender overrides are not set, default to overriding sender balance to
+	// max uint96. This ensures gas estimation is not blocked by insufficient funds.
+	sosCpy, err := in.Sos.Copy()
+	if err != nil {
+		return 0, 0, err
+	}
+	if in.Op.GetPaymaster() == common.HexToAddress("0x") {
+		sosCpy = state.WithMaxBalanceOverride(in.Op.Sender, sosCpy)
+	}
+
 	// Find the optimal verificationGasLimit with binary search. A gas price of 0 may result in certain
 	// upstream code paths in the EVM to not be executed which can affect the reliability of gas estimates. In
 	// this case, consider calling the EstimateGas function after setting the gas price on the UserOperation.
@@ -108,7 +118,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 			Rpc:        in.Rpc,
 			EntryPoint: in.EntryPoint,
 			Op:         simOp,
-			Sos:        in.Sos,
+			Sos:        sosCpy,
 			ChainID:    in.ChainID,
 		})
 		simErr = err
@@ -136,8 +146,9 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	f = (f * (100 + baseVGLBuffer)) / 100
 	data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(f)))
 
-	// Find the optimal callGasLimit by setting the gas price to 0 and maxing out the gas limit. We don't run
-	// into the same restrictions here as we do with verificationGasLimit.
+	// Find the optimal callGasLimit by setting the gas price to 0 and maxing out the gas limit. We use the
+	// original state override to account for insufficient balance reverts unless the caller has explicitly
+	// overridden the balance too.
 	data["maxFeePerGas"] = hexutil.EncodeBig(big.NewInt(0))
 	data["maxPriorityFeePerGas"] = hexutil.EncodeBig(big.NewInt(0))
 	data["callGasLimit"] = hexutil.EncodeBig(in.MaxGasLimit)
@@ -165,8 +176,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		cgl = in.Ov.NonZeroValueCall()
 	}
 
-	// Run a final simulation to check wether or not value transfers are still okay when factoring in the
-	// expected gas cost.
+	// Run a final simulation using actual gas fees and to confirm one-shot tracing is ok.
 	data["maxFeePerGas"] = hexutil.EncodeBig(in.Op.MaxFeePerGas)
 	data["maxPriorityFeePerGas"] = hexutil.EncodeBig(in.Op.MaxFeePerGas)
 	data["verificationGasLimit"] = hexutil.EncodeBig(vgl)
@@ -179,7 +189,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		Rpc:        in.Rpc,
 		EntryPoint: in.EntryPoint,
 		Op:         simOp,
-		Sos:        in.Sos,
+		Sos:        sosCpy,
 		ChainID:    in.ChainID,
 		Tracer:     in.Tracer,
 	})
@@ -204,7 +214,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 					Rpc:        in.Rpc,
 					EntryPoint: in.EntryPoint,
 					Op:         simOp,
-					Sos:        in.Sos,
+					Sos:        sosCpy,
 					ChainID:    in.ChainID,
 					Tracer:     in.Tracer,
 				})
