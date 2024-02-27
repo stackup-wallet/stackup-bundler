@@ -497,7 +497,7 @@ func TestParseOverrideDataOk(t *testing.T) {
 	}
 }
 
-// TestOverrideCopyNewRef validates that the Copy function returns a new set without identical reference.
+// TestOverrideCopyNewRef validates that the Copy function returns a new set without identical references.
 func TestOverrideCopyNewRef(t *testing.T) {
 	acc := common.HexToAddress("0x0000000000000000000000000000000000000000")
 	stateOvKey := common.HexToHash("0xdead")
