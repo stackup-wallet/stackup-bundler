@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// TestCopyNil validates that an empty set is at least returned if nil passed.
 func TestCopyNil(t *testing.T) {
 	if os, err := Copy(nil); err != nil {
 		t.Fatalf("got %v, want nil", err)
@@ -17,7 +16,6 @@ func TestCopyNil(t *testing.T) {
 	}
 }
 
-// TestCopyNewRef validates that the Copy function returns a new set without identical references.
 func TestCopyNewRef(t *testing.T) {
 	acc := common.HexToAddress("0x0000000000000000000000000000000000000000")
 	stateOvKey := common.HexToHash("0xdead")
@@ -48,7 +46,6 @@ func TestCopyNewRef(t *testing.T) {
 	}
 }
 
-// TestCopySameVal validates that the Copy function returns a new set with identical values.
 func TestCopySameVal(t *testing.T) {
 	acc := common.HexToAddress("0x0000000000000000000000000000000000000000")
 	stateOvKey := common.HexToHash("0xdead")
