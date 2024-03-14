@@ -28,8 +28,8 @@ func isValidationOOG(err error) bool {
 		strings.Contains(err.Error(), "AA41 too little verificationGas") ||
 		strings.Contains(err.Error(), "AA51 prefund below actualGasCost") ||
 		strings.Contains(err.Error(), "AA13 initCode failed or OOG") ||
-		strings.Contains(err.Error(), "AA23 reverted (or OOG)") ||
-		strings.Contains(err.Error(), "AA33 reverted (or OOG)") ||
+		strings.Contains(err.Error(), "AA23 reverted") ||
+		strings.Contains(err.Error(), "AA33 reverted") ||
 		strings.Contains(err.Error(), "return data out of bounds") ||
 		strings.Contains(err.Error(), "validation OOG")
 }
