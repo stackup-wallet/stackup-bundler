@@ -1,13 +1,13 @@
 package testutils
 
 import (
+	entrypointV06 "github.com/stackup-wallet/stackup-bundler/pkg/entrypoint/bindings/v06"
 	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stackup-wallet/stackup-bundler/pkg/entrypoint"
 	"github.com/stackup-wallet/stackup-bundler/pkg/signer"
 )
 
@@ -21,28 +21,28 @@ var (
 	ValidAddress5           = common.HexToAddress("0x7357C1Fc72a14399cb845f2f71421B4CE7eCE608")
 	ChainID                 = big.NewInt(1)
 	MaxOpsForUnstakedSender = 1
-	StakedDepositInfo       = &entrypoint.IStakeManagerDepositInfo{
+	StakedDepositInfo       = &entrypointV06.IStakeManagerDepositInfo{
 		Deposit:         big.NewInt(OneETH.Int64()),
 		Staked:          true,
 		Stake:           big.NewInt(OneETH.Int64()),
 		UnstakeDelaySec: DefaultUnstakeDelaySec,
 		WithdrawTime:    big.NewInt(time.Now().Unix()),
 	}
-	StakedZeroDepositInfo = &entrypoint.IStakeManagerDepositInfo{
+	StakedZeroDepositInfo = &entrypointV06.IStakeManagerDepositInfo{
 		Deposit:         big.NewInt(0),
 		Staked:          true,
 		Stake:           big.NewInt(OneETH.Int64()),
 		UnstakeDelaySec: DefaultUnstakeDelaySec,
 		WithdrawTime:    big.NewInt(time.Now().Unix()),
 	}
-	NonStakedDepositInfo = &entrypoint.IStakeManagerDepositInfo{
+	NonStakedDepositInfo = &entrypointV06.IStakeManagerDepositInfo{
 		Deposit:         big.NewInt(OneETH.Int64()),
 		Staked:          false,
 		Stake:           big.NewInt(0),
 		UnstakeDelaySec: uint32(0),
 		WithdrawTime:    big.NewInt(0),
 	}
-	NonStakedZeroDepositInfo = &entrypoint.IStakeManagerDepositInfo{
+	NonStakedZeroDepositInfo = &entrypointV06.IStakeManagerDepositInfo{
 		Deposit:         big.NewInt(0),
 		Staked:          false,
 		Stake:           big.NewInt(0),
