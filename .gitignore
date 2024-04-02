@@ -18,3 +18,6 @@
 .DS_Store
 tmp
 .env
+
+.vscode
+.idea
