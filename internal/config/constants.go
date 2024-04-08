@@ -34,4 +34,10 @@ var (
 		LyraSepoliaChainID.Uint64(),
 		Ancient8SepoliaChainID.Uint64(),
 	)
+
+	ArbStackChains = mapset.NewSet(
+		ArbitrumOneChainID.Uint64(),
+		ArbitrumGoerliChainID.Uint64(),
+		ArbitrumSepoliaChainID.Uint64(),
+	)
 )
