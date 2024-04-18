@@ -25,13 +25,17 @@ var (
 		"BASEFEE",
 		"BLOCKHASH",
 		"NUMBER",
-		"SELFBALANCE",
-		"BALANCE",
 		"ORIGIN",
 		"GAS",
 		"CREATE",
 		"COINBASE",
 		"SELFDESTRUCT",
+	)
+
+	// List of opcodes not allowed during validation for unstaked entities.
+	bannedUnstakedOpCodes = mapset.NewSet(
+		"SELFBALANCE",
+		"BALANCE",
 	)
 
 	revertOpCode = "REVERT"
