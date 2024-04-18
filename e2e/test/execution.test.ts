@@ -95,35 +95,55 @@ describe("During the execution phase", () => {
     expect(event?.args.success).toBe(true);
   });
 
-  describe("With transfer amounts more than sender balance", () => {
-    test("Sender cannot create a UserOperation by default", async () => {
-      expect.assertions(1);
-      try {
-        const balance = await provider.getBalance(acc.getSender());
-        const response = await client.sendUserOperation(
-          acc.execute(acc.getSender(), balance.mul(2), "0x")
-        );
-        await response.wait();
-      } catch (error: any) {
-        expect(error?.error.code).toBe(errorCodes.executionReverted);
-      }
+  describe("With transfer amounts at the limit of sender balance", () => {
+    describe("Equal to sender balance", () => {
+      describe("No EntryPoint deposits", () => {
+        test("Sender cannot create a UserOperation by default", async () => {
+          expect.assertions(1);
+          try {
+            // TODO: ensure no deposits for this sender in EP.
+            const balance = await provider.getBalance(acc.getSender());
+            const response = await client.sendUserOperation(
+              acc.execute(acc.getSender(), balance, "0x")
+            );
+            await response.wait();
+          } catch (error: any) {
+            expect(error?.error.code).toBe(errorCodes.executionReverted);
+          }
+        });
+      });
     });
 
-    test("Sender can cause a failed UserOperation with state overrides", async () => {
-      const balance = await provider.getBalance(acc.getSender());
-      const response = await client.sendUserOperation(
-        acc.execute(acc.getSender(), balance.mul(2), "0x"),
-        {
-          stateOverrides: {
-            [acc.getSender()]: {
-              balance: balance.mul(3).toHexString(),
-            },
-          },
+    describe("More than sender balance", () => {
+      test("Sender cannot create a UserOperation by default", async () => {
+        expect.assertions(1);
+        try {
+          const balance = await provider.getBalance(acc.getSender());
+          const response = await client.sendUserOperation(
+            acc.execute(acc.getSender(), balance.mul(2), "0x")
+          );
+          await response.wait();
+        } catch (error: any) {
+          expect(error?.error.code).toBe(errorCodes.executionReverted);
         }
-      );
-      const event = await response.wait();
+      });
 
-      expect(event?.args.success).toBe(false);
+      test("Sender can cause a failed UserOperation with state overrides", async () => {
+        const balance = await provider.getBalance(acc.getSender());
+        const response = await client.sendUserOperation(
+          acc.execute(acc.getSender(), balance.mul(2), "0x"),
+          {
+            stateOverrides: {
+              [acc.getSender()]: {
+                balance: balance.mul(3).toHexString(),
+              },
+            },
+          }
+        );
+        const event = await response.wait();
+
+        expect(event?.args.success).toBe(false);
+      });
     });
   });
 
