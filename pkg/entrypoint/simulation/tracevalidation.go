@@ -93,6 +93,10 @@ func TraceSimulateValidation(in *TraceInput) (*TraceOutput, error) {
 			if bannedOpCodes.Contains(opcode) {
 				return nil, fmt.Errorf("%s uses banned opcode: %s", title, opcode)
 			}
+
+			if !entity.IsStaked && bannedUnstakedOpCodes.Contains(opcode) {
+				return nil, fmt.Errorf("unstaked %s uses banned opcode: %s", title, opcode)
+			}
 		}
 
 		ic.Add(entity.Address)
