@@ -25,13 +25,13 @@ var (
 	MockByteCode = common.Hex2Bytes("6080604052")
 )
 
-// Returns a valid initial userOperation for an EIP-4337 account.
-func MockValidInitUserOp() *userop.UserOperation {
-	op, _ := userop.New(MockUserOpData)
+// Returns a valid initial v0.6 userOperation for an EIP-4337 account.
+func MockValidInitV06UserOp() *userop.UserOperationV06 {
+	op, _ := userop.NewV06(MockUserOpData)
 	return op
 }
 
-func IsOpsEqual(op1 *userop.UserOperation, op2 *userop.UserOperation) bool {
+func IsOpsEqual(op1 *userop.UserOperationV06, op2 *userop.UserOperationV06) bool {
 	return cmp.Equal(
 		op1,
 		op2,
@@ -39,7 +39,7 @@ func IsOpsEqual(op1 *userop.UserOperation, op2 *userop.UserOperation) bool {
 	)
 }
 
-func GetOpsDiff(op1 *userop.UserOperation, op2 *userop.UserOperation) string {
+func GetOpsDiff(op1 *userop.UserOperationV06, op2 *userop.UserOperationV06) string {
 	return cmp.Diff(
 		op1,
 		op2,

@@ -7,7 +7,7 @@ import (
 )
 
 func TestInitCodeDNE(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	err := ValidateInitCode(op)
 
@@ -17,7 +17,7 @@ func TestInitCodeDNE(t *testing.T) {
 }
 
 func TestInitCodeContainsBadAddress(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte("1234")
 	err := ValidateInitCode(op)
 
@@ -27,7 +27,7 @@ func TestInitCodeContainsBadAddress(t *testing.T) {
 }
 
 func TestInitCodeExists(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	err := ValidateInitCode(op)
 
 	if err != nil {

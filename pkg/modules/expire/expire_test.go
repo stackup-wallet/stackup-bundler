@@ -14,8 +14,8 @@ import (
 // pending removal.
 func TestDropExpired(t *testing.T) {
 	exp := New(time.Second * 30)
-	op1 := testutils.MockValidInitUserOp()
-	op2 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.CallData = common.Hex2Bytes("0xdead")
 	exp.seenAt = map[common.Hash]time.Time{
 		op1.GetUserOpHash(testutils.ValidAddress1, common.Big1): time.Now().Add(time.Second * -45),
@@ -23,7 +23,7 @@ func TestDropExpired(t *testing.T) {
 	}
 
 	ctx := modules.NewBatchHandlerContext(
-		[]*userop.UserOperation{op1, op2},
+		[]*userop.UserOperationV06{op1, op2},
 		testutils.ValidAddress1,
 		testutils.ChainID,
 		nil,

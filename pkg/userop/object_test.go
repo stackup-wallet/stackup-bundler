@@ -11,7 +11,7 @@ import (
 // effective gas price given a base fee.
 func TestUserOperationGetDynamicGasPrice(t *testing.T) {
 	bf := big.NewInt(3)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 
 	// basefee + MPF > MF
 	want := big.NewInt(4)
@@ -41,7 +41,7 @@ func TestUserOperationGetDynamicGasPrice(t *testing.T) {
 // TestUserOperationGetGasPriceNilBF verifies that (*UserOperation).GetDynamicGasPrice returns the correct
 // value when basefee is nil.
 func TestUserOperationGetGasPriceNilBF(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.MaxFeePerGas = big.NewInt(4)
 	op.MaxPriorityFeePerGas = big.NewInt(3)
 	if op.GetDynamicGasPrice(nil).Cmp(op.MaxPriorityFeePerGas) != 0 {

@@ -12,7 +12,7 @@ import (
 // dynamic or legacy GasPrice set in the context.
 func FilterUnderpriced() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
-		b := []*userop.UserOperation{}
+		b := []*userop.UserOperationV06{}
 		for _, op := range ctx.Batch {
 			if ctx.BaseFee != nil && ctx.BaseFee.Cmp(common.Big0) != 0 && ctx.Tip != nil {
 				gp := big.NewInt(0).Add(ctx.BaseFee, ctx.Tip)

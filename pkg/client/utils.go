@@ -55,14 +55,14 @@ func GetGasPricesWithEthClient(eth *ethclient.Client) GetGasPricesFunc {
 // callGasLimit given a userOp and EntryPoint address.
 type GetGasEstimateFunc = func(
 	ep common.Address,
-	op *userop.UserOperation,
+	op *userop.UserOperationV06,
 	sos state.OverrideSet,
 ) (verificationGas uint64, callGas uint64, err error)
 
 func getGasEstimateNoop() GetGasEstimateFunc {
 	return func(
 		ep common.Address,
-		op *userop.UserOperation,
+		op *userop.UserOperationV06,
 		sos state.OverrideSet,
 	) (verificationGas uint64, callGas uint64, err error) {
 		return 0, 0, nil
@@ -80,7 +80,7 @@ func GetGasEstimateWithEthClient(
 ) GetGasEstimateFunc {
 	return func(
 		ep common.Address,
-		op *userop.UserOperation,
+		op *userop.UserOperationV06,
 		sos state.OverrideSet,
 	) (verificationGas uint64, callGas uint64, err error) {
 		return gas.EstimateGas(&gas.EstimateInput{

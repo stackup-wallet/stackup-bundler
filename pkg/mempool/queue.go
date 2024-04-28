@@ -38,7 +38,7 @@ func (q *userOpQueues) getEntryPointSet(entryPoint common.Address) *set {
 	return val.(*set)
 }
 
-func (q *userOpQueues) AddOp(entryPoint common.Address, op *userop.UserOperation) {
+func (q *userOpQueues) AddOp(entryPoint common.Address, op *userop.UserOperationV06) {
 	eps := q.getEntryPointSet(entryPoint)
 	key := string(getUniqueKey(entryPoint, op.Sender, op.Nonce))
 
@@ -54,30 +54,30 @@ func (q *userOpQueues) AddOp(entryPoint common.Address, op *userop.UserOperation
 	}
 }
 
-func (q *userOpQueues) GetOps(entryPoint common.Address, entity common.Address) []*userop.UserOperation {
+func (q *userOpQueues) GetOps(entryPoint common.Address, entity common.Address) []*userop.UserOperationV06 {
 	eps := q.getEntryPointSet(entryPoint)
 	ess := eps.getEntitiesSortedSet(entity)
 	nodes := ess.GetByRankRange(-1, -ess.GetCount(), false)
-	batch := []*userop.UserOperation{}
+	batch := []*userop.UserOperationV06{}
 	for _, n := range nodes {
-		batch = append(batch, n.Value.(*userop.UserOperation))
+		batch = append(batch, n.Value.(*userop.UserOperationV06))
 	}
 
 	return batch
 }
 
-func (q *userOpQueues) All(entryPoint common.Address) []*userop.UserOperation {
+func (q *userOpQueues) All(entryPoint common.Address) []*userop.UserOperationV06 {
 	eps := q.getEntryPointSet(entryPoint)
 	nodes := eps.all.GetByRankRange(1, -1, false)
-	batch := []*userop.UserOperation{}
+	batch := []*userop.UserOperationV06{}
 	for _, n := range nodes {
-		batch = append(batch, n.Value.(*userop.UserOperation))
+		batch = append(batch, n.Value.(*userop.UserOperationV06))
 	}
 
 	return batch
 }
 
-func (q *userOpQueues) RemoveOps(entryPoint common.Address, ops ...*userop.UserOperation) {
+func (q *userOpQueues) RemoveOps(entryPoint common.Address, ops ...*userop.UserOperationV06) {
 	eps := q.getEntryPointSet(entryPoint)
 	for _, op := range ops {
 		key := string(getUniqueKey(entryPoint, op.Sender, op.Nonce))

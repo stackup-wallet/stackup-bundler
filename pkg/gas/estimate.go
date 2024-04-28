@@ -45,7 +45,7 @@ func isExecutionReverted(err error) bool {
 type EstimateInput struct {
 	Rpc         *rpc.Client
 	EntryPoint  common.Address
-	Op          *userop.UserOperation
+	Op          *userop.UserOperationV06
 	Sos         state.OverrideSet
 	Ov          *Overhead
 	ChainID     *big.Int
@@ -110,7 +110,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 		m := (l + r) / 2
 
 		data["verificationGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(m)))
-		simOp, err := userop.New(data)
+		simOp, err := userop.NewV06(data)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -152,7 +152,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	data["maxFeePerGas"] = hexutil.EncodeBig(big.NewInt(0))
 	data["maxPriorityFeePerGas"] = hexutil.EncodeBig(big.NewInt(0))
 	data["callGasLimit"] = hexutil.EncodeBig(in.MaxGasLimit)
-	simOp, err := userop.New(data)
+	simOp, err := userop.NewV06(data)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -181,7 +181,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 	data["maxPriorityFeePerGas"] = hexutil.EncodeBig(in.Op.MaxFeePerGas)
 	data["verificationGasLimit"] = hexutil.EncodeBig(vgl)
 	data["callGasLimit"] = hexutil.EncodeBig(cgl)
-	simOp, err = userop.New(data)
+	simOp, err = userop.NewV06(data)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -206,7 +206,7 @@ func EstimateGas(in *EstimateInput) (verificationGas uint64, callGas uint64, err
 				m := (l + r) / 2
 
 				data["callGasLimit"] = hexutil.EncodeBig(big.NewInt(int64(m)))
-				simOp, err := userop.New(data)
+				simOp, err := userop.NewV06(data)
 				if err != nil {
 					return 0, 0, err
 				}

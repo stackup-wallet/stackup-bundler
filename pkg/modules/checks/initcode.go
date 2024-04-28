@@ -8,7 +8,7 @@ import (
 )
 
 // ValidateInitCode checks if initCode is not empty and has a valid factory address.
-func ValidateInitCode(op *userop.UserOperation) error {
+func ValidateInitCode(op *userop.UserOperationV06) error {
 	if len(op.InitCode) == 0 {
 		return nil
 	}

@@ -15,7 +15,7 @@ func MaintainGasLimit(maxBatchGasLimit *big.Int) modules.BatchHandlerFunc {
 	staticOv := gas.NewDefaultOverhead()
 
 	return func(ctx *modules.BatchHandlerCtx) error {
-		bat := []*userop.UserOperation{}
+		bat := []*userop.UserOperationV06{}
 		sum := big.NewInt(0)
 		for _, op := range ctx.Batch {
 			static, err := staticOv.CalcPreVerificationGas(op)

@@ -67,7 +67,7 @@ func (ov *Overhead) SetPreVerificationGasBufferFactor(factor int64) {
 
 // CalcCallDataCost calculates the additional gas cost required to serialize the userOp when making the
 // transaction to submit the entire batch.
-func (ov *Overhead) CalcCallDataCost(op *userop.UserOperation) float64 {
+func (ov *Overhead) CalcCallDataCost(op *userop.UserOperationV06) float64 {
 	cost := float64(0)
 	for _, b := range op.Pack() {
 		if b == byte(0) {
@@ -86,7 +86,7 @@ func (ov *Overhead) CalcCallDataCost(op *userop.UserOperation) float64 {
 //
 // Note: The constant values have been derived empirically by plotting the relationship between per userOp
 // overhead vs length in words with a sample size of 30.
-func (ov *Overhead) CalcPerUserOpCost(op *userop.UserOperation) float64 {
+func (ov *Overhead) CalcPerUserOpCost(op *userop.UserOperationV06) float64 {
 	opLen := math.Floor(float64(len(op.Pack())+31) / 32)
 	cost := (ov.perUserOpMultiplier * opLen) + ov.perUserOpFixed
 
@@ -94,7 +94,7 @@ func (ov *Overhead) CalcPerUserOpCost(op *userop.UserOperation) float64 {
 }
 
 // CalcPreVerificationGas returns an expected gas cost for processing a UserOperation from a batch.
-func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, error) {
+func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperationV06) (*big.Int, error) {
 	// Sanitize fields to reduce as much variability due to length and zero bytes
 	data, err := op.ToMap()
 	if err != nil {
@@ -104,7 +104,7 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, 
 	data["verificationGasLimit"] = hexutil.EncodeBig(ov.sanitizedVGL)
 	data["callGasLimit"] = hexutil.EncodeBig(ov.sanitizedCGL)
 	data["signature"] = hexutil.Encode(bytes.Repeat([]byte{1}, len(op.Signature)))
-	tmp, err := userop.New(data)
+	tmp, err := userop.NewV06(data)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (ov *Overhead) CalcPreVerificationGas(op *userop.UserOperation) (*big.Int, 
 }
 
 // CalcPreVerificationGasWithBuffer returns CalcPreVerificationGas increased by the set PVG buffer factor.
-func (ov *Overhead) CalcPreVerificationGasWithBuffer(op *userop.UserOperation) (*big.Int, error) {
+func (ov *Overhead) CalcPreVerificationGasWithBuffer(op *userop.UserOperationV06) (*big.Int, error) {
 	pvg, err := ov.CalcPreVerificationGas(op)
 	if err != nil {
 		return nil, err

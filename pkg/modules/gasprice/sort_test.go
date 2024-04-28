@@ -16,22 +16,22 @@ func TestSortByGasPriceBaseDynamic(t *testing.T) {
 	bf := big.NewInt(3)
 	tip := big.NewInt(0)
 
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxFeePerGas = big.NewInt(4)
 	op1.MaxPriorityFeePerGas = big.NewInt(3)
 
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.Sender = testutils.ValidAddress2
 	op2.MaxFeePerGas = big.NewInt(5)
 	op2.MaxPriorityFeePerGas = big.NewInt(2)
 
-	op3 := testutils.MockValidInitUserOp()
+	op3 := testutils.MockValidInitV06UserOp()
 	op3.Sender = testutils.ValidAddress3
 	op3.MaxFeePerGas = big.NewInt(6)
 	op3.MaxPriorityFeePerGas = big.NewInt(1)
 
 	ctx := modules.NewBatchHandlerContext(
-		[]*userop.UserOperation{op1, op2, op3},
+		[]*userop.UserOperationV06{op1, op2, op3},
 		testutils.ValidAddress1,
 		testutils.ChainID,
 		bf,
@@ -54,22 +54,22 @@ func TestSortByGasPriceBaseDynamic(t *testing.T) {
 // TestSortByGasPriceLegacy verifies that SortByGasPrice sorts the UserOperations in a batch by highest
 // MaxFeePerGas if the context BaseFee is nil.
 func TestSortByGasPriceLegacy(t *testing.T) {
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxFeePerGas = big.NewInt(4)
 	op1.MaxPriorityFeePerGas = big.NewInt(4)
 
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.Sender = testutils.ValidAddress2
 	op2.MaxFeePerGas = big.NewInt(5)
 	op2.MaxPriorityFeePerGas = big.NewInt(5)
 
-	op3 := testutils.MockValidInitUserOp()
+	op3 := testutils.MockValidInitV06UserOp()
 	op3.Sender = testutils.ValidAddress3
 	op3.MaxFeePerGas = big.NewInt(6)
 	op3.MaxPriorityFeePerGas = big.NewInt(6)
 
 	ctx := modules.NewBatchHandlerContext(
-		[]*userop.UserOperation{op1, op2, op3},
+		[]*userop.UserOperationV06{op1, op2, op3},
 		testutils.ValidAddress1,
 		testutils.ChainID,
 		nil,

@@ -16,11 +16,11 @@ import (
 )
 
 type HashLookupResult struct {
-	UserOperation   *userop.UserOperation `json:"userOperation"`
-	EntryPoint      string                `json:"entryPoint"`
-	BlockNumber     *big.Int              `json:"blockNumber"`
-	BlockHash       common.Hash           `json:"blockHash"`
-	TransactionHash common.Hash           `json:"transactionHash"`
+	UserOperation   *userop.UserOperationV06 `json:"userOperation"`
+	EntryPoint      string                   `json:"entryPoint"`
+	BlockNumber     *big.Int                 `json:"blockNumber"`
+	BlockHash       common.Hash              `json:"blockHash"`
+	TransactionHash common.Hash              `json:"transactionHash"`
 }
 
 // GetUserOperationByHash filters the EntryPoint contract for UserOperationEvents and returns the
@@ -92,7 +92,7 @@ func GetUserOperationByHash(
 					return nil, err
 				}
 
-				var op userop.UserOperation
+				var op userop.UserOperationV06
 				if err = json.Unmarshal(data, &op); err != nil {
 					return nil, err
 				}

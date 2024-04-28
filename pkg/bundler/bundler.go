@@ -162,7 +162,7 @@ func (i *Bundler) Process(ep common.Address) (*modules.BatchHandlerCtx, error) {
 	}
 
 	// Remove userOps that remain in the context from mempool.
-	rmOps := append([]*userop.UserOperation{}, ctx.Batch...)
+	rmOps := append([]*userop.UserOperationV06{}, ctx.Batch...)
 	dh := []string{}
 	dr := []string{}
 	for _, item := range ctx.PendingRemoval {

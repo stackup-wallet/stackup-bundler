@@ -85,13 +85,15 @@ func PrivateMode() {
 
 	ov := gas.NewDefaultOverhead()
 	if conf.IsArbStackNetwork || config.ArbStackChains.Contains(chain.Uint64()) {
-		ov.SetCalcPreVerificationGasFunc(gas.CalcArbitrumPVGWithEthClient(rpc, conf.SupportedEntryPoints[0]))
+		ov.SetCalcPreVerificationGasFunc(
+			gas.CalcArbitrumPVGWithEthClient(rpc, conf.SupportedV06EntryPoints[0]),
+		)
 		ov.SetPreVerificationGasBufferFactor(16)
 	}
 
 	if conf.IsOpStackNetwork || config.OpStackChains.Contains(chain.Uint64()) {
 		ov.SetCalcPreVerificationGasFunc(
-			gas.CalcOptimismPVGWithEthClient(rpc, chain, conf.SupportedEntryPoints[0]),
+			gas.CalcOptimismPVGWithEthClient(rpc, chain, conf.SupportedV06EntryPoints[0]),
 		)
 		ov.SetPreVerificationGasBufferFactor(1)
 	}
@@ -124,11 +126,11 @@ func PrivateMode() {
 
 	rep := entities.New(db, eth, conf.ReputationConstants)
 
-	// Init Client
-	c := client.New(mem, ov, chain, conf.SupportedEntryPoints, conf.OpLookupLimit)
-	c.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
-	c.SetGetGasPricesFunc(client.GetGasPricesWithEthClient(eth))
-	c.SetGetGasEstimateFunc(
+	// Init ClientV06
+	c06 := client.NewClientV06(mem, ov, chain, conf.SupportedV06EntryPoints, conf.OpLookupLimit)
+	c06.SetGetUserOpReceiptFunc(client.GetUserOpReceiptWithEthClient(eth))
+	c06.SetGetGasPricesFunc(client.GetGasPricesWithEthClient(eth))
+	c06.SetGetGasEstimateFunc(
 		client.GetGasEstimateWithEthClient(
 			rpc,
 			ov,
@@ -137,10 +139,10 @@ func PrivateMode() {
 			conf.NativeBundlerExecutorTracer,
 		),
 	)
-	c.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
-	c.SetGetStakeFunc(stake.GetStakeWithEthClient(eth))
-	c.UseLogger(logr)
-	c.UseModules(
+	c06.SetGetUserOpByHashFunc(client.GetUserOpByHashWithEthClient(eth))
+	c06.SetGetStakeFunc(stake.GetStakeWithEthClient(eth))
+	c06.UseLogger(logr)
+	c06.UseModules(
 		rep.CheckStatus(),
 		rep.ValidateOpLimit(),
 		check.ValidateOpValues(),
@@ -149,7 +151,7 @@ func PrivateMode() {
 	)
 
 	// Init Bundler
-	b := bundler.New(mem, chain, conf.SupportedEntryPoints)
+	b := bundler.New(mem, chain, conf.SupportedV06EntryPoints)
 	b.SetGetBaseFeeFunc(gasprice.GetBaseFeeWithEthClient(eth))
 	b.SetGetGasTipFunc(gasprice.GetGasTipWithEthClient(eth))
 	b.SetGetLegacyGasPriceFunc(gasprice.GetLegacyGasPriceWithEthClient(eth))
@@ -177,7 +179,7 @@ func PrivateMode() {
 	// init Debug
 	var d *client.Debug
 	if conf.DebugMode {
-		d = client.NewDebug(eoa, eth, mem, rep, b, chain, conf.SupportedEntryPoints[0], beneficiary)
+		d = client.NewDebug(eoa, eth, mem, rep, b, chain, conf.SupportedV06EntryPoints[0], beneficiary)
 		b.SetMaxBatch(1)
 		relayer.SetWaitTimeout(0)
 	}
@@ -200,7 +202,7 @@ func PrivateMode() {
 		g.Status(http.StatusOK)
 	})
 	handlers := []gin.HandlerFunc{
-		jsonrpc.Controller(client.NewRpcAdapter(c, d)),
+		jsonrpc.Controller(client.NewRpcAdapter(c06, d)),
 		jsonrpc.WithOTELTracerAttributes(),
 	}
 	r.POST("/", handlers...)

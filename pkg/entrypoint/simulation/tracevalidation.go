@@ -25,7 +25,7 @@ import (
 type TraceInput struct {
 	Rpc                *rpc.Client
 	EntryPoint         common.Address
-	Op                 *userop.UserOperation
+	Op                 *userop.UserOperationV06
 	ChainID            *big.Int
 	IsRIP7212Supported bool
 	Tracer             string

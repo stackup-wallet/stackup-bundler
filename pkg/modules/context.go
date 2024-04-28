@@ -11,7 +11,7 @@ import (
 )
 
 type PendingRemovalItem struct {
-	Op     *userop.UserOperation
+	Op     *userop.UserOperationV06
 	Reason string
 }
 
@@ -19,7 +19,7 @@ type PendingRemovalItem struct {
 // also contains a Data field for adding arbitrary key-value pairs to the context. These values will be
 // logged by the Bundler at the end of each run.
 type BatchHandlerCtx struct {
-	Batch          []*userop.UserOperation
+	Batch          []*userop.UserOperationV06
 	PendingRemoval []*PendingRemovalItem
 	EntryPoint     common.Address
 	ChainID        *big.Int
@@ -31,14 +31,14 @@ type BatchHandlerCtx struct {
 
 // NewBatchHandlerContext creates a new BatchHandlerCtx using a copy of the given batch.
 func NewBatchHandlerContext(
-	batch []*userop.UserOperation,
+	batch []*userop.UserOperationV06,
 	entryPoint common.Address,
 	chainID *big.Int,
 	baseFee *big.Int,
 	tip *big.Int,
 	gasPrice *big.Int,
 ) *BatchHandlerCtx {
-	var copy []*userop.UserOperation
+	var copy []*userop.UserOperationV06
 	copy = append(copy, batch...)
 
 	return &BatchHandlerCtx{
@@ -56,8 +56,8 @@ func NewBatchHandlerContext(
 // MarkOpIndexForRemoval will remove the op by index from the batch and add it to the pending removal array.
 // This should be used for ops that are not to be included on-chain and dropped from the mempool.
 func (c *BatchHandlerCtx) MarkOpIndexForRemoval(index int, reason string) {
-	batch := []*userop.UserOperation{}
-	var op *userop.UserOperation
+	batch := []*userop.UserOperationV06{}
+	var op *userop.UserOperationV06
 	for i, curr := range c.Batch {
 		if i == index {
 			op = curr
@@ -79,12 +79,12 @@ func (c *BatchHandlerCtx) MarkOpIndexForRemoval(index int, reason string) {
 // UserOpHandlerCtx is the object passed to UserOpHandler functions during the Client's SendUserOperation
 // process.
 type UserOpHandlerCtx struct {
-	UserOp              *userop.UserOperation
+	UserOp              *userop.UserOperationV06
 	EntryPoint          common.Address
 	ChainID             *big.Int
-	pendingSenderOps    []*userop.UserOperation
-	pendingFactoryOps   []*userop.UserOperation
-	pendingPaymasterOps []*userop.UserOperation
+	pendingSenderOps    []*userop.UserOperationV06
+	pendingFactoryOps   []*userop.UserOperationV06
+	pendingPaymasterOps []*userop.UserOperationV06
 	senderDeposit       *entrypoint.IStakeManagerDepositInfo
 	factoryDeposit      *entrypoint.IStakeManagerDepositInfo
 	paymasterDeposit    *entrypoint.IStakeManagerDepositInfo
@@ -92,7 +92,7 @@ type UserOpHandlerCtx struct {
 
 // NewUserOpHandlerContext creates a new UserOpHandlerCtx using a given op.
 func NewUserOpHandlerContext(
-	op *userop.UserOperation,
+	op *userop.UserOperationV06,
 	entryPoint common.Address,
 	chainID *big.Int,
 	mem *mempool.Mempool,
@@ -155,16 +155,16 @@ func (c *UserOpHandlerCtx) GetPaymasterDepositInfo() *entrypoint.IStakeManagerDe
 }
 
 // GetPendingSenderOps returns all pending UserOperations in the mempool by the same sender.
-func (c *UserOpHandlerCtx) GetPendingSenderOps() []*userop.UserOperation {
+func (c *UserOpHandlerCtx) GetPendingSenderOps() []*userop.UserOperationV06 {
 	return c.pendingSenderOps
 }
 
 // GetPendingFactoryOps returns all pending UserOperations in the mempool by the same factory.
-func (c *UserOpHandlerCtx) GetPendingFactoryOps() []*userop.UserOperation {
+func (c *UserOpHandlerCtx) GetPendingFactoryOps() []*userop.UserOperationV06 {
 	return c.pendingFactoryOps
 }
 
 // GetPendingPaymasterOps returns all pending UserOperations in the mempool by the same paymaster.
-func (c *UserOpHandlerCtx) GetPendingPaymasterOps() []*userop.UserOperation {
+func (c *UserOpHandlerCtx) GetPendingPaymasterOps() []*userop.UserOperationV06 {
 	return c.pendingPaymasterOps
 }

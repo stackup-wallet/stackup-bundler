@@ -39,8 +39,8 @@ var (
 	UserOpArr, _ = abi.NewType("tuple[]", "ops", UserOpPrimitives)
 )
 
-// UserOperation represents an EIP-4337 style transaction for a smart contract account.
-type UserOperation struct {
+// UserOperationV06 represents a v0.6 EIP-4337 style transaction for a smart contract account.
+type UserOperationV06 struct {
 	Sender               common.Address `json:"sender"               mapstructure:"sender"               validate:"required"`
 	Nonce                *big.Int       `json:"nonce"                mapstructure:"nonce"                validate:"required"`
 	InitCode             []byte         `json:"initCode"             mapstructure:"initCode"             validate:"required"`
@@ -56,7 +56,7 @@ type UserOperation struct {
 
 // GetPaymaster returns the address portion of PaymasterAndData if applicable. Otherwise it returns the zero
 // address.
-func (op *UserOperation) GetPaymaster() common.Address {
+func (op *UserOperationV06) GetPaymaster() common.Address {
 	if len(op.PaymasterAndData) < common.AddressLength {
 		return common.HexToAddress("0x")
 	}
@@ -65,7 +65,7 @@ func (op *UserOperation) GetPaymaster() common.Address {
 }
 
 // GetFactory returns the address portion of InitCode if applicable. Otherwise it returns the zero address.
-func (op *UserOperation) GetFactory() common.Address {
+func (op *UserOperationV06) GetFactory() common.Address {
 	if len(op.InitCode) < common.AddressLength {
 		return common.HexToAddress("0x")
 	}
@@ -75,7 +75,7 @@ func (op *UserOperation) GetFactory() common.Address {
 
 // GetFactoryData returns the data portion of InitCode if applicable. Otherwise it returns an empty byte
 // array.
-func (op *UserOperation) GetFactoryData() []byte {
+func (op *UserOperationV06) GetFactoryData() []byte {
 	if len(op.InitCode) < common.AddressLength {
 		return []byte{}
 	}
@@ -84,7 +84,7 @@ func (op *UserOperation) GetFactoryData() []byte {
 }
 
 // GetMaxGasAvailable returns the max amount of gas that can be consumed by this UserOperation.
-func (op *UserOperation) GetMaxGasAvailable() *big.Int {
+func (op *UserOperationV06) GetMaxGasAvailable() *big.Int {
 	// TODO: Multiplier logic might change in v0.7
 	mul := big.NewInt(1)
 	paymaster := op.GetPaymaster()
@@ -100,13 +100,13 @@ func (op *UserOperation) GetMaxGasAvailable() *big.Int {
 
 // GetMaxPrefund returns the max amount of wei required to pay for gas fees by either the sender or
 // paymaster.
-func (op *UserOperation) GetMaxPrefund() *big.Int {
+func (op *UserOperationV06) GetMaxPrefund() *big.Int {
 	return big.NewInt(0).Mul(op.GetMaxGasAvailable(), op.MaxFeePerGas)
 }
 
 // GetDynamicGasPrice returns the effective gas price paid by the UserOperation given a basefee. If basefee is
 // nil, it will assume a value of 0.
-func (op *UserOperation) GetDynamicGasPrice(basefee *big.Int) *big.Int {
+func (op *UserOperationV06) GetDynamicGasPrice(basefee *big.Int) *big.Int {
 	bf := basefee
 	if bf == nil {
 		bf = big.NewInt(0)
@@ -120,7 +120,7 @@ func (op *UserOperation) GetDynamicGasPrice(basefee *big.Int) *big.Int {
 }
 
 // Pack returns a standard message of the userOp. This cannot be used to generate a userOpHash.
-func (op *UserOperation) Pack() []byte {
+func (op *UserOperationV06) Pack() []byte {
 	args := abi.Arguments{
 		{Name: "UserOp", Type: UserOpType},
 	}
@@ -156,7 +156,7 @@ func (op *UserOperation) Pack() []byte {
 }
 
 // PackForSignature returns a minimal message of the userOp. This can be used to generate a userOpHash.
-func (op *UserOperation) PackForSignature() []byte {
+func (op *UserOperationV06) PackForSignature() []byte {
 	args := abi.Arguments{
 		{Name: "sender", Type: address},
 		{Name: "nonce", Type: uint256},
@@ -186,7 +186,7 @@ func (op *UserOperation) PackForSignature() []byte {
 }
 
 // GetUserOpHash returns the hash of the userOp + entryPoint address + chainID.
-func (op *UserOperation) GetUserOpHash(entryPoint common.Address, chainID *big.Int) common.Hash {
+func (op *UserOperationV06) GetUserOpHash(entryPoint common.Address, chainID *big.Int) common.Hash {
 	return crypto.Keccak256Hash(
 		crypto.Keccak256(op.PackForSignature()),
 		common.LeftPadBytes(entryPoint.Bytes(), 32),
@@ -195,7 +195,7 @@ func (op *UserOperation) GetUserOpHash(entryPoint common.Address, chainID *big.I
 }
 
 // MarshalJSON returns a JSON encoding of the UserOperation.
-func (op *UserOperation) MarshalJSON() ([]byte, error) {
+func (op *UserOperationV06) MarshalJSON() ([]byte, error) {
 	// Note: The bundler spec test requires the address portion of the initCode to include the checksum.
 	ic := "0x"
 	if fa := op.GetFactory(); fa != common.HexToAddress("0x") {
@@ -230,7 +230,7 @@ func (op *UserOperation) MarshalJSON() ([]byte, error) {
 }
 
 // ToMap returns the current UserOp struct as a map type.
-func (op *UserOperation) ToMap() (map[string]any, error) {
+func (op *UserOperationV06) ToMap() (map[string]any, error) {
 	data, err := op.MarshalJSON()
 	if err != nil {
 		return nil, err

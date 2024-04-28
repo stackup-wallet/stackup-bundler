@@ -11,7 +11,7 @@ import (
 
 // TestOpCGLessThanOH calls checks.ValidateCallGasLimit where callGas < overhead. Expect error.
 func TestOpCGLessThanOH(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	ov := gas.NewDefaultOverhead()
 	cg := ov.NonZeroValueCall()
 	op.CallGasLimit = big.NewInt(0).Sub(cg, common.Big1)
@@ -24,7 +24,7 @@ func TestOpCGLessThanOH(t *testing.T) {
 
 // TestOpCGEqualOH calls checks.ValidateCallGasLimit where callGas == overhead. Expect nil.
 func TestOpCGEqualOH(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	ov := gas.NewDefaultOverhead()
 	cg := ov.NonZeroValueCall()
 	op.CallGasLimit = big.NewInt(0).Add(cg, common.Big0)
@@ -37,7 +37,7 @@ func TestOpCGEqualOH(t *testing.T) {
 
 // TestOpCGMoreThanOH calls checks.ValidateCallGasLimit where callGas > overhead. Expect nil.
 func TestOpCGMoreThanOH(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	ov := gas.NewDefaultOverhead()
 	cg := ov.NonZeroValueCall()
 	op.CallGasLimit = big.NewInt(0).Add(cg, common.Big1)

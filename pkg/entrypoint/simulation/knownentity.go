@@ -14,7 +14,7 @@ type knownEntity map[string]struct {
 }
 
 func newKnownEntity(
-	op *userop.UserOperation,
+	op *userop.UserOperationV06,
 	res *tracer.BundlerCollectorReturn,
 	stakes EntityStakes,
 ) (knownEntity, error) {
@@ -53,7 +53,7 @@ func newKnownEntity(
 	}, nil
 }
 
-func addr2KnownEntity(op *userop.UserOperation, addr common.Address) string {
+func addr2KnownEntity(op *userop.UserOperationV06, addr common.Address) string {
 	if addr == op.GetFactory() {
 		return "factory"
 	} else if addr == op.Sender {

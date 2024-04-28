@@ -50,7 +50,7 @@ func newStorageSlotsByEntity(stakes EntityStakes, keccak []string) storageSlotsB
 
 type storageSlotsValidator struct {
 	// Global parameters
-	Op                 *userop.UserOperation
+	Op                 *userop.UserOperationV06
 	EntryPoint         common.Address
 	IsRIP7212Supported bool
 	AltMempools        *altmempools.Directory

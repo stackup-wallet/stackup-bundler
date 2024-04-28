@@ -16,7 +16,7 @@ func TestNoPendingOps(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := mempool.New(db)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	op.PaymasterAndData = []byte{}
 
@@ -42,18 +42,18 @@ func TestGetPendingSenderOps(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := mempool.New(db)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	op.PaymasterAndData = []byte{}
 
-	penOp1 := testutils.MockValidInitUserOp()
+	penOp1 := testutils.MockValidInitV06UserOp()
 	_ = mem.AddOp(testutils.ValidAddress5, penOp1)
 
-	penOp2 := testutils.MockValidInitUserOp()
+	penOp2 := testutils.MockValidInitV06UserOp()
 	penOp2.Nonce = big.NewInt(0).Add(penOp1.Nonce, common.Big1)
 	_ = mem.AddOp(testutils.ValidAddress5, penOp2)
 
-	penOp3 := testutils.MockValidInitUserOp()
+	penOp3 := testutils.MockValidInitV06UserOp()
 	penOp3.Nonce = big.NewInt(0).Add(penOp2.Nonce, common.Big1)
 	_ = mem.AddOp(testutils.ValidAddress5, penOp3)
 
@@ -68,7 +68,7 @@ func TestGetPendingSenderOps(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 
-	expectedPenOps := []*userop.UserOperation{penOp3, penOp2, penOp1}
+	expectedPenOps := []*userop.UserOperationV06{penOp3, penOp2, penOp1}
 	penOps := ctx.GetPendingSenderOps()
 	if len(penOps) != len(expectedPenOps) {
 		t.Fatalf("got length %d, want %d", len(penOps), len(expectedPenOps))
@@ -85,21 +85,21 @@ func TestGetPendingFactoryOps(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := mempool.New(db)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = testutils.ValidAddress4.Bytes()
 	op.PaymasterAndData = []byte{}
 
-	penOp1 := testutils.MockValidInitUserOp()
+	penOp1 := testutils.MockValidInitV06UserOp()
 	penOp1.Sender = testutils.ValidAddress1
 	penOp1.InitCode = testutils.ValidAddress4.Bytes()
 	_ = mem.AddOp(testutils.ValidAddress5, penOp1)
 
-	penOp2 := testutils.MockValidInitUserOp()
+	penOp2 := testutils.MockValidInitV06UserOp()
 	penOp2.Sender = testutils.ValidAddress2
 	penOp2.InitCode = testutils.ValidAddress4.Bytes()
 	_ = mem.AddOp(testutils.ValidAddress5, penOp2)
 
-	penOp3 := testutils.MockValidInitUserOp()
+	penOp3 := testutils.MockValidInitV06UserOp()
 	penOp3.Sender = testutils.ValidAddress3
 	penOp3.InitCode = testutils.ValidAddress4.Bytes()
 	_ = mem.AddOp(testutils.ValidAddress5, penOp3)
@@ -115,7 +115,7 @@ func TestGetPendingFactoryOps(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 
-	expectedPenOps := []*userop.UserOperation{penOp3, penOp2, penOp1}
+	expectedPenOps := []*userop.UserOperationV06{penOp3, penOp2, penOp1}
 	penOps := ctx.GetPendingFactoryOps()
 	if len(penOps) != len(expectedPenOps) {
 		t.Fatalf("got length %d, want %d", len(penOps), len(expectedPenOps))
@@ -132,21 +132,21 @@ func TestGetPendingPaymasterOps(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := mempool.New(db)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	op.PaymasterAndData = testutils.ValidAddress4.Bytes()
 
-	penOp1 := testutils.MockValidInitUserOp()
+	penOp1 := testutils.MockValidInitV06UserOp()
 	penOp1.Sender = testutils.ValidAddress1
 	penOp1.PaymasterAndData = testutils.ValidAddress4.Bytes()
 	_ = mem.AddOp(testutils.ValidAddress5, penOp1)
 
-	penOp2 := testutils.MockValidInitUserOp()
+	penOp2 := testutils.MockValidInitV06UserOp()
 	penOp2.Sender = testutils.ValidAddress2
 	penOp2.PaymasterAndData = testutils.ValidAddress4.Bytes()
 	_ = mem.AddOp(testutils.ValidAddress5, penOp2)
 
-	penOp3 := testutils.MockValidInitUserOp()
+	penOp3 := testutils.MockValidInitV06UserOp()
 	penOp3.Sender = testutils.ValidAddress3
 	penOp3.PaymasterAndData = testutils.ValidAddress4.Bytes()
 	_ = mem.AddOp(testutils.ValidAddress5, penOp3)
@@ -162,7 +162,7 @@ func TestGetPendingPaymasterOps(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 
-	expectedPenOps := []*userop.UserOperation{penOp3, penOp2, penOp1}
+	expectedPenOps := []*userop.UserOperationV06{penOp3, penOp2, penOp1}
 	penOps := ctx.GetPendingPaymasterOps()
 	if len(penOps) != len(expectedPenOps) {
 		t.Fatalf("got length %d, want %d", len(penOps), len(expectedPenOps))
@@ -179,7 +179,7 @@ func TestNilDepositInfo(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := mempool.New(db)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	op.PaymasterAndData = []byte{}
 
@@ -208,7 +208,7 @@ func TestGetSenderDepositInfo(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := mempool.New(db)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	op.PaymasterAndData = []byte{}
 
@@ -235,7 +235,7 @@ func TestGetFactoryDepositInfo(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := mempool.New(db)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = testutils.ValidAddress1.Bytes()
 	op.PaymasterAndData = []byte{}
 
@@ -262,7 +262,7 @@ func TestGetPaymasterDepositInfo(t *testing.T) {
 	db := testutils.DBMock()
 	defer db.Close()
 	mem, _ := mempool.New(db)
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	op.PaymasterAndData = testutils.ValidAddress1.Bytes()
 

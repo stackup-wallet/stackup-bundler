@@ -19,9 +19,9 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-// Client controls the end to end process of adding incoming UserOperations to the mempool. It also
-// implements the required RPC methods as specified in EIP-4337.
-type Client struct {
+// ClientV06 controls the end to end process of adding incoming UserOperations to the mempool. It also
+// implements the required RPC methods as specified in v0.6 of EIP-4337.
+type ClientV06 struct {
 	mempool              *mempool.Mempool
 	ov                   *gas.Overhead
 	chainID              *big.Int
@@ -38,14 +38,14 @@ type Client struct {
 
 // New initializes a new ERC-4337 client which can be extended with modules for validating UserOperations
 // that are allowed to be added to the mempool.
-func New(
+func NewClientV06(
 	mempool *mempool.Mempool,
 	ov *gas.Overhead,
 	chainID *big.Int,
 	supportedEntryPoints []common.Address,
 	opLookupLimit uint64,
-) *Client {
-	return &Client{
+) *ClientV06 {
+	return &ClientV06{
 		mempool:              mempool,
 		ov:                   ov,
 		chainID:              chainID,
@@ -61,7 +61,7 @@ func New(
 	}
 }
 
-func (i *Client) parseEntryPointAddress(ep string) (common.Address, error) {
+func (i *ClientV06) parseEntryPointAddress(ep string) (common.Address, error) {
 	for _, addr := range i.supportedEntryPoints {
 		if common.HexToAddress(ep) == addr {
 			return addr, nil
@@ -72,50 +72,50 @@ func (i *Client) parseEntryPointAddress(ep string) (common.Address, error) {
 }
 
 // UseLogger defines the logger object used by the Client instance based on the go-logr/logr interface.
-func (i *Client) UseLogger(logger logr.Logger) {
+func (i *ClientV06) UseLogger(logger logr.Logger) {
 	i.logger = logger.WithName("client")
 }
 
 // UseModules defines the UserOpHandlers to process a userOp after it has gone through the standard checks.
-func (i *Client) UseModules(handlers ...modules.UserOpHandlerFunc) {
+func (i *ClientV06) UseModules(handlers ...modules.UserOpHandlerFunc) {
 	i.userOpHandler = modules.ComposeUserOpHandlerFunc(handlers...)
 }
 
 // SetGetUserOpReceiptFunc defines a general function for fetching a UserOpReceipt given a userOpHash and
 // EntryPoint address. This function is called in *Client.GetUserOperationReceipt.
-func (i *Client) SetGetUserOpReceiptFunc(fn GetUserOpReceiptFunc) {
+func (i *ClientV06) SetGetUserOpReceiptFunc(fn GetUserOpReceiptFunc) {
 	i.getUserOpReceipt = fn
 }
 
 // SetGetGasPricesFunc defines a general function for fetching values for maxFeePerGas and
 // maxPriorityFeePerGas. This function is called in *Client.EstimateUserOperationGas if given fee values are
 // 0.
-func (i *Client) SetGetGasPricesFunc(fn GetGasPricesFunc) {
+func (i *ClientV06) SetGetGasPricesFunc(fn GetGasPricesFunc) {
 	i.getGasPrices = fn
 }
 
 // SetGetGasEstimateFunc defines a general function for fetching an estimate for verificationGasLimit and
 // callGasLimit given a userOp and EntryPoint address. This function is called in
 // *Client.EstimateUserOperationGas.
-func (i *Client) SetGetGasEstimateFunc(fn GetGasEstimateFunc) {
+func (i *ClientV06) SetGetGasEstimateFunc(fn GetGasEstimateFunc) {
 	i.getGasEstimate = fn
 }
 
 // SetGetUserOpByHashFunc defines a general function for fetching a userOp given a userOpHash, EntryPoint
 // address, and chain ID. This function is called in *Client.GetUserOperationByHash.
-func (i *Client) SetGetUserOpByHashFunc(fn GetUserOpByHashFunc) {
+func (i *ClientV06) SetGetUserOpByHashFunc(fn GetUserOpByHashFunc) {
 	i.getUserOpByHash = fn
 }
 
 // SetGetStakeFunc defines a general function for retrieving the EntryPoint stake for a given address. This
 // function is called in *Client.SendUserOperation to create a context.
-func (i *Client) SetGetStakeFunc(fn stake.GetStakeFunc) {
+func (i *ClientV06) SetGetStakeFunc(fn stake.GetStakeFunc) {
 	i.getStakeFunc = fn
 }
 
 // SendUserOperation implements the method call for eth_sendUserOperation.
 // It returns true if userOp was accepted otherwise returns an error.
-func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error) {
+func (i *ClientV06) SendUserOperation(op map[string]any, ep string) (string, error) {
 	// Init logger
 	l := i.logger.WithName("eth_sendUserOperation")
 
@@ -129,7 +129,7 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 		WithValues("entrypoint", epAddr.String()).
 		WithValues("chain_id", i.chainID.String())
 
-	userOp, err := userop.New(op)
+	userOp, err := userop.NewV06(op)
 	if err != nil {
 		l.Error(err, "eth_sendUserOperation error")
 		return "", err
@@ -168,7 +168,7 @@ func (i *Client) SendUserOperation(op map[string]any, ep string) (string, error)
 // given a UserOperation, EntryPoint address, and state OverrideSet. The signature field and current gas
 // values will not be validated although there should be dummy values in place for the most reliable results
 // (e.g. a signature with the correct length).
-func (i *Client) EstimateUserOperationGas(
+func (i *ClientV06) EstimateUserOperationGas(
 	op map[string]any,
 	ep string,
 	os map[string]any,
@@ -186,7 +186,7 @@ func (i *Client) EstimateUserOperationGas(
 		WithValues("entrypoint", epAddr.String()).
 		WithValues("chain_id", i.chainID.String())
 
-	userOp, err := userop.New(op)
+	userOp, err := userop.NewV06(op)
 	if err != nil {
 		l.Error(err, "eth_estimateUserOperationGas error")
 		return nil, err
@@ -241,7 +241,7 @@ func (i *Client) EstimateUserOperationGas(
 
 // GetUserOperationReceipt fetches a UserOperation receipt based on a userOpHash returned by
 // *Client.SendUserOperation.
-func (i *Client) GetUserOperationReceipt(
+func (i *ClientV06) GetUserOperationReceipt(
 	hash string,
 ) (*filter.UserOperationReceipt, error) {
 	// Init logger
@@ -259,7 +259,7 @@ func (i *Client) GetUserOperationReceipt(
 
 // GetUserOperationByHash returns a UserOperation based on a given userOpHash returned by
 // *Client.SendUserOperation.
-func (i *Client) GetUserOperationByHash(hash string) (*filter.HashLookupResult, error) {
+func (i *ClientV06) GetUserOperationByHash(hash string) (*filter.HashLookupResult, error) {
 	// Init logger
 	l := i.logger.WithName("eth_getUserOperationByHash").WithValues("userop_hash", hash)
 
@@ -275,7 +275,7 @@ func (i *Client) GetUserOperationByHash(hash string) (*filter.HashLookupResult, 
 // SupportedEntryPoints implements the method call for eth_supportedEntryPoints. It returns the array of
 // EntryPoint addresses that is supported by the client. The first address in the array is the preferred
 // EntryPoint.
-func (i *Client) SupportedEntryPoints() ([]string, error) {
+func (i *ClientV06) SupportedEntryPoints() ([]string, error) {
 	slc := []string{}
 	for _, ep := range i.supportedEntryPoints {
 		slc = append(slc, ep.String())
@@ -286,6 +286,6 @@ func (i *Client) SupportedEntryPoints() ([]string, error) {
 
 // ChainID implements the method call for eth_chainId. It returns the current chainID used by the client.
 // This method is used to validate that the client's chainID is in sync with the caller.
-func (i *Client) ChainID() (string, error) {
+func (i *ClientV06) ChainID() (string, error) {
 	return hexutil.EncodeBig(i.chainID), nil
 }

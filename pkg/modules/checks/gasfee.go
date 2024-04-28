@@ -10,7 +10,7 @@ import (
 // ValidateFeePerGas checks the maxFeePerGas is sufficiently high to be included with the current
 // block.basefee. Alternatively, if basefee is not supported, then check that maxPriorityFeePerGas is equal to
 // maxFeePerGas as a fallback.
-func ValidateFeePerGas(op *userop.UserOperation, gbf gasprice.GetBaseFeeFunc) error {
+func ValidateFeePerGas(op *userop.UserOperationV06, gbf gasprice.GetBaseFeeFunc) error {
 	bf, err := gbf()
 	if err != nil {
 		return err

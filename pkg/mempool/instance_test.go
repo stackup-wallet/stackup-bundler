@@ -15,7 +15,7 @@ func TestAddOpToMempool(t *testing.T) {
 	defer db.Close()
 	mem, _ := New(db)
 	ep := testutils.ValidAddress1
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 
 	if err := mem.AddOp(ep, op); err != nil {
 		t.Fatalf("got %v, want nil", err)
@@ -41,8 +41,8 @@ func TestReplaceOpInMempool(t *testing.T) {
 	defer db.Close()
 	mem, _ := New(db)
 	ep := testutils.ValidAddress1
-	op1 := testutils.MockValidInitUserOp()
-	op2 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.MaxPriorityFeePerGas = big.NewInt(0).Add(op1.MaxPriorityFeePerGas, common.Big1)
 
 	if err := mem.AddOp(ep, op1); err != nil {
@@ -71,7 +71,7 @@ func TestRemoveOpsFromMempool(t *testing.T) {
 	defer db.Close()
 	mem, _ := New(db)
 	ep := testutils.ValidAddress1
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 
 	if err := mem.AddOp(ep, op); err != nil {
 		t.Fatalf("got %v, want nil", err)
@@ -98,16 +98,16 @@ func TestDumpFromMempool(t *testing.T) {
 	mem, _ := New(db)
 	ep := testutils.ValidAddress1
 
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxFeePerGas = big.NewInt(4)
 	op1.MaxPriorityFeePerGas = big.NewInt(3)
 
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.Sender = testutils.ValidAddress2
 	op2.MaxFeePerGas = big.NewInt(5)
 	op2.MaxPriorityFeePerGas = big.NewInt(2)
 
-	op3 := testutils.MockValidInitUserOp()
+	op3 := testutils.MockValidInitV06UserOp()
 	op3.Sender = testutils.ValidAddress3
 	op3.MaxFeePerGas = big.NewInt(6)
 	op3.MaxPriorityFeePerGas = big.NewInt(1)
@@ -142,8 +142,8 @@ func TestNewMempoolLoadsFromDisk(t *testing.T) {
 	defer db.Close()
 	mem1, _ := New(db)
 	ep := testutils.ValidAddress1
-	op1 := testutils.MockValidInitUserOp()
-	op2 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.Nonce = big.NewInt(0).Add(op1.Nonce, common.Big1)
 	op2.MaxPriorityFeePerGas = big.NewInt(0).Add(op1.MaxPriorityFeePerGas, common.Big1)
 

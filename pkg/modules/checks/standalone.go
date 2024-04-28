@@ -219,7 +219,7 @@ func (s *Standalone) SimulateBatch() modules.BatchHandlerFunc {
 // the last modules executed by the Bundler.
 func (s *Standalone) Clean() modules.BatchHandlerFunc {
 	return func(ctx *modules.BatchHandlerCtx) error {
-		all := append([]*userop.UserOperation{}, ctx.Batch...)
+		all := append([]*userop.UserOperationV06{}, ctx.Batch...)
 		for _, item := range ctx.PendingRemoval {
 			all = append(all, item.Op)
 		}

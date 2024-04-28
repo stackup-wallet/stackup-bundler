@@ -19,7 +19,8 @@ type Values struct {
 	EthClientUrl                 string
 	Port                         int
 	DataDirectory                string
-	SupportedEntryPoints         []common.Address
+	SupportedV07EntryPoints      []common.Address
+	SupportedV06EntryPoints      []common.Address
 	MaxVerificationGas           *big.Int
 	MaxBatchGasLimit             *big.Int
 	MaxOpTTL                     time.Duration
@@ -92,7 +93,14 @@ func GetValues() *Values {
 	// Default variables
 	viper.SetDefault("erc4337_bundler_port", 4337)
 	viper.SetDefault("erc4337_bundler_data_directory", "/tmp/stackup_bundler")
-	viper.SetDefault("erc4337_bundler_supported_entry_points", "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789")
+	viper.SetDefault(
+		"erc4337_bundler_supported_v07_entry_points",
+		"0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+	)
+	viper.SetDefault(
+		"erc4337_bundler_supported_v06_entry_points",
+		"0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+	)
 	viper.SetDefault("erc4337_bundler_max_verification_gas", 6000000)
 	viper.SetDefault("erc4337_bundler_max_batch_gas_limit", 18000000)
 	viper.SetDefault("erc4337_bundler_max_op_ttl_seconds", 180)
@@ -123,7 +131,8 @@ func GetValues() *Values {
 	_ = viper.BindEnv("erc4337_bundler_private_key")
 	_ = viper.BindEnv("erc4337_bundler_port")
 	_ = viper.BindEnv("erc4337_bundler_data_directory")
-	_ = viper.BindEnv("erc4337_bundler_supported_entry_points")
+	_ = viper.BindEnv("erc4337_bundler_supported_v07_entry_points")
+	_ = viper.BindEnv("erc4337_bundler_supported_v06_entry_points")
 	_ = viper.BindEnv("erc4337_bundler_beneficiary")
 	_ = viper.BindEnv("erc4337_bundler_native_bundler_collector_tracer")
 	_ = viper.BindEnv("erc4337_bundler_native_bundler_executor_tracer")
@@ -186,7 +195,12 @@ func GetValues() *Values {
 	ethClientUrl := viper.GetString("erc4337_bundler_eth_client_url")
 	port := viper.GetInt("erc4337_bundler_port")
 	dataDirectory := viper.GetString("erc4337_bundler_data_directory")
-	supportedEntryPoints := envArrayToAddressSlice(viper.GetString("erc4337_bundler_supported_entry_points"))
+	supportedV07EntryPoints := envArrayToAddressSlice(
+		viper.GetString("erc4337_bundler_supported_v07_entry_points"),
+	)
+	supportedV06EntryPoints := envArrayToAddressSlice(
+		viper.GetString("erc4337_bundler_supported_v06_entry_points"),
+	)
 	beneficiary := viper.GetString("erc4337_bundler_beneficiary")
 	nativeBundlerCollectorTracer := viper.GetString("erc4337_bundler_native_bundler_collector_tracer")
 	nativeBundlerExecutorTracer := viper.GetString("erc4337_bundler_native_bundler_executor_tracer")
@@ -212,7 +226,8 @@ func GetValues() *Values {
 		EthClientUrl:                 ethClientUrl,
 		Port:                         port,
 		DataDirectory:                dataDirectory,
-		SupportedEntryPoints:         supportedEntryPoints,
+		SupportedV07EntryPoints:      supportedV07EntryPoints,
+		SupportedV06EntryPoints:      supportedV06EntryPoints,
 		Beneficiary:                  beneficiary,
 		NativeBundlerCollectorTracer: nativeBundlerCollectorTracer,
 		NativeBundlerExecutorTracer:  nativeBundlerExecutorTracer,

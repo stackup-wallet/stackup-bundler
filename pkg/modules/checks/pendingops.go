@@ -33,11 +33,11 @@ func calcNewThresholds(cap *big.Int, tip *big.Int) (newCap *big.Int, newTip *big
 //  1. Sender doesn't have another UserOperation already present in the pool.
 //  2. It replaces an existing UserOperation with same nonce and higher fee.
 func ValidatePendingOps(
-	op *userop.UserOperation,
-	penOps []*userop.UserOperation,
+	op *userop.UserOperationV06,
+	penOps []*userop.UserOperationV06,
 ) error {
 	if len(penOps) > 0 {
-		var oldOp *userop.UserOperation
+		var oldOp *userop.UserOperationV06
 		for _, penOp := range penOps {
 			if op.Nonce.Cmp(penOp.Nonce) == 0 {
 				oldOp = penOp

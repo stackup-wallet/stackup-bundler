@@ -13,11 +13,11 @@ import (
 // tip from userOps is assumed to not be above the suggested tip. In which case the suggested tip is the
 // optimal choice.
 func TestSuggestMeanGasTipCapForNormalLoad(t *testing.T) {
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxPriorityFeePerGas = big.NewInt(1)
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.MaxPriorityFeePerGas = big.NewInt(1)
-	batch := []*userop.UserOperation{op1, op2}
+	batch := []*userop.UserOperationV06{op1, op2}
 
 	expected := big.NewInt(2)
 	if tip := SuggestMeanGasTipCap(expected, batch); tip.Cmp(expected) != 0 {
@@ -29,11 +29,11 @@ func TestSuggestMeanGasTipCapForNormalLoad(t *testing.T) {
 // from userOps is assumed to be above the suggested tip (i.e. userOps want to be included quickly). In which
 // case the average tip from userOps is the optimal choice.
 func TestSuggestMeanGasTipCapForHighLoad(t *testing.T) {
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxPriorityFeePerGas = big.NewInt(5)
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.MaxPriorityFeePerGas = big.NewInt(10)
-	batch := []*userop.UserOperation{op1, op2}
+	batch := []*userop.UserOperationV06{op1, op2}
 
 	expected := big.NewInt(7)
 	if tip := SuggestMeanGasTipCap(big.NewInt(2), batch); tip.Cmp(expected) != 0 {
@@ -45,11 +45,11 @@ func TestSuggestMeanGasTipCapForHighLoad(t *testing.T) {
 // gas fee cap from userOps is assumed to not be above the recommended max fee. In which case the recommended
 // max fee is the optimal choice.
 func TestSuggestMeanGasFeeCapNormalLoad(t *testing.T) {
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxFeePerGas = big.NewInt(1)
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.MaxFeePerGas = big.NewInt(1)
-	batch := []*userop.UserOperation{op1, op2}
+	batch := []*userop.UserOperationV06{op1, op2}
 
 	bf := big.NewInt(1)
 	tip := big.NewInt(0)
@@ -64,11 +64,11 @@ func TestSuggestMeanGasFeeCapNormalLoad(t *testing.T) {
 // fee cap from userOps is assumed to be above the recommended max fee. In which case the average gas fee cap
 // from userOps is the optimal choice.
 func TestSuggestMeanGasFeeCapHighLoad(t *testing.T) {
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxFeePerGas = big.NewInt(5)
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.MaxFeePerGas = big.NewInt(10)
-	batch := []*userop.UserOperation{op1, op2}
+	batch := []*userop.UserOperationV06{op1, op2}
 
 	bf := big.NewInt(1)
 	tip := big.NewInt(0)
@@ -83,13 +83,13 @@ func TestSuggestMeanGasFeeCapHighLoad(t *testing.T) {
 // gas fee cap from userOps is assumed to not be above the given gas price. In which case the given gas price
 // is the optimal choice.
 func TestSuggestMeanGasPriceForNormalLoad(t *testing.T) {
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxFeePerGas = big.NewInt(1)
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.MaxFeePerGas = big.NewInt(1)
 
 	expected := big.NewInt(2)
-	batch := []*userop.UserOperation{op1, op2}
+	batch := []*userop.UserOperationV06{op1, op2}
 	gp := SuggestMeanGasPrice(expected, batch)
 	if gp.Cmp(expected) != 0 {
 		t.Fatalf("got %d, want %d", gp.Int64(), expected.Int64())
@@ -100,13 +100,13 @@ func TestSuggestMeanGasPriceForNormalLoad(t *testing.T) {
 // fee cap from userOps is assumed to be above the given gas price. In which case the average gas fee cap from
 // userOps is the optimal choice.
 func TestSuggestMeanGasPriceForHighLoad(t *testing.T) {
-	op1 := testutils.MockValidInitUserOp()
+	op1 := testutils.MockValidInitV06UserOp()
 	op1.MaxFeePerGas = big.NewInt(5)
-	op2 := testutils.MockValidInitUserOp()
+	op2 := testutils.MockValidInitV06UserOp()
 	op2.MaxFeePerGas = big.NewInt(10)
 
 	expected := big.NewInt(7)
-	batch := []*userop.UserOperation{op1, op2}
+	batch := []*userop.UserOperationV06{op1, op2}
 	gp := SuggestMeanGasPrice(big.NewInt(2), batch)
 	if gp.Cmp(expected) != 0 {
 		t.Fatalf("got %d, want %d", gp.Int64(), expected.Int64())

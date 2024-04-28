@@ -87,9 +87,9 @@ func validateBigIntType(field reflect.Value) interface{} {
 	return field
 }
 
-// New decodes a map into a UserOperation object and validates all the fields are correctly typed.
-func New(data map[string]any) (*UserOperation, error) {
-	var op UserOperation
+// NewV06 decodes a map into a v0.6 UserOperation object and validates all the fields are correctly typed.
+func NewV06(data map[string]any) (*UserOperationV06, error) {
+	var op UserOperationV06
 
 	// Convert map to struct
 	config := &mapstructure.DecoderConfig{

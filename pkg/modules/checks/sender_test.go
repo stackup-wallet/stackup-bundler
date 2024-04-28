@@ -9,7 +9,7 @@ import (
 // TestSenderExistAndInitCodeDNE calls checks.ValidateSender where sender contract exist and initCode does
 // not. Expect nil.
 func TestSenderExistAndInitCodeDNE(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	err := ValidateSender(op, testutils.MockGetCode)
 
@@ -21,7 +21,7 @@ func TestSenderExistAndInitCodeDNE(t *testing.T) {
 // TestSenderAndInitCodeExist calls checks.ValidateSender where sender contract and initCode exist. Expect
 // error.
 func TestSenderAndInitCodeExist(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	err := ValidateSender(op, testutils.MockGetCode)
 
 	if err == nil {
@@ -32,7 +32,7 @@ func TestSenderAndInitCodeExist(t *testing.T) {
 // TestSenderDNEAndInitCodeExist calls checks.ValidateSender where sender contract does not exist and
 // initCode does. Expect nil.
 func TestSenderDNEAndInitCodeExist(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	err := ValidateSender(op, testutils.MockGetCodeZero)
 
 	if err != nil {
@@ -43,7 +43,7 @@ func TestSenderDNEAndInitCodeExist(t *testing.T) {
 // TestSenderAndInitCodeDNE calls checks.ValidateSender where sender contract and initCode does not exist.
 // Expect error.
 func TestSenderAndInitCodeDNE(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.InitCode = []byte{}
 	err := ValidateSender(op, testutils.MockGetCodeZero)
 

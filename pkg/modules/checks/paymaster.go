@@ -14,7 +14,7 @@ import (
 //  1. currently has nonempty code on chain
 //  2. has a sufficient deposit to pay for the UserOperation
 func ValidatePaymasterAndData(
-	op *userop.UserOperation,
+	op *userop.UserOperationV06,
 	dep *entrypoint.IStakeManagerDepositInfo,
 	gc GetCodeFunc,
 ) error {

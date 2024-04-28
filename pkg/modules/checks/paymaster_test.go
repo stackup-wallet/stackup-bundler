@@ -8,7 +8,7 @@ import (
 
 // TestNilPaymasterAndData calls checks.ValidatePaymasterAndData with no paymaster set. Expects nil.
 func TestNilPaymasterAndData(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.PaymasterAndData = []byte{}
 	err := ValidatePaymasterAndData(op, testutils.NonStakedZeroDepositInfo, testutils.MockGetCodeZero)
 
@@ -19,7 +19,7 @@ func TestNilPaymasterAndData(t *testing.T) {
 
 // TestBadPaymasterAndData calls checks.ValidatePaymasterAndData with invalid paymaster set. Expects error.
 func TestBadPaymasterAndData(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.PaymasterAndData = []byte("1234")
 	err := ValidatePaymasterAndData(op, testutils.NonStakedZeroDepositInfo, testutils.MockGetCodeZero)
 
@@ -31,7 +31,7 @@ func TestBadPaymasterAndData(t *testing.T) {
 // TestZeroByteCodePaymasterAndData calls checks.ValidatePaymasterAndData with paymaster contract not
 // deployed. Expects error.
 func TestZeroByteCodePaymasterAndData(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.PaymasterAndData = op.Sender.Bytes()
 	err := ValidatePaymasterAndData(op, testutils.NonStakedZeroDepositInfo, testutils.MockGetCodeZero)
 
@@ -43,7 +43,7 @@ func TestZeroByteCodePaymasterAndData(t *testing.T) {
 // TestNonStakedZeroDepositPaymasterAndData calls checks.ValidatePaymasterAndData with paymaster that is not
 // staked with zero deposit. Expects error.
 func TestNonStakedZeroDepositPaymasterAndData(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.PaymasterAndData = op.Sender.Bytes()
 	err := ValidatePaymasterAndData(op, testutils.NonStakedZeroDepositInfo, testutils.MockGetCode)
 
@@ -55,7 +55,7 @@ func TestNonStakedZeroDepositPaymasterAndData(t *testing.T) {
 // TestZeroDepositPaymasterAndData calls checks.ValidatePaymasterAndData with paymaster that is staked but
 // with zero deposit. Expects error.
 func TestZeroDepositPaymasterAndData(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.PaymasterAndData = op.Sender.Bytes()
 	err := ValidatePaymasterAndData(op, testutils.StakedZeroDepositInfo, testutils.MockGetCode)
 
@@ -67,7 +67,7 @@ func TestZeroDepositPaymasterAndData(t *testing.T) {
 // TestNotStakedPaymasterAndData calls checks.ValidatePaymasterAndData with paymaster that is not staked and
 // has sufficient deposit. Expects nil.
 func TestNotStakedPaymasterAndData(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.PaymasterAndData = op.Sender.Bytes()
 	err := ValidatePaymasterAndData(op, testutils.NonStakedDepositInfo, testutils.MockGetCode)
 
@@ -79,7 +79,7 @@ func TestNotStakedPaymasterAndData(t *testing.T) {
 // TestPaymasterAndData calls checks.ValidatePaymasterAndData with paymaster that is staked and has sufficient
 // deposit. Expects nil.
 func TestPaymasterAndData(t *testing.T) {
-	op := testutils.MockValidInitUserOp()
+	op := testutils.MockValidInitV06UserOp()
 	op.PaymasterAndData = op.Sender.Bytes()
 	err := ValidatePaymasterAndData(op, testutils.StakedDepositInfo, testutils.MockGetCode)
 

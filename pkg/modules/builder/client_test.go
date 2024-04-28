@@ -33,7 +33,7 @@ func TestSendUserOperationWithAllUpstreamErrors(t *testing.T) {
 
 	if err := fn(
 		modules.NewBatchHandlerContext(
-			[]*userop.UserOperation{testutils.MockValidInitUserOp()},
+			[]*userop.UserOperationV06{testutils.MockValidInitV06UserOp()},
 			common.HexToAddress("0x"),
 			testutils.ChainID,
 			big.NewInt(1),
@@ -68,7 +68,7 @@ func TestSendUserOperationWithPartialUpstreamErrors(t *testing.T) {
 
 	if err := fn(
 		modules.NewBatchHandlerContext(
-			[]*userop.UserOperation{testutils.MockValidInitUserOp()},
+			[]*userop.UserOperationV06{testutils.MockValidInitV06UserOp()},
 			common.HexToAddress("0x"),
 			testutils.ChainID,
 			big.NewInt(1),
@@ -107,7 +107,7 @@ func TestSendUserOperationWithNoUpstreamErrors(t *testing.T) {
 
 	if err := fn(
 		modules.NewBatchHandlerContext(
-			[]*userop.UserOperation{testutils.MockValidInitUserOp()},
+			[]*userop.UserOperationV06{testutils.MockValidInitV06UserOp()},
 			common.HexToAddress("0x"),
 			testutils.ChainID,
 			big.NewInt(1),

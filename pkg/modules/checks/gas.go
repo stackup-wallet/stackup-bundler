@@ -9,7 +9,7 @@ import (
 )
 
 // ValidateGasAvailable checks that the max available gas is less than the batch gas limit.
-func ValidateGasAvailable(op *userop.UserOperation, maxBatchGasLimit *big.Int) error {
+func ValidateGasAvailable(op *userop.UserOperationV06, maxBatchGasLimit *big.Int) error {
 	// This calculation ensures that we are only checking the gas used for execution. In rollups, the PVG also
 	// includes the L1 callData cost. If the L1 gas component spikes, it can cause the PVG value of legit ops
 	// to be greater than the maxBatchGasLimit. For non-rollups, the results would be the same as just calling
