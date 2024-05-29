@@ -137,7 +137,7 @@ func CalcOptimismPVGWithEthClient(
 		if err != nil {
 			return nil, err
 		}
-		ge, err := gaspriceoracle.GetL1FeeMethod.Inputs.Pack(data)
+		ge, err := gaspriceoracle.GetL1FeeUpperBoundMethod.Inputs.Pack(big.NewInt(int64(len(data))))
 		if err != nil {
 			return nil, err
 		}
@@ -146,7 +146,7 @@ func CalcOptimismPVGWithEthClient(
 		req := map[string]any{
 			"from": common.HexToAddress("0x"),
 			"to":   gaspriceoracle.PrecompileAddress,
-			"data": hexutil.Encode(append(gaspriceoracle.GetL1FeeMethod.ID, ge...)),
+			"data": hexutil.Encode(append(gaspriceoracle.GetL1FeeUpperBoundMethod.ID, ge...)),
 		}
 		var out any
 		if err := rpc.Call(&out, "eth_call", &req, "latest"); err != nil {
@@ -154,7 +154,7 @@ func CalcOptimismPVGWithEthClient(
 		}
 
 		// Get L1Fee and L2Price
-		l1fee, err := gaspriceoracle.DecodeGetL1FeeMethodOutput(out)
+		l1fee, err := gaspriceoracle.DecodeGetL1FeeUpperBoundOutput(out)
 		if err != nil {
 			return nil, err
 		}

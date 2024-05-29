@@ -10,18 +10,17 @@ import (
 )
 
 var (
-	bytesT, _   = abi.NewType("bytes", "", nil)
 	uint256T, _ = abi.NewType("uint256", "", nil)
 
-	GetL1FeeMethod = abi.NewMethod(
-		"getL1Fee",
-		"getL1Fee",
+	GetL1FeeUpperBoundMethod = abi.NewMethod(
+		"getL1FeeUpperBound",
+		"getL1FeeUpperBound",
 		abi.Function,
 		"",
 		false,
 		false,
 		abi.Arguments{
-			{Name: "data", Type: bytesT},
+			{Name: "data", Type: uint256T},
 		},
 		abi.Arguments{
 			{Name: "fee", Type: uint256T},
@@ -29,7 +28,7 @@ var (
 	)
 )
 
-func DecodeGetL1FeeMethodOutput(out any) (*big.Int, error) {
+func DecodeGetL1FeeUpperBoundOutput(out any) (*big.Int, error) {
 	hex, ok := out.(string)
 	if !ok {
 		return nil, errors.New("getL1Fee: cannot assert type: hex is not of type string")
@@ -39,7 +38,7 @@ func DecodeGetL1FeeMethodOutput(out any) (*big.Int, error) {
 		return nil, fmt.Errorf("getL1Fee: %s", err)
 	}
 
-	args, err := GetL1FeeMethod.Outputs.Unpack(data)
+	args, err := GetL1FeeUpperBoundMethod.Outputs.Unpack(data)
 	if err != nil {
 		return nil, fmt.Errorf("getL1Fee: %s", err)
 	}
